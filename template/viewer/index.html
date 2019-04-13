@@ -37,25 +37,26 @@
     <script src="./swagger-ui-standalone-preset.js"> </script>
     <script src="./livereload.js"> </script>
     <script>
-    const addr = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port  + "/swagger.spec";
-    window.onload = function() {
-      const ui = SwaggerUIBundle({
-        url: addr,
-        dom_id: '#swagger-ui',
-        deepLinking: true,
-        presets: [
-          SwaggerUIBundle.presets.apis,
-          SwaggerUIStandalonePreset
-        ],
-        plugins: [
-          SwaggerUIBundle.plugins.DownloadUrl
-        ],
-        layout: "StandaloneLayout"
-      })
-      // End Swagger UI call region
+      function liveReload() {
+        const addr = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port  + "/swagger.spec";
+        const ui = SwaggerUIBundle({
+          url: addr,
+          dom_id: '#swagger-ui',
+          deepLinking: true,
+          presets: [
+            SwaggerUIBundle.presets.apis,
+            SwaggerUIStandalonePreset
+          ],
+          plugins: [
+            SwaggerUIBundle.plugins.DownloadUrl
+          ],
+          layout: "StandaloneLayout"
+        })
+        // End Swagger UI call region
+        window.ui = ui
+      }
 
-      window.ui = ui
-    }
+      window.onload = liveReload;
   </script>
   </body>
 </html>

@@ -8,6 +8,8 @@ github.com/aws/aws-sdk-go v1.17.13/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpi
 github.com/aws/aws-sdk-go v1.18.1/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 h1:xJ4a3vCFaGF/jqvzLMYoU8P317H5OQ+Via4RmuPwCS0=
 github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
+github.com/beorn7/perks v0.0.0-20190413114025-234731a4f016 h1:xXgSY9c+M0mX1vz+cIl3vnjo3+1Yl6upLgN45oEikcA=
+github.com/beorn7/perks v0.0.0-20190413114025-234731a4f016/go.mod h1:Dwedo/Wpr24TaqPxmxbtue+5NUziq4I4S80YR8gNf3Q=
 github.com/blang/vfs v1.0.0 h1:AUZUgulCDzbaNjTRWEP45X7m/J10brAptZpSRKRZBZc=
 github.com/blang/vfs v1.0.0/go.mod h1:jjuNUc/IKcRNNWC9NUCvz4fR9PZLPIKxEygtPs/4tSI=
 github.com/creasty/defaults v1.3.0 h1:uG+RAxYbJgOPCOdKEcec9ZJXeva7Y6mj/8egdzwmLtw=
@@ -95,8 +97,8 @@ github.com/phogolabs/log v0.0.0-20190322224159-4a921a6eb0c8 h1:BOltf+mrPCjX4DiKk
 github.com/phogolabs/log v0.0.0-20190322224159-4a921a6eb0c8/go.mod h1:o1Emk1rxXfQM+UGFQKqUzKDauQetCgn3xIe4t6tOqB0=
 github.com/phogolabs/parcello v0.8.1 h1:olbuFKkvNCyFJEN3SYPuRq6vXLWYI+6iBrGJYKJZXdU=
 github.com/phogolabs/parcello v0.8.1/go.mod h1:/HlY+yKSdyM8MUX9YvwT3+sED9SKXizc5zfuHDh6+to=
-github.com/phogolabs/rest v0.0.2-0.20190413113355-e773b263ce98 h1:EyHtAsoYoQhNNXz+Uj7KVYDddt5ktQhBzgbW4wJjkgo=
-github.com/phogolabs/rest v0.0.2-0.20190413113355-e773b263ce98/go.mod h1:j0iypPHdfBTK4q/QMocAfeMzpmbmhiM5zzgvA+MwVwI=
+github.com/phogolabs/rest v0.0.2-0.20190413122917-2284b040dd14 h1:aS+re1A68wVoWrbvvxWPuLVahl+wKfHlGn2lZGNz5Jc=
+github.com/phogolabs/rest v0.0.2-0.20190413122917-2284b040dd14/go.mod h1:j0iypPHdfBTK4q/QMocAfeMzpmbmhiM5zzgvA+MwVwI=
 github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
