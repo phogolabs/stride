@@ -3,11 +3,17 @@ module github.com/phogolabs/stride
 go 1.12
 
 require (
+	github.com/apex/log v1.1.0
+	github.com/aymerick/raymond v2.0.2+incompatible
 	github.com/beorn7/perks v0.0.0-20190413114025-234731a4f016 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/getkin/kin-openapi v0.1.1-0.20190404145759-2fa3ddc203b1
 	github.com/go-chi/chi v4.0.2+incompatible
+	github.com/go-openapi/inflect v0.19.0
 	github.com/golang/protobuf v1.3.1 // indirect
+	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
+	github.com/onsi/ginkgo v1.8.0
+	github.com/onsi/gomega v1.5.0
 	github.com/phogolabs/cli v0.0.0-20190325140121-861b367ef9b6
 	github.com/phogolabs/log v0.0.0-20190322224159-4a921a6eb0c8
 	github.com/phogolabs/parcello v0.8.1

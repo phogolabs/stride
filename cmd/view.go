@@ -29,9 +29,9 @@ func (m *OpenAPIViewer) CreateCommand() *cli.Command {
 				Value: "localhost:8080",
 			},
 			&cli.StringFlag{
-				Name:  "file-path",
+				Name:  "file-path, f",
 				Usage: "path to the open api specification",
-				Value: "./open-api.yaml",
+				Value: "./swagger.yaml",
 			},
 		},
 	}
