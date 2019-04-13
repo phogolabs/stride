@@ -46,7 +46,7 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 	}
 
 	resolver := &codegen.Resolver{
-		Schemas: make(map[string]*codegen.TypeDescriptor),
+		Cache: make(map[string]*codegen.TypeDescriptor),
 	}
 
 	resolver.Resolve(spec)

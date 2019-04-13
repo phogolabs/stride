@@ -8,6 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.1.1-0.20190404145759-2fa3ddc203b1
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/golang/protobuf v1.3.1 // indirect
+	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/phogolabs/cli v0.0.0-20190325140121-861b367ef9b6
 	github.com/phogolabs/log v0.0.0-20190322224159-4a921a6eb0c8
 	github.com/phogolabs/parcello v0.8.1
