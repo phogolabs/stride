@@ -1,0 +1,189 @@
+func (r *Resolver) resolveOperations(paths openapi3.Paths) []*Operation {
+	operations := []*Operation{}
+
+	for url, path := range paths {
+		kv := map[string]*openapi3.Operation{
+			"CONNECT": path.Connect,
+			"DELETE":  path.Delete,
+			"GET":     path.Get,
+			"HEAD":    path.Head,
+			"OPTIONS": path.Options,
+			"PATCH":   path.Patch,
+			"POST":    path.Post,
+			"PUT":     path.Put,
+			"TRACE":   path.Trace,
+		}
+
+		for method, operation := range kv {
+			if operation == nil {
+				continue
+			}
+
+			op := NewOperation(method, url, operation)
+			op.Parameters = r.resolveOperationParameters(operation)
+			// op.Requests = r.resolveOperationRequests(operation)
+			// op.Responses = r.resolveOperationResponses(operation)
+
+			operations = append(operations, op)
+		}
+	}
+
+	return operations
+}
+
+func (r *Resolver) resolveOperationParameters(op *openapi3.Operation) []*Parameter {
+	parameters := []*Parameter{}
+
+	for _, paramDef := range op.Parameters {
+		param := NewParameter(paramDef)
+
+		// if schema := paramDef.Value.Schema.Value; schema.Type == "object" {
+		// 	schema.Format = inflect.Camelize(op.OperationID) + inflect.Camelize(param.Field.Name) + "Param"
+		// }
+
+		// param.Field.Type = r.resolveType(paramDef.Value.Schema)
+		parameters = append(parameters, param)
+	}
+
+	return parameters
+}
+
+func (r *Resolver) resolveType(schema *openapi3.SchemaRef) *Type {
+	name := r.resolveTypeName(schema)
+
+	definition, ok := r.Components[name]
+	if !ok {
+		definition = NewType(schema.Value)
+		definition.Name = name
+		r.Components[name] = definition
+	}
+
+	return definition
+}
+
+func (r *Resolver) resolveParameters(params map[string]*openapi3.ParameterRef) []*Parameter {
+	parameters := []*Parameter{}
+
+	for key, ref := range params {
+		// Set ref for root schemas to itself
+		ref.Value.Schema.Ref = inflect.Camelize(key + "Param")
+
+		param := &Parameter{
+			In: ref.Value.In,
+			Field: &Field{
+				Name:        key,
+				Description: ref.Value.Description,
+				Required:    ref.Value.Required,
+				Deprecated:  ref.Value.Deprecated,
+				// Type:        r.resolveTypeName(key, ref.Value.Schema),
+			},
+		}
+
+		parameters = append(parameters, param)
+		//	spew.Dump(param)
+	}
+
+	return parameters
+}
+
+func (r *Resolver) resolveHeaders(headers map[string]*openapi3.HeaderRef) []*Field {
+	fields := []*Field{}
+
+	for key, ref := range headers {
+		// Set ref for root schemas to itself
+		ref.Value.Schema.Ref = inflect.Camelize(key + "Header")
+
+		field := &Field{
+			Name:        key,
+			Description: ref.Value.Description,
+			// Type:        r.resolveTypeName(key, ref.Value.Schema),
+		}
+
+		fields = append(fields, field)
+		// spew.Dump(field)
+	}
+
+	return fields
+}
+
+func (r *Resolver) resolveRequests(bodies map[string]*openapi3.RequestBodyRef) []*Request {
+	requests := []*Request{}
+
+	for key, ref := range bodies {
+		// Set ref for root schemas to itself
+		ref.Ref = inflect.Camelize(key + "Request")
+
+		request := &Request{
+			Required:    ref.Value.Required,
+			Description: ref.Value.Description,
+			Bodies:      make(map[string]*Type),
+		}
+
+		m := make(map[string]*openapi3.SchemaRef)
+
+		for k, v := range ref.Value.Content {
+			m[k] = v.Schema
+			fmt.Println(k)
+		}
+
+		spew.Dump(r.resolveSchemas(m))
+
+		requests = append(requests, request)
+
+		// spew.Dump(request)
+	}
+
+	return requests
+}
+
+func (r *Resolver) resolveResponses(schemas map[string]*openapi3.ResponseRef) {
+}
+
+func (r *Resolver) resolveFields(name string, parent *openapi3.SchemaRef, schemas map[string]*openapi3.SchemaRef) []*Field {
+	fields := []*Field{}
+
+	for key, ref := range schemas {
+		//TODO; enum
+
+		field := &Field{
+			Name:        key,
+			Description: ref.Value.Description,
+			Nullable:    ref.Value.Nullable,
+			// Type:        r.resolveTypeName(key, ref),
+		}
+
+		if parent != nil && parent.Value != nil {
+			for _, name := range parent.Value.Required {
+				if strings.EqualFold(name, field.Name) {
+					field.Required = true
+					break
+				}
+			}
+		}
+
+		fields = append(fields, field)
+	}
+
+	return fields
+}
+
+func (r *Resolver) resolveTypeName(key string, schemaRef *openapi3.SchemaRef) string {
+	schema := schemaRef.Value
+
+	if schema.Type == "object" {
+		if schemaRef.Ref != "" {
+			schema.Format = filepath.Base(schemaRef.Ref)
+		} else {
+			schema.Format = inflect.Camelize(key) + "Object"
+		}
+	}
+
+	switch {
+	case schema.Type == "array":
+		return "[]" + r.resolveTypeName("items", schema.Items)
+	case schema.Format != "":
+		return schema.Format
+	default:
+		return schema.Type
+	}
+}
