@@ -35,10 +35,12 @@
 
     <script src="./swagger-ui-bundle.js"> </script>
     <script src="./swagger-ui-standalone-preset.js"> </script>
+    <script src="./livereload.js"> </script>
     <script>
+    const addr = window.location.protocol + "//" + window.location.hostname + ":" + window.location.port  + "/swagger.spec";
     window.onload = function() {
       const ui = SwaggerUIBundle({
-        url: window.location.protocol + "//" + window.location.hostname + ":" + window.location.port  + "/swagger.spec",
+        url: addr,
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [

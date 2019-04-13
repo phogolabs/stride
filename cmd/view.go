@@ -50,6 +50,7 @@ func (m *OpenAPIViewer) view(ctx *cli.Context) error {
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.NoCache)
 	router.Use(middleware.Logger)
+	router.Use(middleware.LiveReloader)
 
 	router.Mount("/", http.FileServer(parcello.ManagerAt("viewer")))
 	router.Mount("/swagger.spec", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

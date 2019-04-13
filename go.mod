@@ -10,7 +10,7 @@ require (
 	github.com/phogolabs/cli v0.0.0-20190325140121-861b367ef9b6
 	github.com/phogolabs/log v0.0.0-20190322224159-4a921a6eb0c8
 	github.com/phogolabs/parcello v0.8.1
-	github.com/phogolabs/rest v0.0.2-0.20190407163607-0bcc4641165d
+	github.com/phogolabs/rest v0.0.2-0.20190413113355-e773b263ce98
 	github.com/prometheus/client_golang v0.9.3-0.20190127221311-3c4408c8b829 // indirect
 	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90 // indirect
 	github.com/prometheus/common v0.3.0 // indirect
