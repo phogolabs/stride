@@ -8,6 +8,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/getkin/kin-openapi v0.1.1-0.20190404145759-2fa3ddc203b1
 	github.com/go-chi/chi v4.0.2+incompatible
+	github.com/go-openapi/inflect v0.19.0
 	github.com/golang/protobuf v1.3.1 // indirect
 	github.com/jinzhu/copier v0.0.0-20180308034124-7e38e58719c3
 	github.com/onsi/ginkgo v1.8.0
