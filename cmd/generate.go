@@ -23,7 +23,7 @@ func (m *OpenAPIGenerator) CreateCommand() *cli.Command {
 			&cli.StringFlag{
 				Name:  "file-path, f",
 				Usage: "path to the open api specification",
-				Value: "./open-api.yaml",
+				Value: "./swagger.yaml",
 			},
 		},
 	}
@@ -45,10 +45,8 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		return err
 	}
 
-	resolver := &codegen.Resolver{
-		Cache: make(map[string]*codegen.TypeDescriptor),
-	}
-
+	resolver := &codegen.Resolver{}
 	resolver.Resolve(spec)
+
 	return nil
 }
