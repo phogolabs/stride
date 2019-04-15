@@ -9,7 +9,7 @@ type SpecDescriptor struct {
 	Headers       HeaderDescriptorCollection
 	RequestBodies RequestBodyDescriptorCollection
 	Responses     ResponseDescriptorCollection
-	Controllers   ControllerDescriptorCollection
+	Operations    OperationDescriptorCollection
 }
 
 // TypeDescriptorCollection definition

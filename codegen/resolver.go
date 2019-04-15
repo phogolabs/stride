@@ -3,11 +3,13 @@ package codegen
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/go-openapi/inflect"
 	"github.com/phogolabs/log"
 )
 
@@ -16,25 +18,28 @@ type Resolver struct{}
 
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
+	const root = "#/components"
+
 	spec := &SpecDescriptor{
-		Schemas:       r.resolveSchemas(swagger.Components.Schemas),
-		Parameters:    r.resolveParameters(swagger.Components.Parameters),
-		Headers:       r.resolveHeaders(swagger.Components.Headers),
-		RequestBodies: r.resolveRequestBodies(swagger.Components.RequestBodies),
-		Responses:     r.resolveResponses(swagger.Components.Responses),
-		Controllers:   r.resolveControllers(swagger),
+		Schemas:       r.resolveSchemas(root, swagger.Components.Schemas),
+		Parameters:    r.resolveParameters(root, swagger.Components.Parameters),
+		Headers:       r.resolveHeaders(root, swagger.Components.Headers),
+		RequestBodies: r.resolveRequestBodies(root, swagger.Components.RequestBodies),
+		Responses:     r.resolveResponses(root, swagger.Components.Responses),
+		Operations:    r.resolveOperations(root, swagger.Paths),
 	}
 
 	return spec
 }
 
-func (r *Resolver) resolveSchemas(schemas map[string]*openapi3.SchemaRef) TypeDescriptorCollection {
+func (r *Resolver) resolveSchemas(parent string, schemas map[string]*openapi3.SchemaRef) TypeDescriptorCollection {
 	descriptors := TypeDescriptorCollection{}
 
 	for name, ref := range schemas {
-		log.Infof("Resolving schema: %v", name)
+		path := join(parent, "schemas", name)
+		log.Infof("Resolving schema: %v", path)
 
-		descriptor := r.resolveType(ref)
+		descriptor := r.resolveType(path, ref)
 		descriptor.Name = name
 		descriptors = append(descriptors, descriptor)
 	}
@@ -44,50 +49,10 @@ func (r *Resolver) resolveSchemas(schemas map[string]*openapi3.SchemaRef) TypeDe
 	return descriptors
 }
 
-func (r *Resolver) resolveControllers(spec *openapi3.Swagger) ControllerDescriptorCollection {
-	var (
-		hashmap    = make(map[string]*ControllerDescriptor)
-		operations = r.resolveOperations(spec.Paths)
-	)
-
-	for _, operation := range operations {
-		tag := "default"
-
-		if len(operation.Tags) > 0 {
-			tag = operation.Tags[0]
-		}
-
-		controller, ok := hashmap[tag]
-		if !ok {
-			controller = &ControllerDescriptor{
-				Name: tag,
-			}
-
-			if descriptor := spec.Components.Tags.Get(tag); descriptor != nil {
-				controller.Description = descriptor.Description
-			}
-
-			hashmap[tag] = controller
-		}
-
-		controller.Operations = append(controller.Operations, operation)
-	}
-
-	controllers := ControllerDescriptorCollection{}
-
-	for _, controller := range hashmap {
-		controllers = append(controllers, controller)
-	}
-
-	sort.Sort(controllers)
-
-	return controllers
-}
-
-func (r *Resolver) resolveOperations(schemas openapi3.Paths) OperationDescriptorCollection {
+func (r *Resolver) resolveOperations(parent string, schemas openapi3.Paths) OperationDescriptorCollection {
 	descriptors := OperationDescriptorCollection{}
 
-	for path, item := range schemas {
+	for uri, item := range schemas {
 		parameters := item.Parameters
 
 		for method, op := range item.Operations() {
@@ -95,24 +60,22 @@ func (r *Resolver) resolveOperations(schemas openapi3.Paths) OperationDescriptor
 				continue
 			}
 
-			log.Infof("Resolving operation: %v %v", method, path)
-
 			params := append(parameters, op.Parameters...)
 
+			path := join(parent, "operations", op.OperationID)
+			log.Infof("Resolving operation: %v", path)
+
 			descriptor := &OperationDescriptor{
-				Path:        path,
+				Path:        uri,
 				Method:      method,
 				Name:        op.OperationID,
 				Summary:     op.Summary,
 				Description: op.Description,
 				Deprecated:  op.Deprecated,
 				Tags:        op.Tags,
-				Parameters:  r.resolveOperationParameters(params),
-				Responses:   r.resolveResponses(op.Responses),
-			}
-
-			if bodies := r.resolveOperationRequestBody(op.RequestBody); len(bodies) > 0 {
-				descriptor.RequestBody = bodies[0]
+				Parameters:  r.resolveOperationParameters(path, params),
+				Responses:   r.resolveResponses(path, op.Responses),
+				// RequestBody: r.resolveRequestBody(join(path, "request-bodies", "default"), op.RequestBody),
 			}
 
 			descriptors = append(descriptors, descriptor)
@@ -124,31 +87,23 @@ func (r *Resolver) resolveOperations(schemas openapi3.Paths) OperationDescriptor
 	return descriptors
 }
 
-func (r *Resolver) resolveOperationParameters(params openapi3.Parameters) ParameterDescriptorCollection {
+func (r *Resolver) resolveOperationParameters(parent string, params openapi3.Parameters) ParameterDescriptorCollection {
+	// PATH: "#/components/operations/op.OperationID/parameters/{parameter_name}/...
 	parameters := map[string]*openapi3.ParameterRef{}
 
 	for _, param := range params {
 		parameters[param.Value.Name] = param
 	}
 
-	return r.resolveParameters(parameters)
+	return r.resolveParameters(parent, parameters)
 }
 
-func (r *Resolver) resolveOperationRequestBody(body *openapi3.RequestBodyRef) RequestBodyDescriptorCollection {
-	m := map[string]*openapi3.RequestBodyRef{}
-
-	if body != nil {
-		m[body.Ref] = body
-	}
-
-	return r.resolveRequestBodies(m)
-}
-
-func (r *Resolver) resolveParameters(schemas map[string]*openapi3.ParameterRef) ParameterDescriptorCollection {
+func (r *Resolver) resolveParameters(parent string, schemas map[string]*openapi3.ParameterRef) ParameterDescriptorCollection {
 	descriptors := ParameterDescriptorCollection{}
 
 	for name, ref := range schemas {
-		log.Infof("Resolving parameter: %v", name)
+		path := join(parent, "parameters", ref.Value.Name)
+		log.Infof("Resolving parameter: %v (%v)", path, name)
 
 		descriptor := &ParameterDescriptor{
 			Name:          ref.Value.Name,
@@ -156,7 +111,7 @@ func (r *Resolver) resolveParameters(schemas map[string]*openapi3.ParameterRef) 
 			Description:   ref.Value.Description,
 			Required:      ref.Value.Required,
 			Deprecated:    ref.Value.Deprecated,
-			ParameterType: r.resolveType(ref.Value.Schema),
+			ParameterType: r.resolveType(join(path, "schema"), ref.Value.Schema),
 		}
 
 		descriptors = append(descriptors, descriptor)
@@ -167,15 +122,16 @@ func (r *Resolver) resolveParameters(schemas map[string]*openapi3.ParameterRef) 
 	return descriptors
 }
 
-func (r *Resolver) resolveHeaders(schemas map[string]*openapi3.HeaderRef) HeaderDescriptorCollection {
+func (r *Resolver) resolveHeaders(parent string, schemas map[string]*openapi3.HeaderRef) HeaderDescriptorCollection {
 	descriptors := HeaderDescriptorCollection{}
 
 	for name, ref := range schemas {
-		log.Infof("Resolving header: %v", name)
+		path := join(parent, "headers", name)
+		log.Infof("Resolving header: %v", path)
 
 		descriptor := &HeaderDescriptor{
 			Name:       name,
-			HeaderType: r.resolveType(ref.Value.Schema),
+			HeaderType: r.resolveType(join(path, "schema"), ref.Value.Schema),
 		}
 
 		descriptors = append(descriptors, descriptor)
@@ -186,17 +142,18 @@ func (r *Resolver) resolveHeaders(schemas map[string]*openapi3.HeaderRef) Header
 	return descriptors
 }
 
-func (r *Resolver) resolveRequestBodies(schemas map[string]*openapi3.RequestBodyRef) RequestBodyDescriptorCollection {
+func (r *Resolver) resolveRequestBodies(parent string, schemas map[string]*openapi3.RequestBodyRef) RequestBodyDescriptorCollection {
 	descriptors := RequestBodyDescriptorCollection{}
 
 	for name, ref := range schemas {
-		log.Infof("Resolving request body: %v", name)
+		path := join(parent, "request-bodies", name)
+		log.Infof("Resolving request body: %v", path)
 
 		descriptor := &RequestBodyDescriptor{
 			Name:        name,
 			Description: ref.Value.Description,
 			Required:    ref.Value.Required,
-			Contents:    r.resolveMediaType(ref.Value.Content),
+			Contents:    r.resolveMediaType(path, ref.Value.Content),
 		}
 
 		descriptors = append(descriptors, descriptor)
@@ -207,17 +164,18 @@ func (r *Resolver) resolveRequestBodies(schemas map[string]*openapi3.RequestBody
 	return descriptors
 }
 
-func (r *Resolver) resolveResponses(schemas map[string]*openapi3.ResponseRef) ResponseDescriptorCollection {
+func (r *Resolver) resolveResponses(parent string, schemas map[string]*openapi3.ResponseRef) ResponseDescriptorCollection {
 	descriptors := ResponseDescriptorCollection{}
 
 	for name, ref := range schemas {
-		log.Infof("Resolving response: %v", name)
+		path := join(parent, "responses", name)
+		log.Infof("Resolving response: %v", path)
 
 		descriptor := &ResponseDescriptor{
 			Name:        name,
 			Description: ref.Value.Description,
-			Headers:     r.resolveHeaders(ref.Value.Headers),
-			Contents:    r.resolveMediaType(ref.Value.Content),
+			Headers:     r.resolveHeaders(path, ref.Value.Headers),
+			Contents:    r.resolveMediaType(path, ref.Value.Content),
 		}
 
 		if code, err := strconv.Atoi(name); err == nil {
@@ -233,15 +191,16 @@ func (r *Resolver) resolveResponses(schemas map[string]*openapi3.ResponseRef) Re
 	return descriptors
 }
 
-func (r *Resolver) resolveMediaType(content map[string]*openapi3.MediaType) ContentDescriptorCollection {
+func (r *Resolver) resolveMediaType(parent string, content map[string]*openapi3.MediaType) ContentDescriptorCollection {
 	descriptors := ContentDescriptorCollection{}
 
 	for name, ref := range content {
-		log.Infof("Resolving media type: %v", name)
+		path := join(parent, "contents", name)
+		log.Infof("Resolving media type: %v", path)
 
 		descriptor := &ContentDescriptor{
 			Name:        name,
-			ContentType: r.resolveType(ref.Schema),
+			ContentType: r.resolveType(join(path, "schema"), ref.Schema),
 		}
 
 		descriptors = append(descriptors, descriptor)
@@ -252,41 +211,37 @@ func (r *Resolver) resolveMediaType(content map[string]*openapi3.MediaType) Cont
 	return descriptors
 }
 
-func (r *Resolver) resolveType(schemaRef *openapi3.SchemaRef) *TypeDescriptor {
-	if schemaRef.Ref == "" {
-		log.Infof("Resolving inline type")
-	} else {
-		log.Infof("Resolving referenced type: %v", schemaRef.Ref)
-	}
+func (r *Resolver) resolveType(parent string, schemaRef *openapi3.SchemaRef) *TypeDescriptor {
+	log.Infof("Resolving type: %v", parent)
 
 	var descriptor *TypeDescriptor
 
-	if descriptor = r.resolveObjectType(schemaRef); descriptor != nil {
+	if descriptor = r.resolveObjectType(parent, schemaRef); descriptor != nil {
 		return descriptor
 	}
 
-	if descriptor = r.resolveEnumType(schemaRef); descriptor != nil {
+	if descriptor = r.resolveEnumType(parent, schemaRef); descriptor != nil {
 		return descriptor
 	}
 
-	if descriptor = r.resolvePrimitiveType(schemaRef); descriptor != nil {
+	if descriptor = r.resolvePrimitiveType(parent, schemaRef); descriptor != nil {
 		return descriptor
 	}
 
 	return nil
 }
 
-func (r *Resolver) resolveObjectType(schemaRef *openapi3.SchemaRef) *TypeDescriptor {
+func (r *Resolver) resolveObjectType(parent string, schemaRef *openapi3.SchemaRef) *TypeDescriptor {
 	switch schemaRef.Value.Type {
 	case "object":
 		return &TypeDescriptor{
 			IsClass:     true,
 			Name:        schemaRef.Ref,
-			Properties:  r.resolveProperties(schemaRef),
+			Properties:  r.resolveProperties(parent, schemaRef),
 			Description: schemaRef.Value.Description,
 		}
 	case "array":
-		if descriptor := r.resolveObjectType(schemaRef.Value.Items); descriptor != nil {
+		if descriptor := r.resolveObjectType(parent, schemaRef.Value.Items); descriptor != nil {
 			descriptor = descriptor.Clone()
 			descriptor.IsArray = true
 			return descriptor
@@ -296,15 +251,20 @@ func (r *Resolver) resolveObjectType(schemaRef *openapi3.SchemaRef) *TypeDescrip
 	return nil
 }
 
-func (r *Resolver) resolveProperties(schemaRef *openapi3.SchemaRef) PropertyDescriptorCollection {
+func (r *Resolver) resolveProperties(parent string, schemaRef *openapi3.SchemaRef) PropertyDescriptorCollection {
+	// PATH: #/components/schemas/{schema-name}/properties/...
+	// PATH: #/components/schemas/{schema-name}/properties/{property-name}/schema/properties/...
+
 	descriptors := PropertyDescriptorCollection{}
 
 	for name, ref := range schemaRef.Value.Properties {
+		path := join(parent, "properties", name, "schema")
+
 		property := &PropertyDescriptor{
 			Name:         name,
 			Description:  ref.Value.Description,
 			Nullable:     ref.Value.Nullable,
-			PropertyType: r.resolveType(ref),
+			PropertyType: r.resolveType(path, ref),
 		}
 
 		for _, field := range schemaRef.Value.Required {
@@ -322,7 +282,7 @@ func (r *Resolver) resolveProperties(schemaRef *openapi3.SchemaRef) PropertyDesc
 	return descriptors
 }
 
-func (r *Resolver) resolvePrimitiveType(schemaRef *openapi3.SchemaRef) *TypeDescriptor {
+func (r *Resolver) resolvePrimitiveType(parent string, schemaRef *openapi3.SchemaRef) *TypeDescriptor {
 	switch schemaRef.Value.Format {
 	case "int32":
 		return &TypeDescriptor{
@@ -388,7 +348,7 @@ func (r *Resolver) resolvePrimitiveType(schemaRef *openapi3.SchemaRef) *TypeDesc
 			IsPrimitive: true,
 		}
 	case "array":
-		if descriptor := r.resolvePrimitiveType(schemaRef.Value.Items); descriptor != nil {
+		if descriptor := r.resolvePrimitiveType(parent, schemaRef.Value.Items); descriptor != nil {
 			descriptor = descriptor.Clone()
 			descriptor.IsArray = true
 			return descriptor
@@ -398,7 +358,7 @@ func (r *Resolver) resolvePrimitiveType(schemaRef *openapi3.SchemaRef) *TypeDesc
 	return nil
 }
 
-func (r *Resolver) resolveEnumType(schemaRef *openapi3.SchemaRef) *TypeDescriptor {
+func (r *Resolver) resolveEnumType(parent string, schemaRef *openapi3.SchemaRef) *TypeDescriptor {
 	if len(schemaRef.Value.Enum) > 0 {
 		descriptor := &TypeDescriptor{
 			IsEnum:      true,
@@ -418,4 +378,13 @@ func (r *Resolver) resolveEnumType(schemaRef *openapi3.SchemaRef) *TypeDescripto
 	}
 
 	return nil
+}
+
+func join(paths ...string) string {
+	for index, part := range paths {
+		part = strings.ToLower(inflect.Dasherize(part))
+		paths[index] = part
+	}
+
+	return filepath.Join(paths...)
 }

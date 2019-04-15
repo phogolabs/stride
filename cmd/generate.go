@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/log"
@@ -47,15 +46,7 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 	}
 
 	resolver := &codegen.Resolver{}
-	spec := resolver.Resolve(swagger)
-
-	mapper := &codegen.Mapper{
-		Types: make(map[string]*codegen.TypeModel),
-	}
-
-	mapper.Map(spec)
-
-	spew.Dump(mapper.Types)
+	resolver.Resolve(swagger)
 
 	return nil
 }
