@@ -45,7 +45,10 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		return err
 	}
 
-	resolver := &codegen.Resolver{}
+	resolver := &codegen.Resolver{
+		Cache: make(map[string]*codegen.TypeDescriptor),
+	}
+
 	resolver.Resolve(swagger)
 
 	return nil

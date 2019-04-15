@@ -14,7 +14,9 @@ import (
 )
 
 // Resolver resolves all swagger spec
-type Resolver struct{}
+type Resolver struct {
+	Cache map[string]*TypeDescriptor
+}
 
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
@@ -37,7 +39,7 @@ func (r *Resolver) resolveSchemas(parent string, schemas map[string]*openapi3.Sc
 
 	for name, ref := range schemas {
 		path := join(parent, "schemas", name)
-		log.Infof("Resolving schema: %v", path)
+		log.Infof("Resolving type: %v", path)
 
 		descriptor := r.resolveType(path, ref)
 		descriptor.Name = name
@@ -102,8 +104,8 @@ func (r *Resolver) resolveParameters(parent string, schemas map[string]*openapi3
 	descriptors := ParameterDescriptorCollection{}
 
 	for name, ref := range schemas {
-		path := join(parent, "parameters", ref.Value.Name)
-		log.Infof("Resolving parameter: %v (%v)", path, name)
+		path := join(parent, "parameters", name)
+		log.Infof("Resolving parameter: %v", path)
 
 		descriptor := &ParameterDescriptor{
 			Name:          ref.Value.Name,
@@ -212,19 +214,30 @@ func (r *Resolver) resolveMediaType(parent string, content map[string]*openapi3.
 }
 
 func (r *Resolver) resolveType(parent string, schemaRef *openapi3.SchemaRef) *TypeDescriptor {
+	if descriptor, ok := r.Cache[schemaRef.Ref]; ok {
+		return descriptor
+	}
+
 	log.Infof("Resolving type: %v", parent)
 
-	var descriptor *TypeDescriptor
-
-	if descriptor = r.resolveObjectType(parent, schemaRef); descriptor != nil {
+	if descriptor := r.resolveObjectType(parent, schemaRef); descriptor != nil {
+		if schemaRef.Ref != "" {
+			r.Cache[schemaRef.Ref] = descriptor
+		}
 		return descriptor
 	}
 
-	if descriptor = r.resolveEnumType(parent, schemaRef); descriptor != nil {
+	if descriptor := r.resolveEnumType(parent, schemaRef); descriptor != nil {
+		if schemaRef.Ref != "" {
+			r.Cache[schemaRef.Ref] = descriptor
+		}
 		return descriptor
 	}
 
-	if descriptor = r.resolvePrimitiveType(parent, schemaRef); descriptor != nil {
+	if descriptor := r.resolvePrimitiveType(parent, schemaRef); descriptor != nil {
+		if schemaRef.Ref != "" {
+			r.Cache[schemaRef.Ref] = descriptor
+		}
 		return descriptor
 	}
 
@@ -258,13 +271,13 @@ func (r *Resolver) resolveProperties(parent string, schemaRef *openapi3.SchemaRe
 	descriptors := PropertyDescriptorCollection{}
 
 	for name, ref := range schemaRef.Value.Properties {
-		path := join(parent, "properties", name, "schema")
+		path := join(parent, "properties", name)
 
 		property := &PropertyDescriptor{
 			Name:         name,
 			Description:  ref.Value.Description,
 			Nullable:     ref.Value.Nullable,
-			PropertyType: r.resolveType(path, ref),
+			PropertyType: r.resolveType(join(path, "schema"), ref),
 		}
 
 		for _, field := range schemaRef.Value.Required {
