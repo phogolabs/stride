@@ -36,12 +36,25 @@ func (t TypeDescriptorCollection) Swap(i, j int) {
 // TypeDescriptor represents a type
 type TypeDescriptor struct {
 	Name        string
+	Namespace   string
 	Description string
 	IsArray     bool
 	IsClass     bool
 	IsEnum      bool
 	IsPrimitive bool
 	Properties  PropertyDescriptorCollection
+}
+
+// Imports returns the required imports
+func (t *TypeDescriptor) Imports() []string {
+	var imports []string
+
+	for _, property := range t.Properties {
+		namespaces := property.PropertyType.Imports()
+		imports = append(imports, namespaces...)
+	}
+
+	return imports
 }
 
 // Clone clones the object

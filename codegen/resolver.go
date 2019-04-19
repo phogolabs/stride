@@ -15,7 +15,9 @@ import (
 
 // Resolver resolves all swagger spec
 type Resolver struct {
-	Cache map[string]*TypeDescriptor
+	TypeMapping   map[string]string
+	ImportMapping map[string]string
+	Cache         map[string]*TypeDescriptor
 }
 
 // Resolve resolves the spec
@@ -39,11 +41,12 @@ func (r *Resolver) resolveSchemas(parent string, schemas map[string]*openapi3.Sc
 
 	for name, ref := range schemas {
 		path := join(parent, "schemas", name)
-		log.Infof("Resolving type: %v", path)
 
 		descriptor := r.resolveType(path, ref)
 		descriptor.Name = name
 		descriptors = append(descriptors, descriptor)
+
+		break
 	}
 
 	sort.Sort(descriptors)
@@ -90,7 +93,6 @@ func (r *Resolver) resolveOperations(parent string, schemas openapi3.Paths) Oper
 }
 
 func (r *Resolver) resolveOperationParameters(parent string, params openapi3.Parameters) ParameterDescriptorCollection {
-	// PATH: "#/components/operations/op.OperationID/parameters/{parameter_name}/...
 	parameters := map[string]*openapi3.ParameterRef{}
 
 	for _, param := range params {
@@ -167,9 +169,20 @@ func (r *Resolver) resolveRequestBodies(parent string, schemas map[string]*opena
 }
 
 func (r *Resolver) resolveResponses(parent string, schemas map[string]*openapi3.ResponseRef) ResponseDescriptorCollection {
-	descriptors := ResponseDescriptorCollection{}
+	var (
+		err         error
+		descriptors = ResponseDescriptorCollection{}
+	)
 
 	for name, ref := range schemas {
+		code := 0
+
+		if code, err = strconv.Atoi(name); err == nil {
+			name = strings.ToLower(http.StatusText(code))
+		}
+
+		name = inflect.Dasherize(name + "-response")
+
 		path := join(parent, "responses", name)
 		log.Infof("Resolving response: %v", path)
 
@@ -178,11 +191,6 @@ func (r *Resolver) resolveResponses(parent string, schemas map[string]*openapi3.
 			Description: ref.Value.Description,
 			Headers:     r.resolveHeaders(path, ref.Value.Headers),
 			Contents:    r.resolveMediaType(path, ref.Value.Content),
-		}
-
-		if code, err := strconv.Atoi(name); err == nil {
-			descriptor.Code = code
-			descriptor.Name = http.StatusText(code)
 		}
 
 		descriptors = append(descriptors, descriptor)
@@ -214,30 +222,30 @@ func (r *Resolver) resolveMediaType(parent string, content map[string]*openapi3.
 }
 
 func (r *Resolver) resolveType(parent string, schemaRef *openapi3.SchemaRef) *TypeDescriptor {
-	if descriptor, ok := r.Cache[schemaRef.Ref]; ok {
+	key := parent
+
+	if schemaRef.Ref != "" {
+		key = schemaRef.Ref
+	}
+
+	if descriptor, ok := r.Cache[key]; ok {
 		return descriptor
 	}
 
 	log.Infof("Resolving type: %v", parent)
 
 	if descriptor := r.resolveObjectType(parent, schemaRef); descriptor != nil {
-		if schemaRef.Ref != "" {
-			r.Cache[schemaRef.Ref] = descriptor
-		}
+		r.Cache[key] = descriptor
 		return descriptor
 	}
 
 	if descriptor := r.resolveEnumType(parent, schemaRef); descriptor != nil {
-		if schemaRef.Ref != "" {
-			r.Cache[schemaRef.Ref] = descriptor
-		}
+		r.Cache[key] = descriptor
 		return descriptor
 	}
 
 	if descriptor := r.resolvePrimitiveType(parent, schemaRef); descriptor != nil {
-		if schemaRef.Ref != "" {
-			r.Cache[schemaRef.Ref] = descriptor
-		}
+		r.Cache[key] = descriptor
 		return descriptor
 	}
 
@@ -249,7 +257,7 @@ func (r *Resolver) resolveObjectType(parent string, schemaRef *openapi3.SchemaRe
 	case "object":
 		return &TypeDescriptor{
 			IsClass:     true,
-			Name:        schemaRef.Ref,
+			Name:        r.name(parent, schemaRef),
 			Properties:  r.resolveProperties(parent, schemaRef),
 			Description: schemaRef.Value.Description,
 		}
@@ -265,9 +273,6 @@ func (r *Resolver) resolveObjectType(parent string, schemaRef *openapi3.SchemaRe
 }
 
 func (r *Resolver) resolveProperties(parent string, schemaRef *openapi3.SchemaRef) PropertyDescriptorCollection {
-	// PATH: #/components/schemas/{schema-name}/properties/...
-	// PATH: #/components/schemas/{schema-name}/properties/{property-name}/schema/properties/...
-
 	descriptors := PropertyDescriptorCollection{}
 
 	for name, ref := range schemaRef.Value.Properties {
@@ -375,7 +380,7 @@ func (r *Resolver) resolveEnumType(parent string, schemaRef *openapi3.SchemaRef)
 	if len(schemaRef.Value.Enum) > 0 {
 		descriptor := &TypeDescriptor{
 			IsEnum:      true,
-			Name:        schemaRef.Ref,
+			Name:        r.name(parent, schemaRef),
 			Description: schemaRef.Value.Description,
 		}
 
@@ -391,6 +396,46 @@ func (r *Resolver) resolveEnumType(parent string, schemaRef *openapi3.SchemaRef)
 	}
 
 	return nil
+}
+
+func (r *Resolver) name(parent string, schemaRef *openapi3.SchemaRef) string {
+	key := schemaRef.Ref
+
+	if key == "" {
+		key = parent
+	}
+
+	key = strings.ReplaceAll(key, "components", "")
+	key = strings.ReplaceAll(key, "schemas", "")
+	key = strings.ReplaceAll(key, "schema", "")
+	key = strings.ReplaceAll(key, "operations", "")
+	key = strings.ReplaceAll(key, "headers", "")
+	key = strings.ReplaceAll(key, "responses", "")
+	key = strings.ReplaceAll(key, "request-bodies", "")
+	key = strings.ReplaceAll(key, "contents", "")
+	key = strings.ReplaceAll(key, "application", "")
+	key = strings.ReplaceAll(key, "#", "")
+
+	var parts []string
+
+	for _, part := range strings.Split(key, "/") {
+		part = strings.TrimSpace(part)
+
+		if part == "" {
+			continue
+		}
+
+		parts = append(parts, part)
+	}
+
+	key = strings.Join(parts, "-")
+	key = inflect.Camelize(key)
+	key = strings.ReplaceAll(key, "Xml", "XML")
+	key = strings.ReplaceAll(key, "Json", "JSON")
+	key = strings.ReplaceAll(key, "Id", "ID")
+	key = strings.ReplaceAll(key, "Ok", "OK")
+
+	return key
 }
 
 func join(paths ...string) string {

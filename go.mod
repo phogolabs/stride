@@ -4,6 +4,7 @@ go 1.12
 
 require (
 	github.com/apex/log v1.1.0
+	github.com/aymerick/raymond v2.0.2+incompatible
 	github.com/beorn7/perks v0.0.0-20190413114025-234731a4f016 // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/getkin/kin-openapi v0.1.1-0.20190404145759-2fa3ddc203b1

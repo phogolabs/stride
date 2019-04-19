@@ -46,10 +46,20 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 	}
 
 	resolver := &codegen.Resolver{
-		Cache: make(map[string]*codegen.TypeDescriptor),
+		Cache: map[string]*codegen.TypeDescriptor{},
+		ImportMapping: map[string]string{
+			"time.Time":     "time",
+			"io.ReadCloser": "io",
+			"uuid":          "github.com/phogolabs/schema",
+		},
+		TypeMapping: map[string]string{
+			"date-time": "time.Time",
+			"binary":    "io.ReadCloser",
+		},
 	}
 
-	resolver.Resolve(swagger)
+	spec := resolver.Resolve(swagger)
 
-	return nil
+	generator := &codegen.Generator{}
+	return generator.Generate(spec)
 }
