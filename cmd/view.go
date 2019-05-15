@@ -53,6 +53,7 @@ func (m *OpenAPIViewer) view(ctx *cli.Context) error {
 	router.Use(middleware.LiveReloader)
 
 	router.Mount("/", http.FileServer(parcello.ManagerAt("viewer")))
+	// router.Mount("/", http.FileServer(http.Dir("./template/viewer")))
 	router.Mount("/swagger.spec", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, ctx.String("file-path"))
 	}))

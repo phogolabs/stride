@@ -42,6 +42,7 @@
         const ui = SwaggerUIBundle({
           url: addr,
           dom_id: '#swagger-ui',
+          layout: 'BaseLayout',
           deepLinking: true,
           presets: [
             SwaggerUIBundle.presets.apis,
@@ -49,10 +50,9 @@
           ],
           plugins: [
             SwaggerUIBundle.plugins.DownloadUrl
-          ],
-          layout: "BaseLayout"
+          ]
         })
-        // End Swagger UI call region
+
         window.ui = ui
       }
 
