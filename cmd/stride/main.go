@@ -4,6 +4,7 @@ import (
 	"os"
 
 	"github.com/phogolabs/cli"
+	"github.com/phogolabs/log"
 	"github.com/phogolabs/stride/cmd"
 	_ "github.com/phogolabs/stride/template"
 )
@@ -12,11 +13,13 @@ func main() {
 	var (
 		generator = &cmd.OpenAPIGenerator{}
 		viewer    = &cmd.OpenAPIViewer{}
+		editor    = &cmd.OpenAPIEditor{}
 	)
 
 	commands := []*cli.Command{
 		generator.CreateCommand(),
 		viewer.CreateCommand(),
+		editor.CreateCommand(),
 	}
 
 	app := &cli.App{
@@ -30,5 +33,7 @@ func main() {
 		Commands:  commands,
 	}
 
-	app.Run(os.Args)
+	if err := app.Run(os.Args); err != nil {
+		log.WithError(err).Fatal("execution failed")
+	}
 }

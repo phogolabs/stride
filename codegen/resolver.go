@@ -429,12 +429,15 @@ func (r *Resolver) name(parent string, schemaRef *openapi3.SchemaRef) string {
 	}
 
 	key = strings.Join(parts, "-")
+	return key
+}
+
+func camelize(key string) string {
 	key = inflect.Camelize(key)
 	key = strings.ReplaceAll(key, "Xml", "XML")
 	key = strings.ReplaceAll(key, "Json", "JSON")
 	key = strings.ReplaceAll(key, "Id", "ID")
 	key = strings.ReplaceAll(key, "Ok", "OK")
-
 	return key
 }
 
