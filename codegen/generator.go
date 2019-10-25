@@ -1,10 +1,10 @@
 package codegen
 
 import (
-	"fmt"
-	"io/ioutil"
-
-	"github.com/aymerick/raymond"
+	"go/ast"
+	"go/printer"
+	"go/token"
+	"os"
 )
 
 // Generator generates the source code
@@ -12,17 +12,50 @@ type Generator struct{}
 
 // Generate generates the source code
 func (g *Generator) Generate(spec *SpecDescriptor) error {
-	template, err := ioutil.ReadFile("./template/codegen/model.go.mustache")
-	if err != nil {
-		return err
+	fileSet := token.NewFileSet()
+
+	file := &ast.File{
+		Name:  ast.NewIdent("service"),
+		Scope: ast.NewScope(nil),
+		Decls: []ast.Decl{},
 	}
 
-	result, err := raymond.Render(string(template), spec)
-	if err != nil {
-		return err
+	// for _, schema := range spec.Schemas {
+	// 	declaration := g.declare(schema)
+	// 	file.Decls = append(file.Decls, declaration)
+	// }
+
+	for _, schema := range spec.RequestBodies {
+		for _, content := range schema.Contents {
+			declaration := g.declare(content.ContentType)
+			file.Decls = append(file.Decls, declaration)
+		}
 	}
 
-	fmt.Println(result)
+	for _, schema := range spec.Responses {
+		for _, content := range schema.Contents {
+			declaration := g.declare(content.ContentType)
+			file.Decls = append(file.Decls, declaration)
+		}
+	}
 
+	printer.Fprint(os.Stdout, fileSet, file)
 	return nil
+}
+
+func (g *Generator) declare(descriptor *TypeDescriptor) *ast.GenDecl {
+	declaration := &ast.GenDecl{
+		Tok: token.TYPE,
+		Specs: []ast.Spec{
+			&ast.TypeSpec{
+				Name: ast.NewIdent(descriptor.Name),
+				Type: &ast.StructType{
+					Fields:     &ast.FieldList{},
+					Incomplete: true,
+				},
+			},
+		},
+	}
+
+	return declaration
 }

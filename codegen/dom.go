@@ -1,6 +1,9 @@
 package codegen
 
-import "github.com/jinzhu/copier"
+import (
+	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/jinzhu/copier"
+)
 
 // SpecDescriptor represents a spec
 type SpecDescriptor struct {
@@ -33,16 +36,119 @@ func (t TypeDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
+// TypeDeclaration represents a type declaration
+type TypeDeclaration struct {
+	Name      string
+	SchemaRef *openapi3.SchemaRef
+}
+
+// NewTypeDeclarationPrimitive creates a type declaration primitive
+func NewTypeDeclarationPrimitive(schemaRef *openapi3.SchemaRef) *TypeDeclaration {
+	switch schemaRef.Value.Type {
+	case "integer":
+		switch schemaRef.Value.Format {
+		case "int64":
+			return &TypeDeclaration{
+				Name:      "int64",
+				SchemaRef: schemaRef,
+			}
+		default:
+			return &TypeDeclaration{
+				Name:      "int32",
+				SchemaRef: schemaRef,
+			}
+		}
+	case "number":
+		switch schemaRef.Value.Format {
+		case "double":
+			return &TypeDeclaration{
+				Name:      "double",
+				SchemaRef: schemaRef,
+			}
+		default:
+			return &TypeDeclaration{
+				Name:      "float",
+				SchemaRef: schemaRef,
+			}
+		}
+	case "string":
+		switch schemaRef.Value.Format {
+		case "binary":
+			return &TypeDeclaration{
+				Name:      "binary",
+				SchemaRef: schemaRef,
+			}
+		case "byte":
+			return &TypeDeclaration{
+				Name:      "byte",
+				SchemaRef: schemaRef,
+			}
+		case "date":
+			return &TypeDeclaration{
+				Name:      "date",
+				SchemaRef: schemaRef,
+			}
+		case "date-time":
+			return &TypeDeclaration{
+				Name:      "date-time",
+				SchemaRef: schemaRef,
+			}
+		case "uuid":
+			return &TypeDeclaration{
+				Name:      "uuid",
+				SchemaRef: schemaRef,
+			}
+		default:
+			return &TypeDeclaration{
+				Name:      "string",
+				SchemaRef: schemaRef,
+			}
+		}
+	case "boolean":
+		return &TypeDeclaration{
+			Name:      "boolean",
+			SchemaRef: schemaRef,
+		}
+	default:
+		return nil
+	}
+}
+
 // TypeDescriptor represents a type
 type TypeDescriptor struct {
 	Name        string
-	Namespace   string
 	Description string
 	IsArray     bool
 	IsClass     bool
 	IsEnum      bool
 	IsPrimitive bool
+	Metadata    map[string]interface{}
 	Properties  PropertyDescriptorCollection
+}
+
+// NewTypeDescriptor creates a new type descriptor
+func NewTypeDescriptor(declaration *TypeDeclaration) *TypeDescriptor {
+	descriptor := &TypeDescriptor{
+		Name:        declaration.Name,
+		Description: declaration.SchemaRef.Value.Description,
+		Metadata:    make(map[string]interface{}),
+	}
+	return descriptor
+}
+
+// NewTypeDescriptorPrimitive creates a new primitive type descriptor
+func NewTypeDescriptorPrimitive(declaration *TypeDeclaration) *TypeDescriptor {
+	descriptor := NewTypeDescriptor(declaration)
+	descriptor.IsPrimitive = true
+	return descriptor
+}
+
+// NewTypeDescriptorEnum creates a new type descriptor for enum
+func NewTypeDescriptorEnum(declaration *TypeDeclaration) *TypeDescriptor {
+	descriptor := NewTypeDescriptor(declaration)
+	descriptor.IsEnum = true
+	descriptor.Metadata["enum"] = declaration.SchemaRef.Value.Enum
+	return descriptor
 }
 
 // Imports returns the required imports

@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/phogolabs/cli"
-	"github.com/phogolabs/log"
 	"github.com/phogolabs/stride/cmd"
 	_ "github.com/phogolabs/stride/template"
 )
@@ -33,7 +32,5 @@ func main() {
 		Commands:  commands,
 	}
 
-	if err := app.Run(os.Args); err != nil {
-		log.WithError(err).Fatal("execution failed")
-	}
+	app.Run(os.Args)
 }

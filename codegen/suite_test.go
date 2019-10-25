@@ -1,12 +1,14 @@
 package codegen_test
 
 import (
+	"fmt"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/phogolabs/stride/codegen"
 )
 
 func TestCodegen(t *testing.T) {
@@ -14,11 +16,18 @@ func TestCodegen(t *testing.T) {
 	RunSpecs(t, "Codegen Suite")
 }
 
-func load(path string) *openapi3.Swagger {
-	var loader = openapi3.NewSwaggerLoader()
+func resolve(name string) *codegen.SpecDescriptor {
+	var (
+		path     = fmt.Sprintf("../fixture/%s", name)
+		loader   = openapi3.NewSwaggerLoader()
+		resolver = &codegen.Resolver{
+			Cache: make(map[string]*codegen.TypeDescriptor),
+		}
+	)
 
 	spec, err := loader.LoadSwaggerFromFile(path)
 	Expect(err).To(BeNil())
 	Expect(spec).NotTo(BeNil())
-	return spec
+
+	return resolver.Resolve(spec)
 }

@@ -40,7 +40,7 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		path   = ctx.String("file-path")
 	)
 
-	swagger, err := loader.LoadSwaggerFromFile(path)
+	spec, err := loader.LoadSwaggerFromFile(path)
 	if err != nil {
 		return err
 	}
@@ -58,8 +58,8 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		},
 	}
 
-	spec := resolver.Resolve(swagger)
-
+	resolved := resolver.Resolve(spec)
 	generator := &codegen.Generator{}
-	return generator.Generate(spec)
+
+	return generator.Generate(resolved)
 }
