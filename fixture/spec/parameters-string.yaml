@@ -1,0 +1,44 @@
+openapi: 3.0.1
+components:
+  parameters:
+    BinaryKind:
+      name: BindaryKind
+      schema:
+        type: string
+        format: binary
+    BinaryRef:
+      $ref: '#/components/parameters/BinaryKind'
+    ByteKind:
+      name: ByteKind
+      schema:
+        type: string
+        format: byte
+    ByteRef:
+      $ref: '#/components/parameters/ByteKind'
+    DateKind:
+      name: DateKind
+      schema:
+        type: string
+        format: date
+    DateRef:
+      $ref: '#/components/parameters/DateKind'
+    DateTimeKind:
+      name: DateTimeKind
+      schema:
+        type: string
+        format: date-time
+    DateTimeRef:
+      $ref: '#/components/parameters/DateTimeKind'
+    StringKind:
+      name: StringKind
+      schema:
+        type: string
+    StringRef:
+      $ref: '#/components/parameters/StringKind'
+    UUIDKind:
+      name: UUIDKind
+      schema:
+        type: string
+        format: uuid
+    UUIDRef:
+      $ref: '#/components/parameters/UUIDKind'

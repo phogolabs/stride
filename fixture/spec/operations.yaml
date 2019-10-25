@@ -1,0 +1,73 @@
+openapi: 3.0.1
+servers: []
+info:
+  description: |
+    This is a sample HTTP API. The purpose of the project is to demonstrate
+    best practices for designing a good architecture for HTTP Restful server in
+    Golag.  
+  version: "1.0.0"
+  title: Bank API
+  termsOfService: https://wwww.phogolabs.com
+  contact:
+    email: contact@phogolabs.com
+    url: https://wwww.phogolabs.com
+  license:
+    name: MIT
+    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
+tags:
+  - name: account
+    description: Operations about bank account
+paths:
+  '/accounts/':
+    get:
+      tags:
+        - account
+      summary: Get all accounts for the current user
+      operationId: getAccounts
+      responses:
+        '200':
+          description: All accounts associated with the current user
+          headers:
+            Last-Modified:
+              type: string
+              format: date-time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountArray'
+  '/account/{accountId}':
+    get:
+      tags:
+        - account
+      summary: Gets the bank account for given id
+      description: Returns a bank account for given id
+      operationId: getAccountById
+      parameters:
+        - name: accountId
+          in: path
+          description: ID of the account
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: All accounts associated with the current user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Account'
+
+components:
+  schemas:
+    Account:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    AccountArray:
+      type: array
+      items:
+        $ref: '#/components/schemas/Account'

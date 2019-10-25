@@ -1,0 +1,12 @@
+openapi: 3.0.1
+components:
+  responses:
+    ArrayKind:
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: string
+    ArrayRef:
+      $ref: '#/components/responses/ArrayKind'

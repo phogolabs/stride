@@ -1,0 +1,10 @@
+openapi: 3.0.1
+components:
+  headers:
+    ArrayKind:
+     schema:
+       type: array
+       items:
+         type: string
+    ArrayRef:
+      $ref: '#/components/headers/ArrayKind'

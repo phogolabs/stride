@@ -1,0 +1,33 @@
+package api
+
+import "fmt"
+
+// stride:generate multiply
+func Multiply(x, y int) int {
+	var result int
+
+	// stride:define body:start
+	// NOTE: not implemented
+	// stride:define body:end
+	return result
+}
+
+// stride:generate handle
+func Handle() {
+	var (
+		input  = &HandleInput{}
+		output = &HandleOutput{}
+	)
+
+	if err := bind(input); err != nil {
+		render(err)
+	}
+
+	// stride:define body:start
+	// NOTE: not implemented
+	// stride:define body:end
+
+	if err := render(output); err != nil {
+		render(err)
+	}
+}

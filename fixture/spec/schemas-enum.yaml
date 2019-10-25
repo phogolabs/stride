@@ -1,0 +1,8 @@
+openapi: 3.0.1
+components:
+  schemas:
+    AccountStatus:
+      $ref: '#/components/schemas/TransactionStatus'
+    TransactionStatus:
+      type: string
+      enum: [pending, completed]

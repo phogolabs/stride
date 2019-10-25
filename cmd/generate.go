@@ -1,11 +1,12 @@
 package cmd
 
 import (
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/service"
+	"github.com/phogolabs/stride/syntax/golang"
 )
 
 // OpenAPIGenerator provides a subcommands to generate source code from OpenAPI specification
@@ -25,6 +26,12 @@ func (m *OpenAPIGenerator) CreateCommand() *cli.Command {
 				Usage: "path to the open api specification",
 				Value: "./swagger.yaml",
 			},
+			&cli.StringFlag{
+				Name:   "project-path, p",
+				Usage:  "path to the project directory",
+				Value:  ".",
+				EnvVar: "PWD",
+			},
 		},
 	}
 }
@@ -35,31 +42,13 @@ func (m *OpenAPIGenerator) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
-	var (
-		loader = openapi3.NewSwaggerLoader()
-		path   = ctx.String("file-path")
-	)
-
-	swagger, err := loader.LoadSwaggerFromFile(path)
-	if err != nil {
-		return err
-	}
-
-	resolver := &codegen.Resolver{
-		Cache: map[string]*codegen.TypeDescriptor{},
-		ImportMapping: map[string]string{
-			"time.Time":     "time",
-			"io.ReadCloser": "io",
-			"uuid":          "github.com/phogolabs/schema",
-		},
-		TypeMapping: map[string]string{
-			"date-time": "time.Time",
-			"binary":    "io.ReadCloser",
+	generator := &service.Generator{
+		Path:     ctx.String("file-path"),
+		Resolver: codedom.NewResolver(),
+		Generator: &golang.Generator{
+			Path: ctx.String("project-path"),
 		},
 	}
 
-	spec := resolver.Resolve(swagger)
-
-	generator := &codegen.Generator{}
-	return generator.Generate(spec)
+	return generator.Generate()
 }

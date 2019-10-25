@@ -1,0 +1,28 @@
+package model
+
+// stride:generate user
+type User struct {
+	// stride:generate
+	ID string
+	// stride:generate
+	FirstName string
+	// stride:generate
+	LastName string
+}
+
+// stride:define id
+type ID string
+
+// stride:define users
+type Users []*User
+
+// stride:define company
+type Company struct {
+	// stride:define name
+	Name string
+}
+
+// stride:define user:full-name
+func (u *User) FullName() string {
+	return u.FirstName + " " + u.LastName
+}

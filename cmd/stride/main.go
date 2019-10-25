@@ -4,28 +4,32 @@ import (
 	"os"
 
 	"github.com/phogolabs/cli"
-	"github.com/phogolabs/log"
 	"github.com/phogolabs/stride/cmd"
+
 	_ "github.com/phogolabs/stride/template"
 )
 
 func main() {
 	var (
-		generator = &cmd.OpenAPIGenerator{}
-		viewer    = &cmd.OpenAPIViewer{}
 		editor    = &cmd.OpenAPIEditor{}
+		viewer    = &cmd.OpenAPIViewer{}
+		generator = &cmd.OpenAPIGenerator{}
+		validator = &cmd.OpenAPIValidator{}
+		mocker    = &cmd.OpenAPIMocker{}
 	)
 
 	commands := []*cli.Command{
-		generator.CreateCommand(),
-		viewer.CreateCommand(),
 		editor.CreateCommand(),
+		viewer.CreateCommand(),
+		mocker.CreateCommand(),
+		generator.CreateCommand(),
+		validator.CreateCommand(),
 	}
 
 	app := &cli.App{
 		Name:      "stride",
 		HelpName:  "stride",
-		Usage:     "OpenAPI Viewer and Generator",
+		Usage:     "OpenAPI viewer, editor, generator, validator and mocker",
 		UsageText: "stride [global options]",
 		Version:   "1.0-beta-05",
 		Writer:    os.Stdout,
@@ -33,7 +37,5 @@ func main() {
 		Commands:  commands,
 	}
 
-	if err := app.Run(os.Args); err != nil {
-		log.WithError(err).Fatal("execution failed")
-	}
+	app.Run(os.Args)
 }

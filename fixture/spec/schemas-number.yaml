@@ -1,0 +1,13 @@
+openapi: 3.0.1
+components:
+  schemas:
+    DoubleKind:
+      type: number
+      format: double
+    DoubleRef:
+      $ref: '#/components/schemas/DoubleKind'
+    FloatKind:
+      type: number
+      format: float
+    FloatRef:
+      $ref: '#/components/schemas/FloatKind'
