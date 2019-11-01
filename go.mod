@@ -3,8 +3,7 @@ module github.com/phogolabs/stride
 go 1.12
 
 require (
-	github.com/apex/log v1.1.1
-	github.com/aymerick/raymond v2.0.2+incompatible
+	github.com/aymerick/raymond v2.0.2+incompatible // indirect
 	github.com/davecgh/go-spew v1.1.1
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/go-chi/chi v4.0.2+incompatible

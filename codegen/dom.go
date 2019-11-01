@@ -1,18 +1,60 @@
 package codegen
 
-import (
-	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/jinzhu/copier"
-)
+import "sort"
+
+// Metadata of the TypeDescriptor
+type Metadata map[string]interface{}
 
 // SpecDescriptor represents a spec
 type SpecDescriptor struct {
-	Schemas       TypeDescriptorCollection
-	Parameters    ParameterDescriptorCollection
-	Headers       HeaderDescriptorCollection
-	RequestBodies RequestBodyDescriptorCollection
-	Responses     ResponseDescriptorCollection
-	Operations    OperationDescriptorCollection
+	Types      TypeDescriptorCollection
+	Operations OperationDescriptorCollection
+}
+
+// TypeDescriptorMap definition
+type TypeDescriptorMap map[string]*TypeDescriptor
+
+// CollectFrom the collection
+func (m TypeDescriptorMap) CollectFrom(descriptors TypeDescriptorCollection) {
+	for _, descriptor := range descriptors {
+		m.add(descriptor)
+	}
+}
+
+// Collection return the map as collection
+func (m TypeDescriptorMap) Collection() TypeDescriptorCollection {
+	descriptors := TypeDescriptorCollection{}
+
+	for _, descriptor := range m {
+		descriptors = append(descriptors, descriptor)
+	}
+
+	// sort the descriptors
+	sort.Sort(descriptors)
+
+	return descriptors
+}
+
+func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
+	if descriptor.IsPrimitive {
+		return
+	}
+
+	key := descriptor.Name
+
+	if _, ok := m[key]; ok {
+		return
+	}
+
+	m[key] = descriptor
+
+	if element := descriptor.Element; element != nil {
+		m.add(element)
+	}
+
+	for _, property := range descriptor.Properties {
+		m.add(property.PropertyType)
+	}
 }
 
 // TypeDescriptorCollection definition
@@ -36,84 +78,6 @@ func (t TypeDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// TypeDeclaration represents a type declaration
-type TypeDeclaration struct {
-	Name      string
-	SchemaRef *openapi3.SchemaRef
-}
-
-// NewTypeDeclarationPrimitive creates a type declaration primitive
-func NewTypeDeclarationPrimitive(schemaRef *openapi3.SchemaRef) *TypeDeclaration {
-	switch schemaRef.Value.Type {
-	case "integer":
-		switch schemaRef.Value.Format {
-		case "int64":
-			return &TypeDeclaration{
-				Name:      "int64",
-				SchemaRef: schemaRef,
-			}
-		default:
-			return &TypeDeclaration{
-				Name:      "int32",
-				SchemaRef: schemaRef,
-			}
-		}
-	case "number":
-		switch schemaRef.Value.Format {
-		case "double":
-			return &TypeDeclaration{
-				Name:      "double",
-				SchemaRef: schemaRef,
-			}
-		default:
-			return &TypeDeclaration{
-				Name:      "float",
-				SchemaRef: schemaRef,
-			}
-		}
-	case "string":
-		switch schemaRef.Value.Format {
-		case "binary":
-			return &TypeDeclaration{
-				Name:      "binary",
-				SchemaRef: schemaRef,
-			}
-		case "byte":
-			return &TypeDeclaration{
-				Name:      "byte",
-				SchemaRef: schemaRef,
-			}
-		case "date":
-			return &TypeDeclaration{
-				Name:      "date",
-				SchemaRef: schemaRef,
-			}
-		case "date-time":
-			return &TypeDeclaration{
-				Name:      "date-time",
-				SchemaRef: schemaRef,
-			}
-		case "uuid":
-			return &TypeDeclaration{
-				Name:      "uuid",
-				SchemaRef: schemaRef,
-			}
-		default:
-			return &TypeDeclaration{
-				Name:      "string",
-				SchemaRef: schemaRef,
-			}
-		}
-	case "boolean":
-		return &TypeDeclaration{
-			Name:      "boolean",
-			SchemaRef: schemaRef,
-		}
-	default:
-		return nil
-	}
-}
-
 // TypeDescriptor represents a type
 type TypeDescriptor struct {
 	Name        string
@@ -122,52 +86,10 @@ type TypeDescriptor struct {
 	IsClass     bool
 	IsEnum      bool
 	IsPrimitive bool
-	Metadata    map[string]interface{}
+	IsAlias     bool
+	Element     *TypeDescriptor
+	Metadata    Metadata
 	Properties  PropertyDescriptorCollection
-}
-
-// NewTypeDescriptor creates a new type descriptor
-func NewTypeDescriptor(declaration *TypeDeclaration) *TypeDescriptor {
-	descriptor := &TypeDescriptor{
-		Name:        declaration.Name,
-		Description: declaration.SchemaRef.Value.Description,
-		Metadata:    make(map[string]interface{}),
-	}
-	return descriptor
-}
-
-// NewTypeDescriptorPrimitive creates a new primitive type descriptor
-func NewTypeDescriptorPrimitive(declaration *TypeDeclaration) *TypeDescriptor {
-	descriptor := NewTypeDescriptor(declaration)
-	descriptor.IsPrimitive = true
-	return descriptor
-}
-
-// NewTypeDescriptorEnum creates a new type descriptor for enum
-func NewTypeDescriptorEnum(declaration *TypeDeclaration) *TypeDescriptor {
-	descriptor := NewTypeDescriptor(declaration)
-	descriptor.IsEnum = true
-	descriptor.Metadata["enum"] = declaration.SchemaRef.Value.Enum
-	return descriptor
-}
-
-// Imports returns the required imports
-func (t *TypeDescriptor) Imports() []string {
-	var imports []string
-
-	for _, property := range t.Properties {
-		namespaces := property.PropertyType.Imports()
-		imports = append(imports, namespaces...)
-	}
-
-	return imports
-}
-
-// Clone clones the object
-func (t *TypeDescriptor) Clone() *TypeDescriptor {
-	descriptor := &TypeDescriptor{}
-	copier.Copy(descriptor, t)
-	return descriptor
 }
 
 // PropertyDescriptor definition
@@ -371,6 +293,10 @@ func (t ControllerDescriptorCollection) Swap(i, j int) {
 	var x = t[i]
 	t[i] = t[j]
 	t[j] = x
+}
+
+// RequestDescriptor represents a request descriptor
+type RequestDescriptor struct {
 }
 
 // OperationDescriptor definition

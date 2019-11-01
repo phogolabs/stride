@@ -25,20 +25,6 @@ func (g *Generator) Generate(spec *SpecDescriptor) error {
 	// 	file.Decls = append(file.Decls, declaration)
 	// }
 
-	for _, schema := range spec.RequestBodies {
-		for _, content := range schema.Contents {
-			declaration := g.declare(content.ContentType)
-			file.Decls = append(file.Decls, declaration)
-		}
-	}
-
-	for _, schema := range spec.Responses {
-		for _, content := range schema.Contents {
-			declaration := g.declare(content.ContentType)
-			file.Decls = append(file.Decls, declaration)
-		}
-	}
-
 	printer.Fprint(os.Stdout, fileSet, file)
 	return nil
 }

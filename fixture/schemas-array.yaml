@@ -1,0 +1,9 @@
+openapi: 3.0.1
+components:
+  schemas:
+    Array:
+      type: array
+      items:
+        type: string
+    ArrayRef:
+      $ref: '#/components/schemas/Array'

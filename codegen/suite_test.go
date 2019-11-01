@@ -11,6 +11,8 @@ import (
 	"github.com/phogolabs/stride/codegen"
 )
 
+type GetTypeDescriptorFunc func() *codegen.TypeDescriptor
+
 func TestCodegen(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Codegen Suite")
@@ -20,9 +22,7 @@ func resolve(name string) *codegen.SpecDescriptor {
 	var (
 		path     = fmt.Sprintf("../fixture/%s", name)
 		loader   = openapi3.NewSwaggerLoader()
-		resolver = &codegen.Resolver{
-			Cache: make(map[string]*codegen.TypeDescriptor),
-		}
+		resolver = &codegen.Resolver{}
 	)
 
 	spec, err := loader.LoadSwaggerFromFile(path)

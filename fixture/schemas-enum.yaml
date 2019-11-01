@@ -17,8 +17,8 @@ info:
 paths:
 components:
   schemas:
+    AccountStatus:
+      $ref: '#/components/schemas/TransactionStatus'
     TransactionStatus:
       type: string
       enum: [pending, completed]
-    AccountStatus:
-      $ref: '#/components/schemas/TransactionStatus'
