@@ -45,19 +45,7 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		return err
 	}
 
-	resolver := &codegen.Resolver{
-		Cache: map[string]*codegen.TypeDescriptor{},
-		ImportMapping: map[string]string{
-			"time.Time":     "time",
-			"io.ReadCloser": "io",
-			"uuid":          "github.com/phogolabs/schema",
-		},
-		TypeMapping: map[string]string{
-			"date-time": "time.Time",
-			"binary":    "io.ReadCloser",
-		},
-	}
-
+	resolver := &codegen.Resolver{}
 	resolved := resolver.Resolve(spec)
 	generator := &codegen.Generator{}
 

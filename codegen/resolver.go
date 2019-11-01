@@ -149,25 +149,35 @@ func (r *Resolver) parameters(parameters map[string]*openapi3.ParameterRef) Type
 func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	// reference type descriptor
 	if reference := ctx.Schema.Ref; reference != "" {
-		descriptor := &TypeDescriptor{
-			Name:    ctx.Name,
-			IsAlias: true,
-			Element: r.resolve(ctx.Referenced()),
-		}
+		descriptor := r.resolve(ctx.Referenced())
 
-		return descriptor
+		switch ctx.Stage {
+		case "array":
+			return descriptor
+		case "property":
+			return descriptor
+		default:
+			return &TypeDescriptor{
+				Name:        ctx.Name,
+				Description: ctx.Schema.Value.Description,
+				IsAlias:     true,
+				Element:     descriptor,
+			}
+		}
 	}
 
 	// class type descriptor
 	if kind := kind(ctx.Schema.Value); kind == "object" {
 		descriptor := &TypeDescriptor{
-			Name:    ctx.Name,
-			IsClass: true,
+			Name:        ctx.Name,
+			Description: ctx.Schema.Value.Description,
+			IsClass:     true,
 		}
 
 		for field, schema := range ctx.Schema.Value.Properties {
 			property := &PropertyDescriptor{
 				Name:         field,
+				Description:  schema.Value.Description,
 				PropertyType: r.resolve(ctx.Property(field, schema)),
 			}
 
@@ -183,9 +193,10 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	// array descriptor
 	if kind := kind(ctx.Schema.Value); kind == "array" {
 		descriptor := &TypeDescriptor{
-			Name:    ctx.Name,
-			Element: r.resolve(ctx.Array()),
-			IsArray: true,
+			Name:        ctx.Name,
+			Description: ctx.Schema.Value.Description,
+			Element:     r.resolve(ctx.Array()),
+			IsArray:     true,
 		}
 
 		return descriptor
@@ -195,8 +206,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	if kind := kind(ctx.Schema.Value); kind == "string" {
 		if values := ctx.Schema.Value.Enum; len(values) > 0 {
 			descriptor := &TypeDescriptor{
-				Name:   ctx.Name,
-				IsEnum: true,
+				Name:        ctx.Name,
+				Description: ctx.Schema.Value.Description,
+				IsEnum:      true,
 				Metadata: Metadata{
 					"values": values,
 				},
@@ -218,15 +230,19 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		return descriptor
 	default:
 		return &TypeDescriptor{
-			Name:    ctx.Name,
-			IsAlias: true,
-			Element: descriptor,
+			Name:        ctx.Name,
+			Description: ctx.Schema.Value.Description,
+			IsAlias:     true,
+			Element:     descriptor,
 		}
 	}
 }
 
 func kind(schema *openapi3.Schema) string {
-	kind := schema.Type
+	var (
+		kind   = schema.Type
+		format = schema.Format
+	)
 
 	if kind == "" {
 		return "object"
@@ -234,20 +250,30 @@ func kind(schema *openapi3.Schema) string {
 
 	switch kind {
 	case "string":
-		if format := schema.Format; format != "" {
-			return format
+		switch format {
+		case "uuid":
+			return "schema.UUID"
+		case "duration":
+			return "time.Duration"
+		case "date", "date-time":
+			return "time.Time"
+		default:
+			return "string"
 		}
-		return kind
 	case "integer":
-		if format := schema.Format; format != "" {
-			return format
+		switch format {
+		case "int64":
+			return "int64"
+		default:
+			return "int32"
 		}
-		return "int32"
 	case "number":
-		if format := schema.Format; format != "" {
-			return format
+		switch format {
+		case "float64":
+			return "float64"
+		default:
+			return "float32"
 		}
-		return "float32"
 	default:
 		return kind
 	}

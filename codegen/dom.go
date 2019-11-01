@@ -1,6 +1,10 @@
 package codegen
 
-import "sort"
+import (
+	"fmt"
+	"io"
+	"sort"
+)
 
 // Metadata of the TypeDescriptor
 type Metadata map[string]interface{}
@@ -60,6 +64,23 @@ func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
 // TypeDescriptorCollection definition
 type TypeDescriptorCollection []*TypeDescriptor
 
+// Render renders the collection
+func (t TypeDescriptorCollection) Render(w io.Writer) {
+	end := len(t) - 1
+
+	for index, descriptor := range t {
+		if index > 0 {
+			fmt.Fprintln(w)
+		}
+
+		descriptor.Render(w)
+
+		if index < end {
+			fmt.Fprintln(w)
+		}
+	}
+}
+
 // Len is the number of elements in the collection.
 func (t TypeDescriptorCollection) Len() int {
 	return len(t)
@@ -92,6 +113,39 @@ type TypeDescriptor struct {
 	Properties  PropertyDescriptorCollection
 }
 
+// String returns the string representation
+func (t *TypeDescriptor) String() string {
+	if t.IsClass {
+		return fmt.Sprintf("*%s", t.Name)
+	}
+
+	return t.Name
+}
+
+// Render renders the type
+func (t *TypeDescriptor) Render(w io.Writer) {
+	fmt.Fprintf(w, "// %s is auto-generated type", t.Name)
+	fmt.Fprintln(w)
+
+	if t.Description != "" {
+		fmt.Fprintf(w, "// %s ", t.Description)
+		fmt.Fprintln(w)
+	}
+
+	switch {
+	case t.IsAlias:
+		fmt.Fprintf(w, "type %s %s", t.Name, t.Element.Name)
+	case t.IsArray:
+		fmt.Fprintf(w, "type %s []%v", t.Name, t.Element)
+	case t.IsClass:
+		fmt.Fprintf(w, "type %s struct {", t.Name)
+		t.Properties.Render(w)
+		fmt.Fprintf(w, "}")
+	case t.IsEnum:
+		fmt.Fprintf(w, "type %s %v", t.Name, t.Element.Name)
+	}
+}
+
 // PropertyDescriptor definition
 type PropertyDescriptor struct {
 	Name         string
@@ -101,8 +155,38 @@ type PropertyDescriptor struct {
 	PropertyType *TypeDescriptor
 }
 
+// Render renders the type
+func (p *PropertyDescriptor) Render(w io.Writer) {
+	if p.Description != "" {
+		fmt.Fprintf(w, "// %s ", p.Description)
+		fmt.Fprintln(w)
+	}
+
+	fmt.Fprintf(w, "%s %v %s", camelize(p.Name), p.PropertyType, p.Tag())
+}
+
+// Tag returns the tag
+func (p *PropertyDescriptor) Tag() string {
+	return ""
+}
+
 // PropertyDescriptorCollection definition
 type PropertyDescriptorCollection []*PropertyDescriptor
+
+// Render renders the collection
+func (t PropertyDescriptorCollection) Render(w io.Writer) {
+	end := len(t) - 1
+
+	for index, property := range t {
+		fmt.Fprintln(w)
+
+		property.Render(w)
+
+		if index == end {
+			fmt.Fprintln(w)
+		}
+	}
+}
 
 // Len is the number of elements in the collection.
 func (t PropertyDescriptorCollection) Len() int {
