@@ -3,6 +3,7 @@ package codegen
 import (
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-openapi/inflect"
@@ -172,12 +173,30 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			Name:        ctx.Name,
 			Description: ctx.Schema.Value.Description,
 			IsClass:     true,
+			IsNullable:  true,
+		}
+
+		//TODO: handle min and max properites somehow
+		//TODO: handle additional properties
+		//TODO: handle pattern properties
+		//TODO: handle discriminator
+		//TODO: handle read and write only
+
+		required := func(name string) bool {
+			for _, key := range ctx.Schema.Value.Required {
+				if strings.EqualFold(key, name) {
+					return true
+				}
+			}
+
+			return false
 		}
 
 		for field, schema := range ctx.Schema.Value.Properties {
 			property := &PropertyDescriptor{
 				Name:         field,
 				Description:  schema.Value.Description,
+				Required:     required(field),
 				PropertyType: r.resolve(ctx.Property(field, schema)),
 			}
 
@@ -195,8 +214,15 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		descriptor := &TypeDescriptor{
 			Name:        ctx.Name,
 			Description: ctx.Schema.Value.Description,
-			Element:     r.resolve(ctx.Array()),
+			Default:     ctx.Schema.Value.Default,
+			IsNullable:  ctx.Schema.Value.Nullable,
 			IsArray:     true,
+			Element:     r.resolve(ctx.Array()),
+			Metadata: Metadata{
+				"unique": ctx.Schema.Value.UniqueItems,
+				"min":    ctx.Schema.Value.MinLength,
+				"max":    ctx.Schema.Value.MaxLength,
+			},
 		}
 
 		return descriptor
@@ -208,6 +234,8 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			descriptor := &TypeDescriptor{
 				Name:        ctx.Name,
 				Description: ctx.Schema.Value.Description,
+				Default:     ctx.Schema.Value.Default,
+				IsNullable:  ctx.Schema.Value.Nullable,
 				IsEnum:      true,
 				Metadata: Metadata{
 					"values": values,
@@ -220,7 +248,26 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 
 	descriptor := &TypeDescriptor{
 		Name:        kind(ctx.Schema.Value),
+		Default:     ctx.Schema.Value.Default,
+		IsNullable:  ctx.Schema.Value.Nullable,
 		IsPrimitive: true,
+	}
+
+	switch ctx.Schema.Value.Type {
+	case "string":
+		descriptor.Metadata = Metadata{
+			"min":     &ctx.Schema.Value.MinLength,
+			"max":     ctx.Schema.Value.MaxLength,
+			"pattern": ctx.Schema.Value.Pattern,
+		}
+	case "number", "integer":
+		descriptor.Metadata = Metadata{
+			"min":           ctx.Schema.Value.Min,
+			"max":           ctx.Schema.Value.Max,
+			"min_exclusive": ctx.Schema.Value.ExclusiveMin,
+			"max_exclusive": ctx.Schema.Value.ExclusiveMax,
+			"multiple_of":   ctx.Schema.Value.MultipleOf,
+		}
 	}
 
 	switch ctx.Stage {
