@@ -165,17 +165,9 @@ func (builder *TypeBuilder) commentf(text string, args ...interface{}) string {
 }
 
 func (builder *TypeBuilder) kind(descriptor *TypeDescriptor) string {
-	element := descriptor
+	item := element(descriptor)
 
-	if descriptor.IsAlias {
-		element = descriptor.Element
-
-		for element.IsAlias {
-			element = element.Element
-		}
-	}
-
-	if element.IsClass || element.IsNullable {
+	if item.IsClass || item.IsNullable {
 		return fmt.Sprintf("*%s", descriptor.Name)
 	}
 
@@ -231,7 +223,7 @@ func (builder *TagBuilder) omitempty(property *PropertyDescriptor) []string {
 func (builder *TagBuilder) validate(property *PropertyDescriptor) []string {
 	var (
 		options  = []string{}
-		metadata = property.PropertyType.Metadata
+		metadata = element(property.PropertyType).Metadata
 	)
 
 	if property.Required {
@@ -308,4 +300,14 @@ func (builder *TagBuilder) oneof(values []interface{}) string {
 	}
 
 	return buffer.String()
+}
+
+func element(descriptor *TypeDescriptor) *TypeDescriptor {
+	element := descriptor
+
+	for element.IsAlias {
+		element = element.Element
+	}
+
+	return element
 }

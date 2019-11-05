@@ -20,6 +20,7 @@ require (
 	github.com/phogolabs/log v0.0.0-20191023072150-db076f8d3d3e
 	github.com/phogolabs/parcello v0.8.1
 	github.com/phogolabs/rest v0.0.0-20191009110832-27811396904f
+	github.com/phogolabs/schema v0.0.0-20190406105649-68a93910a72e
 	github.com/prometheus/client_golang v1.2.1 // indirect
 	github.com/ulule/loukoum v2.2.0+incompatible
 	golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7 // indirect

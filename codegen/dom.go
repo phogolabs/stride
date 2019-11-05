@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"sort"
+	"strings"
 )
 
 // Metadata of the TypeDescriptor
@@ -115,7 +116,34 @@ func (t PropertyDescriptorCollection) Len() int {
 // Less reports whether the element with
 // index i should sort before the element with index j.
 func (t PropertyDescriptorCollection) Less(i, j int) bool {
-	return t[i].Name < t[j].Name
+	var (
+		ti = t[i].PropertyType.Name
+		tj = t[j].PropertyType.Name
+		ni = t[i].Name
+		nj = t[j].Name
+	)
+
+	isPrimaryKey := func(value string) bool {
+		return strings.EqualFold(value, "id")
+	}
+
+	isForeignKey := func(value string) bool {
+		return strings.HasSuffix(value, "_id")
+	}
+
+	if isPrimaryKey(ni) || isForeignKey(ni) {
+		return true
+	}
+
+	if isPrimaryKey(nj) || isForeignKey(nj) {
+		return false
+	}
+
+	if ti == tj {
+		return ni < nj
+	}
+
+	return ti < tj
 }
 
 // Swap swaps the elements with indexes i and j.
