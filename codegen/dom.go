@@ -10,8 +10,8 @@ type Metadata map[string]interface{}
 
 // SpecDescriptor represents a spec
 type SpecDescriptor struct {
-	Types      TypeDescriptorCollection
-	Operations OperationDescriptorCollection
+	Types       TypeDescriptorCollection
+	Controllers ControllerDescriptorCollection
 }
 
 // TypeDescriptorMap definition
@@ -156,9 +156,10 @@ func (t PropertyDescriptorCollection) Swap(i, j int) {
 // ParameterDescriptor definition
 type ParameterDescriptor struct {
 	Name          string
-	Path          string
 	In            string
 	Description   string
+	Style         string
+	Explode       *bool
 	Required      bool
 	Deprecated    bool
 	ParameterType *TypeDescriptor
@@ -214,40 +215,17 @@ func (t HeaderDescriptorCollection) Swap(i, j int) {
 
 // RequestBodyDescriptor definition
 type RequestBodyDescriptor struct {
-	Name        string
-	Description string
-	Required    bool
-	Contents    ContentDescriptorCollection
-}
-
-// RequestBodyDescriptorCollection definition
-type RequestBodyDescriptorCollection []*RequestBodyDescriptor
-
-// Len is the number of elements in the collection.
-func (t RequestBodyDescriptorCollection) Len() int {
-	return len(t)
-}
-
-// Less reports whether the element with
-// index i should sort before the element with index j.
-func (t RequestBodyDescriptorCollection) Less(i, j int) bool {
-	return t[i].Name < t[j].Name
-}
-
-// Swap swaps the elements with indexes i and j.
-func (t RequestBodyDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	Description     string
+	Required        bool
+	RequestBodyType *TypeDescriptor
 }
 
 // ResponseDescriptor definition
 type ResponseDescriptor struct {
-	Code        int
-	Name        string
-	Description string
-	Headers     HeaderDescriptorCollection
-	Contents    ContentDescriptorCollection
+	Name         string
+	Description  string
+	ResponseType *TypeDescriptor
+	Headers      HeaderDescriptorCollection
 }
 
 // ResponseDescriptorCollection definition
@@ -271,38 +249,46 @@ func (t ResponseDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// ContentDescriptor definition
-type ContentDescriptor struct {
-	Name        string
-	ContentType *TypeDescriptor
-}
-
-// ContentDescriptorCollection definition
-type ContentDescriptorCollection []*ContentDescriptor
-
-// Len is the number of elements in the collection.
-func (t ContentDescriptorCollection) Len() int {
-	return len(t)
-}
-
-// Less reports whether the element with
-// index i should sort before the element with index j.
-func (t ContentDescriptorCollection) Less(i, j int) bool {
-	return t[i].Name < t[j].Name
-}
-
-// Swap swaps the elements with indexes i and j.
-func (t ContentDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
-}
-
 // ControllerDescriptor definition
 type ControllerDescriptor struct {
 	Name        string
 	Description string
 	Operations  OperationDescriptorCollection
+}
+
+// ControllerDescriptorMap definition
+type ControllerDescriptorMap map[string]*ControllerDescriptor
+
+// Get returns a descriptor
+func (m ControllerDescriptorMap) Get(keys []string) *ControllerDescriptor {
+	if len(keys) == 0 {
+		keys = []string{"default"}
+	}
+
+	var (
+		name           = keys[0]
+		controller, ok = m[name]
+	)
+
+	if !ok {
+		controller = &ControllerDescriptor{
+			Name: name,
+		}
+	}
+
+	m[name] = controller
+	return controller
+}
+
+// Collection returns the descriptors as collection
+func (m ControllerDescriptorMap) Collection() ControllerDescriptorCollection {
+	descriptors := ControllerDescriptorCollection{}
+
+	for _, descriptor := range m {
+		descriptors = append(descriptors, descriptor)
+	}
+
+	return descriptors
 }
 
 // ControllerDescriptorCollection definition

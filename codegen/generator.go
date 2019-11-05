@@ -6,6 +6,7 @@ import (
 	"go/token"
 	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/dave/dst"
@@ -20,11 +21,19 @@ type Renderer interface {
 }
 
 // Generator generates the source code
-type Generator struct{}
+type Generator struct {
+	Path string
+}
 
 // Generate generates the source code
 func (g *Generator) Generate(spec *SpecDescriptor) error {
-	if err := g.write("contract.go", g.types(spec.Types)); err != nil {
+	path := filepath.Join(g.Path, "service")
+
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return err
+	}
+
+	if err := g.write(filepath.Join(path, "contract.go"), g.types(spec.Types)); err != nil {
 		return err
 	}
 
@@ -147,16 +156,23 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 }
 
 func (builder *TypeBuilder) camelize(text string) string {
-	field := inflect.Camelize(text)
+	var (
+		field  = inflect.Camelize(text)
+		buffer = &bytes.Buffer{}
+		suffix = "Id"
+	)
 
 	switch {
-	case field == "Id":
-		field = strings.ToUpper(field)
-	case strings.HasSuffix(field, "Id"):
-		field = fmt.Sprintf("%vID", strings.TrimSuffix(field, "Id"))
+	case field == suffix:
+		buffer.WriteString(strings.ToUpper(field))
+	case strings.HasSuffix(field, suffix):
+		buffer.WriteString(strings.TrimSuffix(field, suffix))
+		buffer.WriteString(strings.ToUpper(suffix))
+	default:
+		buffer.WriteString(field)
 	}
 
-	return field
+	return buffer.String()
 }
 
 func (builder *TypeBuilder) commentf(text string, args ...interface{}) string {
@@ -187,11 +203,12 @@ func (builder *TagBuilder) Build(property *PropertyDescriptor) string {
 		Options: builder.omitempty(property),
 	})
 
-	tags.Set(&structtag.Tag{
-		Key:     "xml",
-		Name:    property.Name,
-		Options: builder.omitempty(property),
-	})
+	// TODO: uncomment when you add xml support
+	// tags.Set(&structtag.Tag{
+	// 	Key:     "xml",
+	// 	Name:    property.Name,
+	// 	Options: builder.omitempty(property),
+	// })
 
 	if value := property.PropertyType.Default; value != nil {
 		tags.Set(&structtag.Tag{
@@ -283,6 +300,10 @@ func (builder *TagBuilder) validate(property *PropertyDescriptor) []string {
 				}
 			}
 		}
+	}
+
+	if len(options) == 0 {
+		options = append(options, "-")
 	}
 
 	return options

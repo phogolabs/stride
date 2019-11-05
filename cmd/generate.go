@@ -47,7 +47,9 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 
 	resolver := &codegen.Resolver{}
 	resolved := resolver.Resolve(spec)
-	generator := &codegen.Generator{}
+	generator := &codegen.Generator{
+		Path: "./test",
+	}
 
 	return generator.Generate(resolved)
 }
