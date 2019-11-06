@@ -97,11 +97,28 @@ func (g *Generator) types(descriptors TypeDescriptorCollection) []dst.Decl {
 }
 
 func (g *Generator) controller(descriptor *ControllerDescriptor) []dst.Decl {
-	return nil
+	node := &dst.GenDecl{
+		Tok: token.TYPE,
+		Specs: []dst.Spec{
+			&dst.TypeSpec{
+				Name: &dst.Ident{
+					Name: descriptor.Name,
+				},
+				Type: &dst.StructType{
+					Fields: &dst.FieldList{
+						List: []*dst.Field{},
+					},
+					Incomplete: true,
+				},
+			},
+		},
+	}
+
+	return []dst.Decl{node}
 }
 
 func (g *Generator) spec(descriptor *ControllerDescriptor) []dst.Decl {
-	return nil
+	return []dst.Decl{}
 }
 
 func (g *Generator) filename(name string) string {
