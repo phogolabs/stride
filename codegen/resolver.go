@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"net/http"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -33,8 +32,8 @@ func (r *ResolverContext) Referenced() *ResolverContext {
 func (r *ResolverContext) Property(name string, schema *openapi3.SchemaRef) *ResolverContext {
 	ctx := &ResolverContext{
 		Name:   inflect.Camelize(r.Name + "_" + name),
-		Schema: schema,
 		Stage:  "property",
+		Schema: schema,
 	}
 
 	return ctx
@@ -44,8 +43,8 @@ func (r *ResolverContext) Property(name string, schema *openapi3.SchemaRef) *Res
 func (r *ResolverContext) Array() *ResolverContext {
 	ctx := &ResolverContext{
 		Name:   inflect.Singularize(r.Name),
-		Schema: r.Schema.Value.Items,
 		Stage:  "array",
+		Schema: r.Schema.Value.Items,
 	}
 
 	return ctx
@@ -56,21 +55,19 @@ type Resolver struct{}
 
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
-	descriptors := TypeDescriptorCollection{}
-
-	descriptors = append(descriptors, r.schemas(swagger.Components.Schemas)...)
-	descriptors = append(descriptors, r.parameters(swagger.Components.Parameters)...)
-	descriptors = append(descriptors, r.headers(swagger.Components.Headers)...)
-	descriptors = append(descriptors, r.bodies(swagger.Components.RequestBodies)...)
-	descriptors = append(descriptors, r.responses(swagger.Components.Responses)...)
-
-	hash := TypeDescriptorMap{}
-	hash.CollectFrom(descriptors)
-
 	spec := &SpecDescriptor{
-		Types:       hash.Collection(),
 		Controllers: r.operations(swagger.Paths),
 	}
+
+	descriptors := TypeDescriptorMap{}
+	descriptors.CollectFromSchemas(r.schemas(swagger.Components.Schemas))
+	descriptors.CollectFromParameters(r.parameters(swagger.Components.Parameters))
+	descriptors.CollectFromHeaders(r.headers(swagger.Components.Headers))
+	descriptors.CollectFromRequests(r.requests(swagger.Components.RequestBodies))
+	descriptors.CollectFromResponses(r.responses(swagger.Components.Responses))
+	// descriptors.CollectFromControllers(spec.Controllers)
+
+	spec.Types = descriptors.Collection()
 
 	return spec
 }
@@ -94,9 +91,21 @@ func (r *Resolver) schemas(schemas map[string]*openapi3.SchemaRef) TypeDescripto
 func (r *Resolver) operations(operations map[string]*openapi3.PathItem) ControllerDescriptorCollection {
 	descriptors := ControllerDescriptorMap{}
 
-	for path, item := range operations {
-		for method, spec := range item.Operations() {
+	for path, spec := range operations {
+		for method, spec := range spec.Operations() {
 			controller := descriptors.Get(spec.Tags)
+
+			var (
+				parameters = make(map[string]*openapi3.ParameterRef)
+				requests   = make(map[string]*openapi3.RequestBodyRef)
+				responses  = spec.Responses
+			)
+
+			requests[spec.OperationID] = spec.RequestBody
+
+			for _, param := range spec.Parameters {
+				parameters[param.Value.Name] = param
+			}
 
 			operation := &OperationDescriptor{
 				Path:        path,
@@ -106,105 +115,10 @@ func (r *Resolver) operations(operations map[string]*openapi3.PathItem) Controll
 				Summary:     spec.Summary,
 				Deprecated:  spec.Deprecated,
 				Tags:        spec.Tags,
+				Parameters:  r.parameters(parameters),
+				Requests:    r.requests(requests),
+				Responses:   r.responses(responses),
 			}
-
-			// handle the parameters
-			for _, spec := range spec.Parameters {
-				ctx := &ResolverContext{
-					Name:   name(controller.Name, spec.Value.Name, "param"),
-					Schema: spec.Value.Schema,
-					Stage:  "parameter",
-				}
-
-				parameter := &ParameterDescriptor{
-					Name:          spec.Value.Name,
-					In:            spec.Value.In,
-					Style:         spec.Value.Style,
-					Explode:       spec.Value.Explode,
-					Description:   spec.Value.Description,
-					Required:      spec.Value.Required,
-					Deprecated:    spec.Value.Deprecated,
-					ParameterType: r.resolve(ctx),
-				}
-
-				operation.Parameters = append(operation.Parameters, parameter)
-			}
-
-			// sort parameters
-			sort.Sort(operation.Parameters)
-
-			// handle the request body
-			if spec := spec.RequestBody; spec != nil {
-				content, ok := spec.Value.Content["application/json"]
-				if ok {
-					//TODO: handle it
-				}
-
-				ctx := &ResolverContext{
-					Name:   name(controller.Name, operation.Name, "request"),
-					Schema: content.Schema,
-					Stage:  "body",
-				}
-
-				operation.RequestBody = &RequestBodyDescriptor{
-					Description:     spec.Value.Description,
-					Required:        spec.Value.Required,
-					RequestBodyType: r.resolve(ctx),
-				}
-			}
-
-			// handle the response
-			for key, spec := range spec.Responses {
-				code, err := strconv.Atoi(key)
-				if err != nil {
-					continue
-				}
-
-				content, ok := spec.Value.Content["application/json"]
-				if !ok {
-					//TODO: handle it
-					continue
-				}
-
-				var (
-					status = http.StatusText(code)
-					ctx    = &ResolverContext{
-						Name:   name(controller.Name, operation.Name, status, "response"),
-						Schema: content.Schema,
-						Stage:  "response",
-					}
-				)
-
-				response := &ResponseDescriptor{
-					Name:         status,
-					Description:  spec.Value.Description,
-					ResponseType: r.resolve(ctx),
-				}
-
-				// handle headers
-				for key, spec := range spec.Value.Headers {
-					ctx := &ResolverContext{
-						Name:   name(controller.Name, operation.Name, key),
-						Schema: spec.Value.Schema,
-						Stage:  "header",
-					}
-
-					header := &HeaderDescriptor{
-						Name:       key,
-						HeaderType: r.resolve(ctx),
-					}
-
-					response.Headers = append(response.Headers, header)
-				}
-
-				// sort headers
-				sort.Sort(response.Headers)
-
-				operation.Responses = append(operation.Responses, response)
-			}
-
-			// sort responses
-			sort.Sort(operation.Responses)
 
 			controller.Operations = append(controller.Operations, operation)
 		}
@@ -213,80 +127,122 @@ func (r *Resolver) operations(operations map[string]*openapi3.PathItem) Controll
 	return descriptors.Collection()
 }
 
-func (r *Resolver) bodies(bodies map[string]*openapi3.RequestBodyRef) TypeDescriptorCollection {
-	descriptors := TypeDescriptorCollection{}
+func (r *Resolver) requests(bodies map[string]*openapi3.RequestBodyRef) RequestDescriptorCollection {
+	descriptors := RequestDescriptorCollection{}
 
-	for name, body := range bodies {
-		content, ok := body.Value.Content["application/json"]
-		if !ok {
-			//TODO:
+	for name, spec := range bodies {
+		if spec == nil {
 			continue
 		}
 
-		ctx := &ResolverContext{
-			Name:   name,
-			Stage:  "body",
-			Schema: content.Schema,
-		}
+		for contentType, content := range spec.Value.Content {
+			ctx := &ResolverContext{
+				Name:   name,
+				Stage:  "request",
+				Schema: content.Schema,
+			}
 
-		descriptors = append(descriptors, r.resolve(ctx))
+			request := &RequestDescriptor{
+				ContentType: contentType,
+				Description: spec.Value.Description,
+				Required:    spec.Value.Required,
+				RequestType: r.resolve(ctx),
+			}
+
+			descriptors = append(descriptors, request)
+		}
 	}
+
+	// sort descriptors
+	sort.Sort(descriptors)
 
 	return descriptors
 }
 
-func (r *Resolver) responses(responses map[string]*openapi3.ResponseRef) TypeDescriptorCollection {
-	descriptors := TypeDescriptorCollection{}
+func (r *Resolver) responses(responses map[string]*openapi3.ResponseRef) ResponseDescriptorCollection {
+	descriptors := ResponseDescriptorCollection{}
 
-	for name, response := range responses {
-		content, ok := response.Value.Content["application/json"]
-		if !ok {
-			//TODO:
-			continue
+	for name, spec := range responses {
+		code, err := strconv.Atoi(name)
+		if err != nil {
+			code = 0
 		}
 
-		ctx := &ResolverContext{
-			Name:   name,
-			Stage:  "response",
-			Schema: content.Schema,
+		for contentType, content := range spec.Value.Content {
+			ctx := &ResolverContext{
+				Name:   name,
+				Stage:  "response",
+				Schema: content.Schema,
+			}
+
+			response := &ResponseDescriptor{
+				Code:         code,
+				ContentType:  contentType,
+				Description:  spec.Value.Description,
+				ResponseType: r.resolve(ctx),
+				Headers:      r.headers(spec.Value.Headers),
+			}
+
+			descriptors = append(descriptors, response)
 		}
-
-		descriptors = append(descriptors, r.resolve(ctx))
-
-		// resolve schema types
-		descriptors = append(descriptors, r.headers(response.Value.Headers)...)
 	}
+
+	// sort descriptors
+	sort.Sort(descriptors)
 
 	return descriptors
 }
 
-func (r *Resolver) parameters(parameters map[string]*openapi3.ParameterRef) TypeDescriptorCollection {
-	descriptors := TypeDescriptorCollection{}
+func (r *Resolver) parameters(parameters map[string]*openapi3.ParameterRef) ParameterDescriptorCollection {
+	descriptors := ParameterDescriptorCollection{}
 
-	for name, parameter := range parameters {
+	for name, spec := range parameters {
 		ctx := &ResolverContext{
 			Name:   name,
 			Stage:  "parameter",
-			Schema: parameter.Value.Schema,
+			Schema: spec.Value.Schema,
 		}
 
-		descriptors = append(descriptors, r.resolve(ctx))
+		parameter := &ParameterDescriptor{
+			Name:          spec.Value.Name,
+			In:            spec.Value.In,
+			Style:         spec.Value.Style,
+			Explode:       spec.Value.Explode,
+			Description:   spec.Value.Description,
+			Required:      spec.Value.Required,
+			Deprecated:    spec.Value.Deprecated,
+			ParameterType: r.resolve(ctx),
+		}
+
+		descriptors = append(descriptors, parameter)
 	}
+
+	// sort parameters
+	sort.Sort(descriptors)
+
 	return descriptors
 }
 
-func (r *Resolver) headers(headers map[string]*openapi3.HeaderRef) TypeDescriptorCollection {
-	descriptors := TypeDescriptorCollection{}
+func (r *Resolver) headers(headers map[string]*openapi3.HeaderRef) HeaderDescriptorCollection {
+	descriptors := HeaderDescriptorCollection{}
 
-	for name, header := range headers {
+	for name, spec := range headers {
 		ctx := &ResolverContext{
 			Name:   name,
 			Stage:  "header",
-			Schema: header.Value.Schema,
+			Schema: spec.Value.Schema,
 		}
 
-		descriptors = append(descriptors, r.resolve(ctx))
+		header := &HeaderDescriptor{
+			Name:       name,
+			HeaderType: r.resolve(ctx),
+		}
+
+		descriptors = append(descriptors, header)
 	}
+
+	// sort descriptors
+	sort.Sort(descriptors)
 
 	return descriptors
 }

@@ -17,10 +17,49 @@ type SpecDescriptor struct {
 // TypeDescriptorMap definition
 type TypeDescriptorMap map[string]*TypeDescriptor
 
-// CollectFrom the collection
-func (m TypeDescriptorMap) CollectFrom(descriptors TypeDescriptorCollection) {
+// CollectFromHeaders collect the type descriptors from header collection
+func (m TypeDescriptorMap) CollectFromHeaders(descriptors HeaderDescriptorCollection) {
+	for _, descriptor := range descriptors {
+		m.add(descriptor.HeaderType)
+	}
+}
+
+// CollectFromParameters collect the type descriptors from parameters collection
+func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptorCollection) {
+	for _, descriptor := range descriptors {
+		m.add(descriptor.ParameterType)
+	}
+}
+
+// CollectFromRequests collect the type descriptors from requests collection
+func (m TypeDescriptorMap) CollectFromRequests(descriptors RequestDescriptorCollection) {
+	for _, descriptor := range descriptors {
+		m.add(descriptor.RequestType)
+	}
+}
+
+// CollectFromResponses collect the type descriptors from responses collection
+func (m TypeDescriptorMap) CollectFromResponses(descriptors ResponseDescriptorCollection) {
+	for _, descriptor := range descriptors {
+		m.add(descriptor.ResponseType)
+	}
+}
+
+// CollectFromSchemas collect the type descriptors from types collection
+func (m TypeDescriptorMap) CollectFromSchemas(descriptors TypeDescriptorCollection) {
 	for _, descriptor := range descriptors {
 		m.add(descriptor)
+	}
+}
+
+// CollectFromControllers collect the type descriptors from controllers collection
+func (m TypeDescriptorMap) CollectFromControllers(descriptors ControllerDescriptorCollection) {
+	for _, controller := range descriptors {
+		for _, operation := range controller.Operations {
+			m.CollectFromRequests(operation.Requests)
+			m.CollectFromResponses(operation.Responses)
+			m.CollectFromParameters(operation.Parameters)
+		}
 	}
 }
 
@@ -213,17 +252,40 @@ func (t HeaderDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// RequestBodyDescriptor definition
-type RequestBodyDescriptor struct {
-	Description     string
-	Required        bool
-	RequestBodyType *TypeDescriptor
+// RequestDescriptor definition
+type RequestDescriptor struct {
+	ContentType string
+	Description string
+	RequestType *TypeDescriptor
+	Required    bool
+}
+
+// RequestDescriptorCollection definition
+type RequestDescriptorCollection []*RequestDescriptor
+
+// Len is the number of elements in the collection.
+func (t RequestDescriptorCollection) Len() int {
+	return len(t)
+}
+
+// Less reports whether the element with
+// index i should sort before the element with index j.
+func (t RequestDescriptorCollection) Less(i, j int) bool {
+	return t[i].ContentType < t[j].ContentType
+}
+
+// Swap swaps the elements with indexes i and j.
+func (t RequestDescriptorCollection) Swap(i, j int) {
+	var x = t[i]
+	t[i] = t[j]
+	t[j] = x
 }
 
 // ResponseDescriptor definition
 type ResponseDescriptor struct {
-	Name         string
+	Code         int
 	Description  string
+	ContentType  string
 	ResponseType *TypeDescriptor
 	Headers      HeaderDescriptorCollection
 }
@@ -239,7 +301,16 @@ func (t ResponseDescriptorCollection) Len() int {
 // Less reports whether the element with
 // index i should sort before the element with index j.
 func (t ResponseDescriptorCollection) Less(i, j int) bool {
-	return t[i].Name < t[j].Name
+	var (
+		x = t[i]
+		y = t[j]
+	)
+
+	if x.ContentType == y.ContentType {
+		return x.Code < y.Code
+	}
+
+	return x.ContentType < y.ContentType
 }
 
 // Swap swaps the elements with indexes i and j.
@@ -312,10 +383,6 @@ func (t ControllerDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// RequestDescriptor represents a request descriptor
-type RequestDescriptor struct {
-}
-
 // OperationDescriptor definition
 type OperationDescriptor struct {
 	Method      string
@@ -326,8 +393,8 @@ type OperationDescriptor struct {
 	Deprecated  bool
 	Tags        []string
 	Parameters  ParameterDescriptorCollection
+	Requests    RequestDescriptorCollection
 	Responses   ResponseDescriptorCollection
-	RequestBody *RequestBodyDescriptor
 }
 
 // OperationDescriptorCollection definition
