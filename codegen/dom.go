@@ -141,6 +141,8 @@ type PropertyDescriptor struct {
 	Name         string
 	Description  string
 	Required     bool
+	ReadOnly     bool
+	WriteOnly    bool
 	PropertyType *TypeDescriptor
 }
 
@@ -156,8 +158,6 @@ func (t PropertyDescriptorCollection) Len() int {
 // index i should sort before the element with index j.
 func (t PropertyDescriptorCollection) Less(i, j int) bool {
 	var (
-		ti = t[i].PropertyType.Name
-		tj = t[j].PropertyType.Name
 		ni = t[i].Name
 		nj = t[j].Name
 	)
@@ -178,11 +178,7 @@ func (t PropertyDescriptorCollection) Less(i, j int) bool {
 		return false
 	}
 
-	if ti == tj {
-		return ni < nj
-	}
-
-	return ti < tj
+	return ni < nj
 }
 
 // Swap swaps the elements with indexes i and j.

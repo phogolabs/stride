@@ -29,21 +29,42 @@ type Generator struct {
 func (g *Generator) Generate(spec *SpecDescriptor) error {
 	path := filepath.Join(g.Path, "service")
 
+	// prepare the service package directory
 	if err := os.MkdirAll(path, 0755); err != nil {
 		return err
 	}
 
-	if err := g.write(filepath.Join(path, "contract.go"), g.types(spec.Types)); err != nil {
+	// write types
+	if err := g.write(g.filename("contract"), g.types(spec.Types)); err != nil {
 		return err
+	}
+
+	// write controllers
+	for _, descriptor := range spec.Controllers {
+		name := descriptor.Name + "_api"
+		if err := g.write(g.filename(name), g.controller(descriptor)); err != nil {
+			return err
+		}
+
+		spec := descriptor.Name + "_api_test"
+		if err := g.write(g.filename(spec), g.spec(descriptor)); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
 func (g *Generator) write(name string, decls []dst.Decl) error {
+	pkg := filepath.Base(filepath.Dir(name))
+
+	if strings.HasSuffix(name, "_test.go") {
+		pkg = pkg + "_test"
+	}
+
 	root := &dst.File{
 		Name: &dst.Ident{
-			Name: "service",
+			Name: pkg,
 		},
 		Decls: decls,
 	}
@@ -73,6 +94,19 @@ func (g *Generator) types(descriptors TypeDescriptorCollection) []dst.Decl {
 	}
 
 	return tree
+}
+
+func (g *Generator) controller(descriptor *ControllerDescriptor) []dst.Decl {
+	return nil
+}
+
+func (g *Generator) spec(descriptor *ControllerDescriptor) []dst.Decl {
+	return nil
+}
+
+func (g *Generator) filename(name string) string {
+	name = inflect.Underscore(name) + ".go"
+	return filepath.Join(g.Path, name)
 }
 
 // TypeBuilder builds a type
@@ -131,20 +165,23 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 		return nil
 	}
 
-	node := &dst.GenDecl{
-		Tok: token.TYPE,
-		Specs: []dst.Spec{
-			&dst.TypeSpec{
-				Name: &dst.Ident{
-					Name: descriptor.Name,
+	var (
+		name = builder.camelize(descriptor.Name)
+		node = &dst.GenDecl{
+			Tok: token.TYPE,
+			Specs: []dst.Spec{
+				&dst.TypeSpec{
+					Name: &dst.Ident{
+						Name: name,
+					},
+					Type: expr,
 				},
-				Type: expr,
 			},
-		},
-	}
+		}
+	)
 
 	node.Decs.Before = dst.NewLine
-	node.Decs.Start.Append(builder.commentf("%s is a struct type auto-generated from OpenAPI spec", descriptor.Name))
+	node.Decs.Start.Append(builder.commentf("%s is a struct type auto-generated from OpenAPI spec", name))
 
 	if descriptor.Description != "" {
 		node.Decs.Start.Append(builder.commentf(descriptor.Description))
@@ -181,13 +218,31 @@ func (builder *TypeBuilder) commentf(text string, args ...interface{}) string {
 }
 
 func (builder *TypeBuilder) kind(descriptor *TypeDescriptor) string {
-	item := element(descriptor)
+	var (
+		elem = element(descriptor)
+		name = descriptor.Name
+	)
 
-	if item.IsClass || item.IsNullable {
-		return fmt.Sprintf("*%s", descriptor.Name)
+	switch descriptor.Name {
+	case "date-time":
+		name = "time.Time"
+	case "date":
+		name = "time.Time"
+	case "uuid":
+		name = "schema.UUID"
 	}
 
-	return descriptor.Name
+	if elem.IsClass {
+		if len(elem.Properties) == 0 {
+			return "interface{}"
+		}
+	}
+
+	if elem.IsNullable {
+		return fmt.Sprintf("*%s", name)
+	}
+
+	return name
 }
 
 // TagBuilder builds the tags for given type
