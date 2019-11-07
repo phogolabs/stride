@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"fmt"
 	"go/token"
 
 	"github.com/dave/dst"
@@ -12,10 +11,7 @@ type TypeBuilder struct{}
 
 // Build builds a type
 func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
-	var (
-		expr dst.Expr
-		tag  = &TagBuilder{}
-	)
+	var expr dst.Expr
 
 	switch {
 	case descriptor.IsAlias:
@@ -25,7 +21,7 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 	case descriptor.IsArray:
 		expr = &dst.ArrayType{
 			Elt: &dst.Ident{
-				Name: builder.kind(descriptor.Element),
+				Name: descriptor.Element.Kind(),
 			},
 		}
 	case descriptor.IsClass:
@@ -38,16 +34,16 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 			field := &dst.Field{
 				Names: []*dst.Ident{
 					&dst.Ident{
-						Name: camelize(property.Name),
+						Name: property.Name,
 					},
 				},
 				Type: &dst.Ident{
-					Name: builder.kind(property.PropertyType),
+					Name: property.PropertyType.Kind(),
 				},
-				Tag: &dst.BasicLit{
-					Kind:  token.STRING,
-					Value: tag.Build(property),
-				},
+				// Tag: &dst.BasicLit{
+				// 	Kind: token.STRING,
+				//  Value: property.Tags(),
+				// },
 			}
 
 			spec.Fields.List = append(spec.Fields.List, field)
@@ -64,13 +60,12 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 	}
 
 	var (
-		name = camelize(descriptor.Name)
 		node = &dst.GenDecl{
 			Tok: token.TYPE,
 			Specs: []dst.Spec{
 				&dst.TypeSpec{
 					Name: &dst.Ident{
-						Name: name,
+						Name: descriptor.Name,
 					},
 					Type: expr,
 				},
@@ -79,7 +74,7 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 	)
 
 	node.Decs.Before = dst.NewLine
-	node.Decs.Start.Append(commentf("%s is a struct type auto-generated from OpenAPI spec", name))
+	node.Decs.Start.Append(commentf("%s is a struct type auto-generated from OpenAPI spec", descriptor.Name))
 
 	if descriptor.Description != "" {
 		node.Decs.Start.Append(commentf(descriptor.Description))
@@ -88,32 +83,4 @@ func (builder *TypeBuilder) Build(descriptor *TypeDescriptor) dst.Decl {
 	node.Decs.Start.Append(commentf("stride:generate"))
 
 	return node
-}
-
-func (builder *TypeBuilder) kind(descriptor *TypeDescriptor) string {
-	var (
-		elem = element(descriptor)
-		name = descriptor.Name
-	)
-
-	switch descriptor.Name {
-	case "date-time":
-		name = "time.Time"
-	case "date":
-		name = "time.Time"
-	case "uuid":
-		name = "schema.UUID"
-	}
-
-	if elem.IsClass {
-		if len(elem.Properties) == 0 {
-			return "interface{}"
-		}
-	}
-
-	if elem.IsNullable {
-		return fmt.Sprintf("*%s", name)
-	}
-
-	return name
 }

@@ -67,7 +67,7 @@ func (r *ResolverContext) name(text string) string {
 	}
 
 	text = strings.Join(items, "_")
-	text = inflect.Camelize(text)
+	text = inflect.Underscore(text)
 
 	return text
 }

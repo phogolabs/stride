@@ -168,13 +168,17 @@ func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*opena
 				Name:          spec.Value.Name,
 				In:            spec.Value.In,
 				Style:         spec.Value.Style,
-				Explode:       spec.Value.Explode,
 				Description:   spec.Value.Description,
 				Required:      spec.Value.Required,
 				Deprecated:    spec.Value.Deprecated,
 				ParameterType: r.resolve(cctx),
 			}
 		)
+
+		//TODO: handle the explode value propertly as per spec
+		if value := spec.Value.Explode; value != nil {
+			parameter.Explode = *value
+		}
 
 		descriptors = append(descriptors, parameter)
 	}

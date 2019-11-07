@@ -1,6 +1,8 @@
 package codegen
 
 import (
+	"bytes"
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -20,6 +22,7 @@ type TypeDescriptorMap map[string]*TypeDescriptor
 // CollectFromHeaders collect the type descriptors from header collection
 func (m TypeDescriptorMap) CollectFromHeaders(descriptors HeaderDescriptorCollection) {
 	for _, descriptor := range descriptors {
+		descriptor.Name = camelize(descriptor.Name)
 		m.add(descriptor.HeaderType)
 	}
 }
@@ -27,6 +30,7 @@ func (m TypeDescriptorMap) CollectFromHeaders(descriptors HeaderDescriptorCollec
 // CollectFromParameters collect the type descriptors from parameters collection
 func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptorCollection) {
 	for _, descriptor := range descriptors {
+		descriptor.Name = camelize(descriptor.Name)
 		m.add(descriptor.ParameterType)
 	}
 }
@@ -55,7 +59,12 @@ func (m TypeDescriptorMap) CollectFromSchemas(descriptors TypeDescriptorCollecti
 // CollectFromControllers collect the type descriptors from controllers collection
 func (m TypeDescriptorMap) CollectFromControllers(descriptors ControllerDescriptorCollection) {
 	for _, controller := range descriptors {
+		controller.Name = camelize(controller.Name)
+
 		for _, operation := range controller.Operations {
+			operation.Name = camelize(operation.Name)
+			operation.Method = camelize(strings.ToLower(operation.Method))
+
 			m.CollectFromRequests(operation.Requests)
 			m.CollectFromResponses(operation.Responses)
 			m.CollectFromParameters(operation.Parameters)
@@ -82,6 +91,7 @@ func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
 		return
 	}
 
+	descriptor.Name = camelize(descriptor.Name)
 	key := descriptor.Name
 
 	if _, ok := m[key]; ok {
@@ -95,6 +105,7 @@ func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
 	}
 
 	for _, property := range descriptor.Properties {
+		property.Name = camelize(property.Name)
 		m.add(property.PropertyType)
 	}
 }
@@ -136,6 +147,158 @@ type TypeDescriptor struct {
 	Properties  PropertyDescriptorCollection
 }
 
+// Fields returns the fields
+func (d *TypeDescriptor) Fields() []*Field {
+	fields := []*Field{}
+
+	for _, property := range d.Properties {
+		field := &Field{
+			Name: property.Name,
+			Type: property.PropertyType.Kind(),
+			Tags: property.Tags(),
+		}
+
+		fields = append(fields, field)
+	}
+
+	return fields
+}
+
+// Tags returns the associated tagss
+func (d *TypeDescriptor) Tags(required bool) []*Tag {
+	var (
+		tags []*Tag
+		tag  *Tag
+	)
+
+	oneof := func(values []interface{}) string {
+		buffer := &bytes.Buffer{}
+
+		for index, value := range values {
+			if index > 0 {
+				fmt.Fprint(buffer, " ")
+			}
+
+			fmt.Fprintf(buffer, "%v", value)
+		}
+
+		return buffer.String()
+	}
+
+	// validation
+	tag = &Tag{
+		Key:  "validate",
+		Name: "-",
+	}
+
+	if required {
+		tag.Options = append(tag.Options, "required")
+	}
+
+	tags = append(tags, tag)
+
+	for k, v := range d.Metadata {
+		switch k {
+		case "unique":
+			if unique, ok := v.(bool); ok {
+				if unique {
+					tag.Options = append(tag.Options, "unique")
+				}
+			}
+		case "pattern":
+			if value, ok := v.(string); ok {
+				if value != "" {
+					// TODO: add support for regex
+					// options = append(options, fmt.Sprintf("regex=%v", value))
+				}
+			}
+		case "multiple_of":
+			if value, ok := v.(*float64); ok {
+				if value != nil {
+					// TODO: add support for multileof
+					// options = append(options, fmt.Sprintf("multipleof=%v", value))
+				}
+			}
+		case "min":
+			if value, ok := v.(*float64); ok {
+				if value != nil {
+					if exclusive, ok := d.Metadata["min_exclusive"].(bool); ok {
+						if exclusive {
+							tag.Options = append(tag.Options, fmt.Sprintf("gt=%v", *value))
+						} else {
+							tag.Options = append(tag.Options, fmt.Sprintf("gte=%v", *value))
+						}
+					}
+				}
+			}
+		case "max":
+			if value, ok := v.(*float64); ok {
+				if value != nil {
+					if exclusive, ok := d.Metadata["max_exclusive"].(bool); ok {
+						if exclusive {
+							tag.Options = append(tag.Options, fmt.Sprintf("lt=%v", *value))
+						} else {
+							tag.Options = append(tag.Options, fmt.Sprintf("lte=%v", *value))
+						}
+					}
+				}
+			}
+		case "values":
+			if values, ok := v.([]interface{}); ok {
+				if len(values) > 0 {
+					tag.Options = append(tag.Options, fmt.Sprintf("oneof=%v", oneof(values)))
+				}
+			}
+		}
+	}
+
+	if len(tag.Options) > 0 {
+		tag.Name = tag.Options[0]
+		tag.Options = tag.Options[1:]
+	}
+
+	// default
+	if value := d.Default; value != nil {
+		tag = &Tag{
+			Key:  "default",
+			Name: fmt.Sprintf("%v", value),
+		}
+
+		tags = append(tags, tag)
+	}
+
+	return tags
+}
+
+// Kind returns the golang kind
+func (d *TypeDescriptor) Kind() string {
+	var (
+		elem = element(d)
+		name = d.Name
+	)
+
+	switch d.Name {
+	case "date-time":
+		name = "time.Time"
+	case "date":
+		name = "time.Time"
+	case "uuid":
+		name = "schema.UUID"
+	}
+
+	if elem.IsClass {
+		if len(elem.Properties) == 0 {
+			return "interface{}"
+		}
+	}
+
+	if elem.IsNullable {
+		return fmt.Sprintf("*%s", name)
+	}
+
+	return name
+}
+
 // PropertyDescriptor definition
 type PropertyDescriptor struct {
 	Name         string
@@ -144,6 +307,38 @@ type PropertyDescriptor struct {
 	ReadOnly     bool
 	WriteOnly    bool
 	PropertyType *TypeDescriptor
+}
+
+// Tags returns the underlying tags
+func (p *PropertyDescriptor) Tags() []*Tag {
+	var (
+		tags = []*Tag{}
+		tag  *Tag
+	)
+
+	omitempty := func() []string {
+		options := []string{}
+
+		if !p.Required {
+			options = append(options, "omitempty")
+		}
+
+		return options
+	}
+
+	// json marshalling
+	tag = &Tag{
+		Key:     "json",
+		Name:    p.Name,
+		Options: omitempty(),
+	}
+
+	tags = append(tags, tag)
+
+	// validation
+	tags = append(tags, p.PropertyType.Tags(p.Required)...)
+
+	return tags
 }
 
 // PropertyDescriptorCollection definition
@@ -194,10 +389,39 @@ type ParameterDescriptor struct {
 	In            string
 	Description   string
 	Style         string
-	Explode       *bool
+	Explode       bool
 	Required      bool
 	Deprecated    bool
 	ParameterType *TypeDescriptor
+}
+
+// Tags returns the tags for this parameter
+func (p *ParameterDescriptor) Tags() []*Tag {
+	var (
+		tags = []*Tag{}
+		tag  *Tag
+	)
+
+	// style
+	tag = &Tag{
+		Key:  p.In,
+		Name: p.Name,
+	}
+
+	if style := strings.ToLower(p.Style); style != "" {
+		tag.Options = append(tag.Options, style)
+	}
+
+	if exlode := p.Explode; exlode {
+		tag.Options = append(tag.Options, "explode")
+	}
+
+	tags = append(tags, tag)
+
+	// validation
+	tags = append(tags, p.ParameterType.Tags(p.Required)...)
+
+	return tags
 }
 
 // ParameterDescriptorCollection definition
