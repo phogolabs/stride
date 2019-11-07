@@ -61,10 +61,9 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 		}
 
 		input.Commentf("%s is the input of %s operation", input.Name, operation.Name)
-		input.Commentf(operation.Description)
 
-		param := func(name string) {
-			if node := g.param(name, operation); node != nil {
+		inputParam := func(name string, parameters ParameterDescriptorCollection) {
+			if node := g.param("Input", name, operation.Name, parameters); node != nil {
 				tree = append(tree, node)
 
 				field := &Field{
@@ -77,13 +76,13 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 		}
 
 		// path input
-		param("Path")
+		inputParam("Path", operation.Parameters)
 		// query input
-		param("Query")
+		inputParam("Query", operation.Parameters)
 		// header input
-		param("Header")
+		inputParam("Header", operation.Parameters)
 		// cookie input
-		param("Cookie")
+		inputParam("Cookie", operation.Parameters)
 
 		// input body
 		for _, request := range operation.Requests {
@@ -93,11 +92,14 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			}
 
 			input.Fields = append(input.Fields, field)
+
 			// NOTE: we handle the first request for now
 			break
 		}
 
-		tree = append(tree, input.Build())
+		if len(input.Fields) > 0 {
+			tree = append(tree, input.Build())
+		}
 
 		// output
 		output := &StructTypeBuilder{
@@ -106,7 +108,18 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 
 		output.Commentf("%s is the output of %s operation", output.Name, operation.Name)
 
-		//TODO: output header
+		outputParam := func(name string, parameters ParameterDescriptorCollection) {
+			if node := g.param("Output", name, operation.Name, parameters); node != nil {
+				tree = append(tree, node)
+
+				field := &Field{
+					Name: name,
+					Type: g.outputArg(operation.Name, name),
+				}
+
+				output.Fields = append(output.Fields, field)
+			}
+		}
 
 		// output body
 		for _, response := range operation.Responses {
@@ -116,11 +129,15 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			}
 
 			output.Fields = append(input.Fields, field)
+			outputParam("Header", response.Headers)
+
 			// NOTE: we handle the first response for now
 			break
 		}
 
-		tree = append(tree, output.Build())
+		if len(output.Fields) > 0 {
+			tree = append(tree, output.Build())
+		}
 	}
 
 	return tree
@@ -134,21 +151,24 @@ func (g *ControllerGenerator) controller() []dst.Decl {
 	builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", g.name())
 	builder.Commentf(g.Controller.Description)
 
+	//TODO: add methods
+
 	return []dst.Decl{builder.Build()}
 }
 
 func (g *ControllerGenerator) spec() []dst.Decl {
+	//TODO:
 	return nil
 }
 
-func (g *ControllerGenerator) param(kind string, operation *OperationDescriptor) dst.Decl {
+func (g *ControllerGenerator) param(context, kind, name string, parameters ParameterDescriptorCollection) dst.Decl {
 	builder := &StructTypeBuilder{
-		Name: operation.Name + strings.Title(kind) + "Input",
+		Name: name + strings.Title(kind) + context,
 	}
 
-	builder.Commentf("%s is the %s input of %s operation", builder.Name, kind, operation.Name)
+	builder.Commentf("%s is the %s %s of %s operation", builder.Name, strings.ToLower(context), kind, name)
 
-	for _, param := range operation.Parameters {
+	for _, param := range parameters {
 		if strings.EqualFold(param.In, kind) {
 			field := &Field{
 				Name: param.Name,
@@ -189,6 +209,10 @@ func (g *ControllerGenerator) name() string {
 
 func (g *ControllerGenerator) inputArg(operation, kind string) string {
 	return "*" + operation + strings.Title(kind) + "Input"
+}
+
+func (g *ControllerGenerator) outputArg(operation, kind string) string {
+	return "*" + operation + strings.Title(kind) + "Output"
 }
 
 // 	var (

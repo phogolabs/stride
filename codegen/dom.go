@@ -19,13 +19,13 @@ type SpecDescriptor struct {
 // TypeDescriptorMap definition
 type TypeDescriptorMap map[string]*TypeDescriptor
 
-// CollectFromHeaders collect the type descriptors from header collection
-func (m TypeDescriptorMap) CollectFromHeaders(descriptors HeaderDescriptorCollection) {
-	for _, descriptor := range descriptors {
-		descriptor.Name = camelize(descriptor.Name)
-		m.add(descriptor.HeaderType)
-	}
-}
+// // CollectFromHeaders collect the type descriptors from header collection
+// func (m TypeDescriptorMap) CollectFromHeaders(descriptors HeaderDescriptorCollection) {
+// 	for _, descriptor := range descriptors {
+// 		descriptor.Name = camelize(descriptor.Name)
+// 		m.add(descriptor.HeaderType)
+// 	}
+// }
 
 // CollectFromParameters collect the type descriptors from parameters collection
 func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptorCollection) {
@@ -445,32 +445,32 @@ func (t ParameterDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// HeaderDescriptor definition
-type HeaderDescriptor struct {
-	Name       string
-	HeaderType *TypeDescriptor
-}
+// // HeaderDescriptor definition
+// type HeaderDescriptor struct {
+// 	Name       string
+// 	HeaderType *TypeDescriptor
+// }
 
-// HeaderDescriptorCollection definition
-type HeaderDescriptorCollection []*HeaderDescriptor
+// // HeaderDescriptorCollection definition
+// type HeaderDescriptorCollection []*HeaderDescriptor
 
-// Len is the number of elements in the collection.
-func (t HeaderDescriptorCollection) Len() int {
-	return len(t)
-}
+// // Len is the number of elements in the collection.
+// func (t HeaderDescriptorCollection) Len() int {
+// 	return len(t)
+// }
 
-// Less reports whether the element with
-// index i should sort before the element with index j.
-func (t HeaderDescriptorCollection) Less(i, j int) bool {
-	return t[i].Name < t[j].Name
-}
+// // Less reports whether the element with
+// // index i should sort before the element with index j.
+// func (t HeaderDescriptorCollection) Less(i, j int) bool {
+// 	return t[i].Name < t[j].Name
+// }
 
-// Swap swaps the elements with indexes i and j.
-func (t HeaderDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
-}
+// // Swap swaps the elements with indexes i and j.
+// func (t HeaderDescriptorCollection) Swap(i, j int) {
+// 	var x = t[i]
+// 	t[i] = t[j]
+// 	t[j] = x
+// }
 
 // RequestDescriptor definition
 type RequestDescriptor struct {
@@ -507,7 +507,7 @@ type ResponseDescriptor struct {
 	Description  string
 	ContentType  string
 	ResponseType *TypeDescriptor
-	Headers      HeaderDescriptorCollection
+	Headers      ParameterDescriptorCollection
 }
 
 // ResponseDescriptorCollection definition

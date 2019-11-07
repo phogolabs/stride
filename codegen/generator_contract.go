@@ -37,6 +37,9 @@ func (g *ContractGenerator) Generate() *File {
 				Name:   descriptor.Name,
 				Fields: descriptor.Fields(),
 			}
+		case descriptor.IsEnum:
+			//TODO: implement enum builder
+			continue
 		}
 
 		file.Decls = append(file.Decls, builder.Build())

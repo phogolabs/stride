@@ -24,7 +24,8 @@ func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
 
 	types.CollectFromSchemas(r.schemas(ctx, components.Schemas))
 	types.CollectFromParameters(r.parameters(ctx, components.Parameters))
-	types.CollectFromHeaders(r.headers(ctx, components.Headers))
+	// types.CollectFromHeaders(r.headers(ctx, components.Headers))
+	types.CollectFromParameters(r.headers(ctx, components.Headers))
 	types.CollectFromRequests(r.requests(ctx, components.RequestBodies))
 	types.CollectFromResponses(r.responses(ctx, components.Responses))
 	types.CollectFromControllers(controllers)
@@ -189,15 +190,16 @@ func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*opena
 	return descriptors
 }
 
-func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.HeaderRef) HeaderDescriptorCollection {
-	descriptors := HeaderDescriptorCollection{}
+func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.HeaderRef) ParameterDescriptorCollection {
+	descriptors := ParameterDescriptorCollection{}
 
 	for name, spec := range headers {
 		var (
 			cctx   = ctx.Child(name, spec.Value.Schema)
-			header = &HeaderDescriptor{
-				Name:       name,
-				HeaderType: r.resolve(cctx),
+			header = &ParameterDescriptor{
+				Name:          name,
+				In:            "header",
+				ParameterType: r.resolve(cctx),
 			}
 		)
 
