@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -111,6 +112,15 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 	method.Commentf("Mount mounts all operations to the corresponding paths")
 	method.Param("r", "chi.Router")
 
+	for _, operation := range g.Controller.Operations {
+		params := []string{
+			fmt.Sprintf("%q", operation.Path),
+			fmt.Sprintf("x.%s", operation.Name),
+		}
+
+		method.Block().CallWithReceiver("r", operation.Method, params...)
+	}
+
 	// operations
 	for _, operation := range g.Controller.Operations {
 		method = builder.Method(operation.Name)
@@ -127,29 +137,6 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 		method.Param("r", "*http.Request")
 	}
 }
-
-// func (g *ControllerGenerator) mount() dst.Decl {
-// 	// mount body
-// 	block := &BlockBuilder{}
-
-// 	for _, operation := range g.Controller.Operations {
-// 		method := &Method{
-// 			Receiver: "r",
-// 			Name:     operation.Method,
-// 			Parameters: []string{
-// 				fmt.Sprintf("%q", operation.Path),
-// 				fmt.Sprintf("controller.%s", operation.Name),
-// 			},
-// 		}
-
-// 		block.Call(method)
-// 	}
-
-// 	node := builder.Build()
-// 	node.Body = block.Build()
-
-// 	return node
-// }
 
 func (g *ControllerGenerator) spec(root *FileBuilder) {
 	//TODO:

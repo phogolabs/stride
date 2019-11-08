@@ -368,6 +368,7 @@ type MethodTypeBuilder struct {
 	receiver   *Param
 	parameters []*Param
 	comments   []string
+	block      *dst.BlockStmt
 }
 
 // Commentf adds a comment
@@ -389,8 +390,19 @@ func (b *MethodTypeBuilder) Param(name, kind string) {
 	b.parameters = append(b.parameters, param)
 }
 
+// Block returns the block type builder
+func (b *MethodTypeBuilder) Block() *BlockTypeBuilder {
+	b.init()
+
+	return &BlockTypeBuilder{
+		block: b.block,
+	}
+}
+
 // Build builds the method
 func (b *MethodTypeBuilder) Build() []dst.Decl {
+	b.init()
+
 	node := &dst.FuncDecl{
 		// function receiver
 		Recv: &dst.FieldList{
@@ -406,7 +418,7 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 				List: []*dst.Field{},
 			},
 		},
-		Body: &dst.BlockStmt{},
+		Body: b.block,
 	}
 
 	// receiver param
@@ -433,6 +445,12 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 	return []dst.Decl{node}
 }
 
+func (b *MethodTypeBuilder) init() {
+	if b.block == nil {
+		b.block = &dst.BlockStmt{}
+	}
+}
+
 func (b *MethodTypeBuilder) field(param *Param) *dst.Field {
 	field := &dst.Field{
 		Names: []*dst.Ident{
@@ -448,28 +466,27 @@ func (b *MethodTypeBuilder) field(param *Param) *dst.Field {
 	return field
 }
 
-// Method represents a method
-type Method struct {
-	Name       string
-	Receiver   string
-	Parameters []string
-}
-
-// BlockBuilder build blocks
-type BlockBuilder struct {
-	stmt []dst.Stmt
+// BlockTypeBuilder build blocks
+type BlockTypeBuilder struct {
+	receiver string
+	block    *dst.BlockStmt
 }
 
 // Call calls a method
-func (b *BlockBuilder) Call(m *Method) {
+func (b *BlockTypeBuilder) Call(name string, params ...string) {
+	b.CallWithReceiver("", name, params...)
+}
+
+// CallWithReceiver calls a method
+func (b *BlockTypeBuilder) CallWithReceiver(receiver, name string, params ...string) {
 	var (
 		fun  dst.Expr
 		args []dst.Expr
 	)
 
-	if receiver := m.Receiver; receiver == "" {
+	if receiver == "" {
 		fun = &dst.Ident{
-			Name: m.Name,
+			Name: name,
 		}
 	} else {
 		fun = &dst.SelectorExpr{
@@ -477,12 +494,12 @@ func (b *BlockBuilder) Call(m *Method) {
 				Name: receiver,
 			},
 			Sel: &dst.Ident{
-				Name: m.Name,
+				Name: name,
 			},
 		}
 	}
 
-	for _, param := range m.Parameters {
+	for _, param := range params {
 		arg := &dst.Ident{
 			Name: param,
 		}
@@ -497,14 +514,7 @@ func (b *BlockBuilder) Call(m *Method) {
 		},
 	}
 
-	b.stmt = append(b.stmt, stmt)
-}
-
-// Build builds the block
-func (b *BlockBuilder) Build() *dst.BlockStmt {
-	return &dst.BlockStmt{
-		List: b.stmt,
-	}
+	b.block.List = append(b.block.List, stmt)
 }
 
 // revise
