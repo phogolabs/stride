@@ -66,12 +66,13 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			if node := g.param("Input", name, operation.Name, parameters); node != nil {
 				tree = append(tree, node)
 
-				field := &Field{
+				param := &Field{
 					Name: name,
 					Type: g.inputArg(operation.Name, name),
+					Tags: []*Tag{g.tagOfArg(name)},
 				}
 
-				input.Fields = append(input.Fields, field)
+				input.Fields = append(input.Fields, param)
 			}
 		}
 
@@ -86,12 +87,13 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			inputParam("Cookie", request.Parameters)
 
 			// input body
-			field := &Field{
+			body := &Field{
 				Name: "Body",
 				Type: request.RequestType.Kind(),
+				Tags: []*Tag{g.tagOfArg("Body")},
 			}
 
-			input.Fields = append(input.Fields, field)
+			input.Fields = append(input.Fields, body)
 
 			// NOTE: we handle the first request for now
 			break
@@ -112,12 +114,13 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			if node := g.param("Output", name, operation.Name, parameters); node != nil {
 				tree = append(tree, node)
 
-				field := &Field{
+				param := &Field{
 					Name: name,
 					Type: g.outputArg(operation.Name, name),
+					Tags: []*Tag{g.tagOfArg(name)},
 				}
 
-				output.Fields = append(output.Fields, field)
+				output.Fields = append(output.Fields, param)
 			}
 		}
 
@@ -126,12 +129,13 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			outputParam("Header", response.Parameters)
 
 			// output body
-			field := &Field{
+			body := &Field{
 				Name: "Body",
 				Type: response.ResponseType.Kind(),
+				Tags: []*Tag{g.tagOfArg("Body")},
 			}
 
-			output.Fields = append(input.Fields, field)
+			output.Fields = append(output.Fields, body)
 
 			// NOTE: we handle the first response for now
 			break
@@ -215,6 +219,13 @@ func (g *ControllerGenerator) inputArg(operation, kind string) string {
 
 func (g *ControllerGenerator) outputArg(operation, kind string) string {
 	return "*" + operation + strings.Title(kind) + "Output"
+}
+
+func (g *ControllerGenerator) tagOfArg(kind string) *Tag {
+	return &Tag{
+		Key:  strings.ToLower(kind),
+		Name: "~",
+	}
 }
 
 // 	var (
