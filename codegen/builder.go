@@ -395,7 +395,7 @@ type MethodTypeBuilder struct {
 	parameters []*Param
 	results    []*Param
 	comments   []string
-	block      *dst.BlockStmt
+	block      []string
 }
 
 // Name returns the type name
@@ -432,18 +432,12 @@ func (b *MethodTypeBuilder) Return(kind string) {
 }
 
 // Block returns the block type builder
-func (b *MethodTypeBuilder) Block(stmts ...Stmt) {
-	b.init()
-
-	for _, node := range stmts {
-		b.block.List = append(b.block.List, node.Stmt())
-	}
+func (b *MethodTypeBuilder) Block(text string, args ...interface{}) {
+	b.block = append(b.block, fmt.Sprintf(text, args...))
 }
 
 // Build builds the method
 func (b *MethodTypeBuilder) Build() []dst.Decl {
-	b.init()
-
 	node := &dst.FuncDecl{
 		// function receiver
 		Recv: &dst.FieldList{
@@ -462,7 +456,19 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 				List: []*dst.Field{},
 			},
 		},
-		Body: b.block,
+		Body: &dst.BlockStmt{
+			List: []dst.Stmt{},
+		},
+	}
+
+	// block
+	for _, text := range b.block {
+		stmt := &dst.ExprStmt{
+			X: &dst.Ident{
+				Name: text,
+			},
+		}
+		node.Body.List = append(node.Body.List, stmt)
 	}
 
 	// receiver param
@@ -493,12 +499,6 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 	node.Decs.Start.Append(commentf("stride:generate"))
 
 	return []dst.Decl{node}
-}
-
-func (b *MethodTypeBuilder) init() {
-	if b.block == nil {
-		b.block = &dst.BlockStmt{}
-	}
 }
 
 func (b *MethodTypeBuilder) field(param *Param) *dst.Field {

@@ -2,7 +2,6 @@ package codegen
 
 import (
 	"fmt"
-	"go/token"
 	"path/filepath"
 	"strings"
 
@@ -91,7 +90,7 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 			method.Return("int")
 
 			// output status mmethod body
-			method.Block(Leaf(fmt.Sprintf("return %d", response.Code)))
+			method.Block(fmt.Sprintf("return %d", response.Code))
 
 			// NOTE: we handle the first response for now
 			break
@@ -147,61 +146,38 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 	}
 }
 
-func (g *ControllerGenerator) mount(method *MethodTypeBuilder) {
-	var block []Stmt
-
+func (g *ControllerGenerator) mount(builder *MethodTypeBuilder) {
 	for _, operation := range g.Controller.Operations {
 		var (
-			name   = Leaf("r." + inflect.Camelize(strings.ToLower(operation.Method)))
-			params = []Expr{
-				Leaf(fmt.Sprintf("%q", operation.Path)),
-				Leaf(fmt.Sprintf("x.%s", camelize(operation.Name))),
-			}
+			path    = operation.Path
+			method  = camelize(strings.ToLower(operation.Method))
+			handler = camelize(operation.Name)
 		)
 
-		block = append(block, Call(name, params...))
+		builder.Block("r.%s(%q, x.%s)", method, path, handler)
 	}
-
-	method.Block(block...)
 }
 
-func (g *ControllerGenerator) operation(name string, method *MethodTypeBuilder) {
-	method.Block(
-		Assign(Pair(
-			Leaf("reactor"),
-			Leaf("restify.NewReactor(w, r)"),
-		)),
-		Declare(
-			Map{
-				"input":  Leaf("&" + name + "Input{}"),
-				"output": Leaf("&" + name + "Output{}"),
-			},
-		),
-		If(Condition(Leaf("err"), token.NEQ, Leaf("nil"))).
-			Init(Assign(
-				Pair(
-					Leaf("err"),
-					Call(Leaf("reactor.Bind"), Leaf("input")),
-				),
-			)).
-			Then(
-				Call(Leaf("reactor.Render"), Leaf("err")),
-				Leaf("return"),
-			),
-		Leaf(commentf("stride:block open")),
-		Leaf(commentf("TODO: Please add your implementation here")),
-		Leaf(commentf("stride:block close")),
-		If(Condition(Leaf("err"), token.NEQ, Leaf("nil"))).
-			Init(Assign(
-				Pair(
-					Leaf("err"),
-					Call(Leaf("reactor.Render"), Leaf("output")),
-				),
-			)).
-			Then(
-				Call(Leaf("reactor.Render"), Leaf("err")),
-			),
-	)
+func (g *ControllerGenerator) operation(name string, builder *MethodTypeBuilder) {
+	builder.Block("reactor := restify.NewReactor(w, r)")
+	builder.Block("")
+	builder.Block("var (")
+	builder.Block("   input  = &%sInput{}", name)
+	builder.Block("   output = &%sOutput{}", name)
+	builder.Block(")")
+	builder.Block("")
+	builder.Block("if err := reactor.Bind(input); err != nil {")
+	builder.Block("   reactor.Render(err)")
+	builder.Block("   return")
+	builder.Block("}")
+	builder.Block("")
+	builder.Block("// stride:block open")
+	builder.Block("// TODO: Please add your implementation here")
+	builder.Block("// stride:block close")
+	builder.Block("")
+	builder.Block("if err := reactor.Render(output); err != nil {")
+	builder.Block("   reactor.Render(err)")
+	builder.Block("}")
 }
 
 func (g *ControllerGenerator) spec(root *FileBuilder) {
