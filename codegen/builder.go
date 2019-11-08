@@ -493,10 +493,73 @@ func (b *MethodTypeBuilder) field(param *Param) *dst.Field {
 	return field
 }
 
+// Var represents a variable
+type Var struct {
+	Name  string
+	Value string
+}
+
 // BlockTypeBuilder build blocks
 type BlockTypeBuilder struct {
-	receiver string
-	block    *dst.BlockStmt
+	block *dst.BlockStmt
+}
+
+// Assign assigns a variable
+func (b *BlockTypeBuilder) Assign(v *Var) {
+	stmt := &dst.AssignStmt{
+		Tok: token.DEFINE,
+		Lhs: []dst.Expr{
+			&dst.Ident{
+				Name: v.Name,
+			},
+		},
+		Rhs: []dst.Expr{
+			&dst.Ident{
+				Name: v.Value,
+			},
+		},
+	}
+
+	if len(b.block.List) > 0 {
+		stmt.Decs.Before = dst.EmptyLine
+	}
+	stmt.Decs.After = dst.EmptyLine
+
+	b.block.List = append(b.block.List, stmt)
+}
+
+// Declare declares a variable
+func (b *BlockTypeBuilder) Declare(vars ...*Var) {
+	specs := []dst.Spec{}
+
+	for _, v := range vars {
+		spec := &dst.ValueSpec{
+			Names: []*dst.Ident{
+				&dst.Ident{
+					Name: v.Name,
+				},
+			},
+			Values: []dst.Expr{
+				&dst.Ident{
+					Name: v.Value,
+				},
+			},
+		}
+
+		specs = append(specs, spec)
+	}
+
+	stmt := &dst.DeclStmt{
+		Decl: &dst.GenDecl{
+			Tok:   token.VAR,
+			Specs: specs,
+		},
+	}
+
+	stmt.Decs.Before = dst.EmptyLine
+	stmt.Decs.After = dst.EmptyLine
+
+	b.block.List = append(b.block.List, stmt)
 }
 
 // Call calls a method

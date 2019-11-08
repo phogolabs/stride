@@ -115,12 +115,15 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 	method.Param("r", "chi.Router")
 
 	for _, operation := range g.Controller.Operations {
-		params := []string{
-			fmt.Sprintf("%q", operation.Path),
-			fmt.Sprintf("x.%s", operation.Name),
-		}
+		var (
+			verb   = inflect.Camelize(strings.ToLower(operation.Method))
+			params = []string{
+				fmt.Sprintf("%q", operation.Path),
+				fmt.Sprintf("x.%s", camelize(operation.Name)),
+			}
+		)
 
-		method.Block().CallWithReceiver("r", operation.Method, params...)
+		method.Block().CallWithReceiver("r", verb, params...)
 	}
 
 	// operations
@@ -139,6 +142,28 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 
 		method.Param("w", "http.ResponseWriter")
 		method.Param("r", "*http.Request")
+
+		var (
+			reactor = &Var{
+				Name:  "reactor",
+				Value: "restify.NewReactor(w, r)",
+			}
+			input = &Var{
+				Name:  "input",
+				Value: "&" + name + "Input{}",
+			}
+			output = &Var{
+				Name:  "output",
+				Value: "&" + name + "Output{}",
+			}
+		)
+
+		block := method.Block()
+		block.Assign(reactor)
+		block.Declare(input, output)
+
+		block.Call("reactor.Bind", "input")
+		block.Call("reactor.Render", "output")
 	}
 }
 
