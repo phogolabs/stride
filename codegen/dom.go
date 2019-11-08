@@ -19,14 +19,6 @@ type SpecDescriptor struct {
 // TypeDescriptorMap definition
 type TypeDescriptorMap map[string]*TypeDescriptor
 
-// // CollectFromHeaders collect the type descriptors from header collection
-// func (m TypeDescriptorMap) CollectFromHeaders(descriptors HeaderDescriptorCollection) {
-// 	for _, descriptor := range descriptors {
-// 		descriptor.Name = camelize(descriptor.Name)
-// 		m.add(descriptor.HeaderType)
-// 	}
-// }
-
 // CollectFromParameters collect the type descriptors from parameters collection
 func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptorCollection) {
 	for _, descriptor := range descriptors {
@@ -38,6 +30,7 @@ func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptor
 // CollectFromRequests collect the type descriptors from requests collection
 func (m TypeDescriptorMap) CollectFromRequests(descriptors RequestDescriptorCollection) {
 	for _, descriptor := range descriptors {
+		m.CollectFromParameters(descriptor.Parameters)
 		m.add(descriptor.RequestType)
 	}
 }
@@ -45,6 +38,7 @@ func (m TypeDescriptorMap) CollectFromRequests(descriptors RequestDescriptorColl
 // CollectFromResponses collect the type descriptors from responses collection
 func (m TypeDescriptorMap) CollectFromResponses(descriptors ResponseDescriptorCollection) {
 	for _, descriptor := range descriptors {
+		m.CollectFromParameters(descriptor.Parameters)
 		m.add(descriptor.ResponseType)
 	}
 }
@@ -67,7 +61,6 @@ func (m TypeDescriptorMap) CollectFromControllers(descriptors ControllerDescript
 
 			m.CollectFromRequests(operation.Requests)
 			m.CollectFromResponses(operation.Responses)
-			m.CollectFromParameters(operation.Parameters)
 		}
 	}
 }
@@ -445,39 +438,13 @@ func (t ParameterDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// // HeaderDescriptor definition
-// type HeaderDescriptor struct {
-// 	Name       string
-// 	HeaderType *TypeDescriptor
-// }
-
-// // HeaderDescriptorCollection definition
-// type HeaderDescriptorCollection []*HeaderDescriptor
-
-// // Len is the number of elements in the collection.
-// func (t HeaderDescriptorCollection) Len() int {
-// 	return len(t)
-// }
-
-// // Less reports whether the element with
-// // index i should sort before the element with index j.
-// func (t HeaderDescriptorCollection) Less(i, j int) bool {
-// 	return t[i].Name < t[j].Name
-// }
-
-// // Swap swaps the elements with indexes i and j.
-// func (t HeaderDescriptorCollection) Swap(i, j int) {
-// 	var x = t[i]
-// 	t[i] = t[j]
-// 	t[j] = x
-// }
-
 // RequestDescriptor definition
 type RequestDescriptor struct {
 	ContentType string
 	Description string
-	RequestType *TypeDescriptor
 	Required    bool
+	RequestType *TypeDescriptor
+	Parameters  ParameterDescriptorCollection
 }
 
 // RequestDescriptorCollection definition
@@ -507,7 +474,7 @@ type ResponseDescriptor struct {
 	Description  string
 	ContentType  string
 	ResponseType *TypeDescriptor
-	Headers      ParameterDescriptorCollection
+	Parameters   ParameterDescriptorCollection
 }
 
 // ResponseDescriptorCollection definition
@@ -612,7 +579,6 @@ type OperationDescriptor struct {
 	Description string
 	Deprecated  bool
 	Tags        []string
-	Parameters  ParameterDescriptorCollection
 	Requests    RequestDescriptorCollection
 	Responses   ResponseDescriptorCollection
 }

@@ -77,8 +77,7 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 				Summary:     spec.Summary,
 				Deprecated:  spec.Deprecated,
 				Tags:        spec.Tags,
-				Parameters:  r.parameters(cctx, parameters),
-				Requests:    r.requests(cctx, requests),
+				Requests:    r.requests(cctx, requests, r.parameters(cctx, parameters)...),
 				Responses:   r.responses(cctx, responses),
 			}
 
@@ -89,7 +88,7 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 	return descriptors.Collection()
 }
 
-func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.RequestBodyRef) RequestDescriptorCollection {
+func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.RequestBodyRef, params ...*ParameterDescriptor) RequestDescriptorCollection {
 	descriptors := RequestDescriptorCollection{}
 
 	for name, spec := range bodies {
@@ -110,6 +109,7 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 					Description: spec.Value.Description,
 					Required:    spec.Value.Required,
 					RequestType: r.resolve(cctx),
+					Parameters:  params,
 				}
 			)
 
@@ -145,7 +145,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 					ContentType:  contentType,
 					Description:  spec.Value.Description,
 					ResponseType: r.resolve(cctx),
-					Headers:      r.headers(cctx, spec.Value.Headers),
+					Parameters:   r.headers(cctx, spec.Value.Headers),
 				}
 			)
 

@@ -75,17 +75,17 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			}
 		}
 
-		// path input
-		inputParam("Path", operation.Parameters)
-		// query input
-		inputParam("Query", operation.Parameters)
-		// header input
-		inputParam("Header", operation.Parameters)
-		// cookie input
-		inputParam("Cookie", operation.Parameters)
-
-		// input body
 		for _, request := range operation.Requests {
+			// path input
+			inputParam("Path", request.Parameters)
+			// query input
+			inputParam("Query", request.Parameters)
+			// header input
+			inputParam("Header", request.Parameters)
+			// cookie input
+			inputParam("Cookie", request.Parameters)
+
+			// input body
 			field := &Field{
 				Name: "Body",
 				Type: request.RequestType.Kind(),
@@ -121,15 +121,17 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 			}
 		}
 
-		// output body
 		for _, response := range operation.Responses {
+			// output header
+			outputParam("Header", response.Parameters)
+
+			// output body
 			field := &Field{
 				Name: "Body",
 				Type: response.ResponseType.Kind(),
 			}
 
 			output.Fields = append(input.Fields, field)
-			outputParam("Header", response.Headers)
 
 			// NOTE: we handle the first response for now
 			break
