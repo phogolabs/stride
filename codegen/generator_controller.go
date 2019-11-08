@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -150,6 +151,9 @@ func (g *ControllerGenerator) schema() []dst.Decl {
 }
 
 func (g *ControllerGenerator) controller() []dst.Decl {
+	tree := []dst.Decl{}
+
+	// struct
 	builder := &StructTypeBuilder{
 		Name: g.name(),
 	}
@@ -157,9 +161,80 @@ func (g *ControllerGenerator) controller() []dst.Decl {
 	builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", g.name())
 	builder.Commentf(g.Controller.Description)
 
-	//TODO: add methods
+	tree = append(tree, builder.Build())
 
-	return []dst.Decl{builder.Build()}
+	// method mount
+	node := g.mount()
+	tree = append(tree, node)
+
+	// operations
+	for _, operation := range g.Controller.Operations {
+		node := g.operation(operation)
+		tree = append(tree, node)
+	}
+
+	return tree
+}
+
+func (g *ControllerGenerator) mount() dst.Decl {
+	builder := &MethodTypeBuilder{
+		Name: "Mount",
+		Receiver: &Param{
+			Name: "controller",
+			Type: pointer(g.name()),
+		},
+		Parameters: []*Param{
+			&Param{Name: "r", Type: "chi.Router"},
+		},
+	}
+
+	builder.Commentf("Mount mounts all operations to the corresponding paths")
+
+	// mount body
+	block := &BlockBuilder{}
+
+	for _, operation := range g.Controller.Operations {
+		method := &Method{
+			Receiver: "r",
+			Name:     operation.Method,
+			Parameters: []string{
+				fmt.Sprintf("%q", operation.Path),
+				fmt.Sprintf("controller.%s", operation.Name),
+			},
+		}
+
+		block.Call(method)
+	}
+
+	node := builder.Build()
+	node.Body = block.Build()
+
+	return node
+}
+
+func (g *ControllerGenerator) operation(operation *OperationDescriptor) dst.Decl {
+	builder := &MethodTypeBuilder{
+		Name: operation.Name,
+		Receiver: &Param{
+			Name: "controller",
+			Type: pointer(g.name()),
+		},
+		Parameters: []*Param{
+			&Param{Name: "w", Type: "http.ResponseWriter"},
+			&Param{Name: "r", Type: "*http.Request"},
+		},
+	}
+
+	builder.Commentf("%s handles endpoint %s %s", operation.Name, operation.Method, operation.Path)
+
+	if operation.Deprecated {
+		builder.Commentf("Deprecated: The operation is obsolete")
+	}
+
+	builder.Commentf(operation.Description)
+	builder.Commentf(operation.Summary)
+
+	return builder.Build()
 }
 
 func (g *ControllerGenerator) spec() []dst.Decl {
@@ -228,84 +303,7 @@ func (g *ControllerGenerator) tagOfArg(kind string) *Tag {
 	}
 }
 
-// 	var (
-// 		name = descriptor.Name + "API"
-// 		tree = []dst.Decl{}
-// 		node dst.Decl
-// 	)
-
-// 	// generate controller type
-// 	node = builder.controller(name, descriptor)
-// 	tree = append(tree, node)
-
-// 	// generate mount type
-// 	node = builder.mount(name, descriptor)
-// 	tree = append(tree, node)
-
-// 	// generate operations
-// 	for _, operation := range descriptor.Operations {
-// 		node := builder.operation(name, operation)
-// 		tree = append(tree, node)
-// 	}
-
-// 	return tree
-// }
-
-// func (builder *ControllerBuilder) controller(name string, descriptor *ControllerDescriptor) dst.Decl {
-// 	parent := &StructTypeBuilder{
-// 		Name: name,
-// 	}
-
-// 	parent.Comments = append(parent.Comments, commentf("%s is a struct type auto-generated from OpenAPI spec", name))
-
-// 	if descriptor.Description != "" {
-// 		parent.Comments = append(parent.Comments, commentf(descriptor.Description))
-// 	}
-
-// 	return parent.Build()
-// }
-
 // func (builder *ControllerBuilder) mount(receiver string, descriptor *ControllerDescriptor) dst.Decl {
-// 	node := &dst.FuncDecl{
-// 		// receiver param
-// 		Recv: &dst.FieldList{
-// 			List: []*dst.Field{
-// 				&dst.Field{
-// 					Names: []*dst.Ident{
-// 						&dst.Ident{
-// 							Name: "controller",
-// 						},
-// 					},
-// 					Type: &dst.Ident{
-// 						Name: pointer(receiver),
-// 					},
-// 				},
-// 			},
-// 		},
-// 		// function name
-// 		Name: &dst.Ident{
-// 			Name: "Mount",
-// 		},
-// 		// function parameters
-// 		Type: &dst.FuncType{
-// 			Params: &dst.FieldList{
-// 				List: []*dst.Field{
-// 					&dst.Field{
-// 						Names: []*dst.Ident{
-// 							&dst.Ident{
-// 								Name: "r",
-// 							},
-// 						},
-// 						Type: &dst.Ident{
-// 							Name: "chi.Router",
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 		Body: &dst.BlockStmt{},
-// 	}
-
 // 	// function body
 // 	for _, operation := range descriptor.Operations {
 // 		stmt := &dst.ExprStmt{
@@ -340,77 +338,6 @@ func (g *ControllerGenerator) tagOfArg(kind string) *Tag {
 
 // 	node.Decs.Before = dst.NewLine
 // 	node.Decs.Start.Append(commentf("Mount mounts all operations to the corresponding paths"))
-// 	node.Decs.Start.Append(commentf("stride:generate"))
-
-// 	return node
-// }
-
-// func (builder *ControllerBuilder) operation(receiver string, descriptor *OperationDescriptor) dst.Decl {
-// 	node := &dst.FuncDecl{
-// 		// receiver param
-// 		Recv: &dst.FieldList{
-// 			List: []*dst.Field{
-// 				&dst.Field{
-// 					Names: []*dst.Ident{
-// 						&dst.Ident{
-// 							Name: "controller",
-// 						},
-// 					},
-// 					Type: &dst.Ident{
-// 						Name: pointer(receiver),
-// 					},
-// 				},
-// 			},
-// 		},
-// 		// function name
-// 		Name: &dst.Ident{
-// 			Name: descriptor.Name,
-// 		},
-// 		// function parameters
-// 		Type: &dst.FuncType{
-// 			Params: &dst.FieldList{
-// 				List: []*dst.Field{
-// 					&dst.Field{
-// 						Names: []*dst.Ident{
-// 							&dst.Ident{
-// 								Name: "w",
-// 							},
-// 						},
-// 						Type: &dst.Ident{
-// 							Name: "http.ResponseWriter",
-// 						},
-// 					},
-// 					&dst.Field{
-// 						Names: []*dst.Ident{
-// 							&dst.Ident{
-// 								Name: "r",
-// 							},
-// 						},
-// 						Type: &dst.Ident{
-// 							Name: "*http.Request",
-// 						},
-// 					},
-// 				},
-// 			},
-// 		},
-// 		Body: &dst.BlockStmt{},
-// 	}
-
-// 	node.Decs.Before = dst.NewLine
-// 	node.Decs.Start.Append(commentf("%s handles endpoint %s %s", descriptor.Name, descriptor.Method, descriptor.Path))
-
-// 	if descriptor.Deprecated {
-// 		node.Decs.Start.Append(commentf("Deprecated: The operation is obsolete"))
-// 	}
-
-// 	if descriptor.Description != "" {
-// 		node.Decs.Start.Append(commentf(descriptor.Description))
-// 	}
-
-// 	if descriptor.Summary != "" {
-// 		node.Decs.Start.Append(commentf(descriptor.Summary))
-// 	}
-
 // 	node.Decs.Start.Append(commentf("stride:generate"))
 
 // 	return node
