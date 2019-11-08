@@ -42,6 +42,8 @@ func (g *ContractGenerator) Generate() *File {
 			continue
 		}
 
+		builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", descriptor.Name)
+		builder.Commentf(descriptor.Description)
 		file.Decls = append(file.Decls, builder.Build())
 	}
 
