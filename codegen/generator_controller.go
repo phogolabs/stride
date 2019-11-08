@@ -2,6 +2,7 @@ package codegen
 
 import (
 	"fmt"
+	"go/token"
 	"path/filepath"
 	"strings"
 
@@ -49,19 +50,6 @@ func (g *ControllerGenerator) Generate() *File {
 }
 
 func (g *ControllerGenerator) schema(root *FileBuilder) {
-	param := func(kind string, parent *StructTypeBuilder, parameters ParameterDescriptorCollection) {
-		builder := root.Type(parent.Name() + kind)
-		builder.Commentf("%s is the %s of %s", builder.Name(), strings.ToLower(kind), parent.Name())
-
-		for _, param := range parameters {
-			if strings.EqualFold(param.In, kind) {
-				builder.Field(param.Name, param.ParameterType.Kind(), param.Tags()...)
-			}
-		}
-
-		parent.Field(kind, pointer(builder.Name()), g.tagOfArg(kind))
-	}
-
 	for _, operation := range g.Controller.Operations {
 		name := camelize(operation.Name)
 
@@ -71,13 +59,13 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 
 		for _, request := range operation.Requests {
 			// path input
-			param("Path", input, request.Parameters)
+			g.param("Path", root, input, request.Parameters)
 			// query input
-			param("Query", input, request.Parameters)
+			g.param("Query", root, input, request.Parameters)
 			// header input
-			param("Header", input, request.Parameters)
+			g.param("Header", root, input, request.Parameters)
 			// cookie input
-			param("Cookie", input, request.Parameters)
+			g.param("Cookie", root, input, request.Parameters)
 
 			// input body
 			input.Field("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
@@ -92,15 +80,36 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 
 		for _, response := range operation.Responses {
 			// output header
-			param("Header", output, response.Parameters)
+			g.param("Header", root, output, response.Parameters)
 
 			// output body
 			input.Field("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+
+			// output status method
+			method := output.Method("Status")
+			method.Commentf("Status returns the response status code")
+			method.Return("int")
+
+			// output status mmethod body
+			method.Block(Leaf(fmt.Sprintf("return %d", response.Code)))
 
 			// NOTE: we handle the first response for now
 			break
 		}
 	}
+}
+
+func (g *ControllerGenerator) param(kind string, root *FileBuilder, parent *StructTypeBuilder, parameters ParameterDescriptorCollection) {
+	builder := root.Type(parent.Name() + kind)
+	builder.Commentf("%s is the %s of %s", builder.Name(), strings.ToLower(kind), parent.Name())
+
+	for _, param := range parameters {
+		if strings.EqualFold(param.In, kind) {
+			builder.Field(param.Name, param.ParameterType.Kind(), param.Tags()...)
+		}
+	}
+
+	parent.Field(kind, pointer(builder.Name()), g.tagOfArg(kind))
 }
 
 func (g *ControllerGenerator) controller(root *FileBuilder) {
@@ -114,17 +123,8 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 	method.Commentf("Mount mounts all operations to the corresponding paths")
 	method.Param("r", "chi.Router")
 
-	for _, operation := range g.Controller.Operations {
-		var (
-			verb   = inflect.Camelize(strings.ToLower(operation.Method))
-			params = []string{
-				fmt.Sprintf("%q", operation.Path),
-				fmt.Sprintf("x.%s", camelize(operation.Name)),
-			}
-		)
-
-		method.Block().CallWithReceiver("r", verb, params...)
-	}
+	// mount method block
+	g.mount(method)
 
 	// operations
 	for _, operation := range g.Controller.Operations {
@@ -143,28 +143,65 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 		method.Param("w", "http.ResponseWriter")
 		method.Param("r", "*http.Request")
 
+		g.operation(name, method)
+	}
+}
+
+func (g *ControllerGenerator) mount(method *MethodTypeBuilder) {
+	var block []Stmt
+
+	for _, operation := range g.Controller.Operations {
 		var (
-			reactor = &Var{
-				Name:  "reactor",
-				Value: "restify.NewReactor(w, r)",
-			}
-			input = &Var{
-				Name:  "input",
-				Value: "&" + name + "Input{}",
-			}
-			output = &Var{
-				Name:  "output",
-				Value: "&" + name + "Output{}",
+			name   = Leaf("r." + inflect.Camelize(strings.ToLower(operation.Method)))
+			params = []Expr{
+				Leaf(fmt.Sprintf("%q", operation.Path)),
+				Leaf(fmt.Sprintf("x.%s", camelize(operation.Name))),
 			}
 		)
 
-		block := method.Block()
-		block.Assign(reactor)
-		block.Declare(input, output)
-
-		block.Call("reactor.Bind", "input")
-		block.Call("reactor.Render", "output")
+		block = append(block, Call(name, params...))
 	}
+
+	method.Block(block...)
+}
+
+func (g *ControllerGenerator) operation(name string, method *MethodTypeBuilder) {
+	method.Block(
+		Assign(Pair(
+			Leaf("reactor"),
+			Leaf("restify.NewReactor(w, r)"),
+		)),
+		Declare(
+			Map{
+				"input":  Leaf("&" + name + "Input{}"),
+				"output": Leaf("&" + name + "Output{}"),
+			},
+		),
+		If(Condition(Leaf("err"), token.NEQ, Leaf("nil"))).
+			Init(Assign(
+				Pair(
+					Leaf("err"),
+					Call(Leaf("reactor.Bind"), Leaf("input")),
+				),
+			)).
+			Then(
+				Call(Leaf("reactor.Render"), Leaf("err")),
+				Leaf("return"),
+			),
+		Leaf(commentf("stride:block open")),
+		Leaf(commentf("TODO: Please add your implementation here")),
+		Leaf(commentf("stride:block close")),
+		If(Condition(Leaf("err"), token.NEQ, Leaf("nil"))).
+			Init(Assign(
+				Pair(
+					Leaf("err"),
+					Call(Leaf("reactor.Render"), Leaf("output")),
+				),
+			)).
+			Then(
+				Call(Leaf("reactor.Render"), Leaf("err")),
+			),
+	)
 }
 
 func (g *ControllerGenerator) spec(root *FileBuilder) {

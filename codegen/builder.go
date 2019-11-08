@@ -189,15 +189,19 @@ func (b *StructTypeBuilder) Build() []dst.Decl {
 		expr = spec
 	}
 
+	kind := &dst.Ident{
+		Name: b.name,
+	}
+
+	spec := &dst.TypeSpec{
+		Name: kind,
+		Type: expr,
+	}
+
 	node := &dst.GenDecl{
 		Tok: token.TYPE,
 		Specs: []dst.Spec{
-			&dst.TypeSpec{
-				Name: &dst.Ident{
-					Name: b.name,
-				},
-				Type: expr,
-			},
+			spec,
 		},
 	}
 
@@ -389,6 +393,7 @@ type MethodTypeBuilder struct {
 	name       string
 	receiver   *Param
 	parameters []*Param
+	results    []*Param
 	comments   []string
 	block      *dst.BlockStmt
 }
@@ -417,12 +422,21 @@ func (b *MethodTypeBuilder) Param(name, kind string) {
 	b.parameters = append(b.parameters, param)
 }
 
+// Return sets the return type
+func (b *MethodTypeBuilder) Return(kind string) {
+	param := &Param{
+		Type: kind,
+	}
+
+	b.results = append(b.results, param)
+}
+
 // Block returns the block type builder
-func (b *MethodTypeBuilder) Block() *BlockTypeBuilder {
+func (b *MethodTypeBuilder) Block(stmts ...Stmt) {
 	b.init()
 
-	return &BlockTypeBuilder{
-		block: b.block,
+	for _, node := range stmts {
+		b.block.List = append(b.block.List, node.Stmt())
 	}
 }
 
@@ -444,6 +458,9 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 			Params: &dst.FieldList{
 				List: []*dst.Field{},
 			},
+			Results: &dst.FieldList{
+				List: []*dst.Field{},
+			},
 		},
 		Body: b.block,
 	}
@@ -458,6 +475,12 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 	for _, param := range b.parameters {
 		field := b.field(param)
 		node.Type.Params.List = append(node.Type.Params.List, field)
+	}
+
+	// function returns
+	for _, param := range b.results {
+		field := b.field(param)
+		node.Type.Results.List = append(node.Type.Results.List, field)
 	}
 
 	node.Decs.Before = dst.EmptyLine
@@ -480,131 +503,21 @@ func (b *MethodTypeBuilder) init() {
 
 func (b *MethodTypeBuilder) field(param *Param) *dst.Field {
 	field := &dst.Field{
-		Names: []*dst.Ident{
-			&dst.Ident{
-				Name: param.Name,
-			},
-		},
+		Names: []*dst.Ident{},
 		Type: &dst.Ident{
 			Name: param.Type,
 		},
 	}
 
+	if name := param.Name; name != "" {
+		field.Names = []*dst.Ident{
+			&dst.Ident{
+				Name: param.Name,
+			},
+		}
+	}
+
 	return field
-}
-
-// Var represents a variable
-type Var struct {
-	Name  string
-	Value string
-}
-
-// BlockTypeBuilder build blocks
-type BlockTypeBuilder struct {
-	block *dst.BlockStmt
-}
-
-// Assign assigns a variable
-func (b *BlockTypeBuilder) Assign(v *Var) {
-	stmt := &dst.AssignStmt{
-		Tok: token.DEFINE,
-		Lhs: []dst.Expr{
-			&dst.Ident{
-				Name: v.Name,
-			},
-		},
-		Rhs: []dst.Expr{
-			&dst.Ident{
-				Name: v.Value,
-			},
-		},
-	}
-
-	if len(b.block.List) > 0 {
-		stmt.Decs.Before = dst.EmptyLine
-	}
-	stmt.Decs.After = dst.EmptyLine
-
-	b.block.List = append(b.block.List, stmt)
-}
-
-// Declare declares a variable
-func (b *BlockTypeBuilder) Declare(vars ...*Var) {
-	specs := []dst.Spec{}
-
-	for _, v := range vars {
-		spec := &dst.ValueSpec{
-			Names: []*dst.Ident{
-				&dst.Ident{
-					Name: v.Name,
-				},
-			},
-			Values: []dst.Expr{
-				&dst.Ident{
-					Name: v.Value,
-				},
-			},
-		}
-
-		specs = append(specs, spec)
-	}
-
-	stmt := &dst.DeclStmt{
-		Decl: &dst.GenDecl{
-			Tok:   token.VAR,
-			Specs: specs,
-		},
-	}
-
-	stmt.Decs.Before = dst.EmptyLine
-	stmt.Decs.After = dst.EmptyLine
-
-	b.block.List = append(b.block.List, stmt)
-}
-
-// Call calls a method
-func (b *BlockTypeBuilder) Call(name string, params ...string) {
-	b.CallWithReceiver("", name, params...)
-}
-
-// CallWithReceiver calls a method
-func (b *BlockTypeBuilder) CallWithReceiver(receiver, name string, params ...string) {
-	var (
-		fun  dst.Expr
-		args []dst.Expr
-	)
-
-	if receiver == "" {
-		fun = &dst.Ident{
-			Name: name,
-		}
-	} else {
-		fun = &dst.SelectorExpr{
-			X: &dst.Ident{
-				Name: receiver,
-			},
-			Sel: &dst.Ident{
-				Name: name,
-			},
-		}
-	}
-
-	for _, param := range params {
-		arg := &dst.Ident{
-			Name: param,
-		}
-
-		args = append(args, arg)
-	}
-
-	stmt := &dst.ExprStmt{
-		X: &dst.CallExpr{
-			Fun:  fun,
-			Args: args,
-		},
-	}
-
-	b.block.List = append(b.block.List, stmt)
 }
 
 func camelize(text string) string {
