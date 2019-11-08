@@ -14,41 +14,36 @@ func (g *ContractGenerator) Generate() *File {
 		Package: "service",
 	}
 
-	// create the file
-	file := builder.Build()
-
 	// generate contract
 	for _, descriptor := range g.Collection {
-		var builder Builder
-
 		switch {
 		case descriptor.IsAlias:
-			builder = &LiteralTypeBuilder{
-				Name:    descriptor.Name,
-				Element: descriptor.Element.Name,
-			}
+			builder.
+				Literal(descriptor.Name).
+				Element(descriptor.Element.Name)
 		case descriptor.IsArray:
-			builder = &ArrayTypeBuilder{
-				Name:    descriptor.Name,
-				Element: descriptor.Element.Name,
-			}
+			builder.
+				Array(descriptor.Name).
+				Element(descriptor.Element.Name)
 		case descriptor.IsClass:
-			builder = &StructTypeBuilder{
-				Name:   descriptor.Name,
-				Fields: descriptor.Fields(),
-			}
+			builder.Type(descriptor.Name)
+			// builder = &StructTypeBuilder{
+			// 	Name:   descriptor.Name,
+			// 	Fields: descriptor.Fields(),
+			// }
 		case descriptor.IsEnum:
 			//TODO: implement enum builder
 			continue
 		}
 
-		builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", descriptor.Name)
-		builder.Commentf(descriptor.Description)
-		file.Decls = append(file.Decls, builder.Build())
+		// builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", descriptor.Name)
+		// builder.Commentf(descriptor.Description)
+
+		// file.Decls = append(file.Decls, builder.Build())
 	}
 
 	return &File{
 		Name:    filepath.Join(g.Path, "contract.go"),
-		Content: file,
+		Content: builder.Build(),
 	}
 }
