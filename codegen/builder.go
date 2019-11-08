@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
-	"sort"
 	"strings"
 
 	"github.com/dave/dst"
@@ -15,6 +14,7 @@ import (
 // Builder builds a node from the code
 type Builder interface {
 	Build() []dst.Decl
+	Name() string
 	Commentf(string, ...interface{})
 }
 
@@ -48,16 +48,18 @@ func (b *FileBuilder) Build() *dst.File {
 
 // Type returns a struct type
 func (b *FileBuilder) Type(name string) *StructTypeBuilder {
+	name = camelize(name)
+
 	for _, builder := range b.builders {
 		if value, ok := builder.(*StructTypeBuilder); ok {
-			if strings.EqualFold(value.Name, name) {
+			if strings.EqualFold(value.name, name) {
 				return value
 			}
 		}
 	}
 
 	builder := &StructTypeBuilder{
-		Name: name,
+		name: name,
 	}
 
 	b.builders = append(b.builders, builder)
@@ -66,16 +68,18 @@ func (b *FileBuilder) Type(name string) *StructTypeBuilder {
 
 // Literal returns a literal type
 func (b *FileBuilder) Literal(name string) *LiteralTypeBuilder {
+	name = camelize(name)
+
 	for _, builder := range b.builders {
 		if value, ok := builder.(*LiteralTypeBuilder); ok {
-			if strings.EqualFold(value.Name, name) {
+			if strings.EqualFold(value.name, name) {
 				return value
 			}
 		}
 	}
 
 	builder := &LiteralTypeBuilder{
-		Name: name,
+		name: name,
 	}
 
 	b.builders = append(b.builders, builder)
@@ -84,16 +88,18 @@ func (b *FileBuilder) Literal(name string) *LiteralTypeBuilder {
 
 // Array returns a array type
 func (b *FileBuilder) Array(name string) *ArrayTypeBuilder {
+	name = camelize(name)
+
 	for _, builder := range b.builders {
 		if value, ok := builder.(*ArrayTypeBuilder); ok {
-			if strings.EqualFold(value.Name, name) {
+			if strings.EqualFold(value.name, name) {
 				return value
 			}
 		}
 	}
 
 	builder := &ArrayTypeBuilder{
-		Name: name,
+		name: name,
 	}
 
 	b.builders = append(b.builders, builder)
@@ -118,12 +124,15 @@ var _ Builder = &StructTypeBuilder{}
 
 // StructTypeBuilder builds a struct
 type StructTypeBuilder struct {
-	Name string
-
-	// private
+	name     string
 	comments []string
 	fields   []*Field
 	builders []Builder
+}
+
+// Name returns the type name
+func (b *StructTypeBuilder) Name() string {
+	return b.name
 }
 
 // Commentf adds a comment
@@ -137,6 +146,8 @@ func (b *StructTypeBuilder) Commentf(pattern string, args ...interface{}) {
 
 // Field defines a field
 func (b *StructTypeBuilder) Field(name, kind string, tags ...*Tag) {
+	name = camelize(name)
+
 	field := &Field{
 		Name: name,
 		Type: kind,
@@ -148,19 +159,21 @@ func (b *StructTypeBuilder) Field(name, kind string, tags ...*Tag) {
 
 // Method returns a struct method
 func (b *StructTypeBuilder) Method(name string) *MethodTypeBuilder {
+	name = camelize(name)
+
 	for _, builder := range b.builders {
 		if value, ok := builder.(*MethodTypeBuilder); ok {
-			if strings.EqualFold(value.Name, name) {
+			if strings.EqualFold(value.name, name) {
 				return value
 			}
 		}
 	}
 
 	builder := &MethodTypeBuilder{
-		Name: name,
+		name: name,
 		receiver: &Param{
 			Name: "x",
-			Type: "*" + b.Name,
+			Type: "*" + b.name,
 		},
 	}
 
@@ -181,7 +194,7 @@ func (b *StructTypeBuilder) Build() []dst.Decl {
 		Specs: []dst.Spec{
 			&dst.TypeSpec{
 				Name: &dst.Ident{
-					Name: b.Name,
+					Name: b.name,
 				},
 				Type: expr,
 			},
@@ -251,10 +264,14 @@ var _ Builder = &LiteralTypeBuilder{}
 
 // LiteralTypeBuilder builds a literal type
 type LiteralTypeBuilder struct {
-	Name string
-	// private
+	name     string
 	element  string
 	comments []string
+}
+
+// Name returns the type name
+func (b *LiteralTypeBuilder) Name() string {
+	return b.name
 }
 
 // Commentf adds a comment
@@ -268,6 +285,8 @@ func (b *LiteralTypeBuilder) Commentf(pattern string, args ...interface{}) {
 
 // Element sets the element
 func (b *LiteralTypeBuilder) Element(name string) {
+	name = camelize(name)
+
 	b.element = name
 }
 
@@ -278,7 +297,7 @@ func (b *LiteralTypeBuilder) Build() []dst.Decl {
 		Specs: []dst.Spec{
 			&dst.TypeSpec{
 				Name: &dst.Ident{
-					Name: b.Name,
+					Name: b.name,
 				},
 				Type: &dst.ArrayType{
 					Elt: &dst.Ident{
@@ -305,10 +324,14 @@ var _ Builder = &ArrayTypeBuilder{}
 
 // ArrayTypeBuilder builds an array type
 type ArrayTypeBuilder struct {
-	Name string
-	// private
+	name     string
 	element  string
 	comments []string
+}
+
+// Name returns the type name
+func (b *ArrayTypeBuilder) Name() string {
+	return b.name
 }
 
 // Element sets the element
@@ -332,7 +355,7 @@ func (b *ArrayTypeBuilder) Build() []dst.Decl {
 		Specs: []dst.Spec{
 			&dst.TypeSpec{
 				Name: &dst.Ident{
-					Name: b.Name,
+					Name: b.name,
 				},
 				Type: &dst.Ident{
 					Name: b.element,
@@ -363,12 +386,16 @@ var _ Builder = &MethodTypeBuilder{}
 
 // MethodTypeBuilder builds a method
 type MethodTypeBuilder struct {
-	Name string
-	// private
+	name       string
 	receiver   *Param
 	parameters []*Param
 	comments   []string
 	block      *dst.BlockStmt
+}
+
+// Name returns the type name
+func (b *MethodTypeBuilder) Name() string {
+	return b.name
 }
 
 // Commentf adds a comment
@@ -410,7 +437,7 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 		},
 		// function name
 		Name: &dst.Ident{
-			Name: b.Name,
+			Name: b.name,
 		},
 		// function param
 		Type: &dst.FuncType{
@@ -517,37 +544,30 @@ func (b *BlockTypeBuilder) CallWithReceiver(receiver, name string, params ...str
 	b.block.List = append(b.block.List, stmt)
 }
 
-// revise
 func camelize(text string) string {
-	var (
-		field  = inflect.Camelize(text)
-		buffer = &bytes.Buffer{}
-		suffix = "Id"
+	const (
+		separator = "-"
+		suffix    = "id"
 	)
 
-	switch {
-	case field == suffix:
-		buffer.WriteString(strings.ToUpper(field))
-	case strings.HasSuffix(field, suffix):
-		buffer.WriteString(strings.TrimSuffix(field, suffix))
-		buffer.WriteString(strings.ToUpper(suffix))
-	default:
-		buffer.WriteString(field)
+	var (
+		parts  = strings.Split(inflect.Dasherize(text), separator)
+		buffer = &bytes.Buffer{}
+	)
+
+	for index, part := range parts {
+		if index > 0 {
+			buffer.WriteString(separator)
+		}
+
+		if strings.EqualFold(part, suffix) {
+			part = strings.ToUpper(part)
+		}
+
+		buffer.WriteString(part)
 	}
 
-	return buffer.String()
-}
-
-func sorted(m map[string]string) []string {
-	keys := []string{}
-
-	for key := range m {
-		keys = append(keys, key)
-	}
-
-	sort.Strings(keys)
-
-	return keys
+	return inflect.Camelize(buffer.String())
 }
 
 func commentf(text string, args ...interface{}) string {

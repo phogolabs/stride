@@ -24,7 +24,6 @@ func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
 
 	types.CollectFromSchemas(r.schemas(ctx, components.Schemas))
 	types.CollectFromParameters(r.parameters(ctx, components.Parameters))
-	// types.CollectFromHeaders(r.headers(ctx, components.Headers))
 	types.CollectFromParameters(r.headers(ctx, components.Headers))
 	types.CollectFromRequests(r.requests(ctx, components.RequestBodies))
 	types.CollectFromResponses(r.responses(ctx, components.Responses))
@@ -129,7 +128,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 	for name, spec := range responses {
 		code, err := strconv.Atoi(name)
 		if err == nil {
-			name = inflect.Underscore(http.StatusText(code)) + "_response"
+			name = inflect.Dasherize(http.StatusText(code)) + "-response"
 		}
 
 		for contentType, content := range spec.Value.Content {
@@ -219,7 +218,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 
 		if ctx.Parent.IsRoot() {
 			return &TypeDescriptor{
-				Name:        ctx.Name,
+				Name:        inflect.Dasherize(ctx.Name),
 				Description: ctx.Schema.Value.Description,
 				IsAlias:     true,
 				Element:     descriptor,
@@ -232,7 +231,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	// class type descriptor
 	if kind := r.kind(ctx.Schema.Value); kind == "object" {
 		descriptor := &TypeDescriptor{
-			Name:        ctx.Name,
+			Name:        inflect.Dasherize(ctx.Name),
 			Description: ctx.Schema.Value.Description,
 			IsClass:     true,
 			IsNullable:  true,
@@ -278,7 +277,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	// array descriptor
 	if kind := r.kind(ctx.Schema.Value); kind == "array" {
 		descriptor := &TypeDescriptor{
-			Name:        ctx.Name,
+			Name:        inflect.Dasherize(ctx.Name),
 			Description: ctx.Schema.Value.Description,
 			Default:     ctx.Schema.Value.Default,
 			IsNullable:  ctx.Schema.Value.Nullable,
@@ -298,7 +297,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	if kind := r.kind(ctx.Schema.Value); kind == "string" {
 		if values := ctx.Schema.Value.Enum; len(values) > 0 {
 			descriptor := &TypeDescriptor{
-				Name:        ctx.Name,
+				Name:        inflect.Dasherize(ctx.Name),
 				Description: ctx.Schema.Value.Description,
 				Default:     ctx.Schema.Value.Default,
 				IsNullable:  ctx.Schema.Value.Nullable,

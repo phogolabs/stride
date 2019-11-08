@@ -1,6 +1,9 @@
 package codegen
 
-import "path/filepath"
+import (
+	"fmt"
+	"path/filepath"
+)
 
 // ContractGenerator generates a contract
 type ContractGenerator struct {
@@ -10,40 +13,48 @@ type ContractGenerator struct {
 
 // Generate generates the file
 func (g *ContractGenerator) Generate() *File {
-	builder := &FileBuilder{
+	root := &FileBuilder{
 		Package: "service",
 	}
 
 	// generate contract
 	for _, descriptor := range g.Collection {
+		var parent Builder
+
+		fmt.Println(descriptor.Name)
+
 		switch {
 		case descriptor.IsAlias:
-			builder.
-				Literal(descriptor.Name).
-				Element(descriptor.Element.Name)
+			builder := root.Literal(descriptor.Name)
+			builder.Element(descriptor.Element.Name)
+			parent = builder
 		case descriptor.IsArray:
-			builder.
-				Array(descriptor.Name).
-				Element(descriptor.Element.Name)
+			builder := root.Array(descriptor.Name)
+			builder.Element(descriptor.Element.Name)
+			parent = builder
 		case descriptor.IsClass:
-			builder.Type(descriptor.Name)
-			// builder = &StructTypeBuilder{
-			// 	Name:   descriptor.Name,
-			// 	Fields: descriptor.Fields(),
-			// }
+			builder := root.Type(descriptor.Name)
+			parent = builder
+
+			// add fields
+			for _, property := range descriptor.Properties {
+				var (
+					tags = property.Tags()
+					kind = property.PropertyType.Kind()
+				)
+				builder.Field(property.Name, kind, tags...)
+			}
 		case descriptor.IsEnum:
 			//TODO: implement enum builder
 			continue
 		}
 
-		// builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", descriptor.Name)
-		// builder.Commentf(descriptor.Description)
-
-		// file.Decls = append(file.Decls, builder.Build())
+		parent.Commentf("%s is a struct type auto-generated from OpenAPI spec", parent.Name())
+		parent.Commentf(descriptor.Description)
 	}
 
 	return &File{
 		Name:    filepath.Join(g.Path, "contract.go"),
-		Content: builder.Build(),
+		Content: root.Build(),
 	}
 }

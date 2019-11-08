@@ -22,7 +22,6 @@ type TypeDescriptorMap map[string]*TypeDescriptor
 // CollectFromParameters collect the type descriptors from parameters collection
 func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptorCollection) {
 	for _, descriptor := range descriptors {
-		descriptor.Name = camelize(descriptor.Name)
 		m.add(descriptor.ParameterType)
 	}
 }
@@ -53,12 +52,7 @@ func (m TypeDescriptorMap) CollectFromSchemas(descriptors TypeDescriptorCollecti
 // CollectFromControllers collect the type descriptors from controllers collection
 func (m TypeDescriptorMap) CollectFromControllers(descriptors ControllerDescriptorCollection) {
 	for _, controller := range descriptors {
-		controller.Name = camelize(controller.Name)
-
 		for _, operation := range controller.Operations {
-			operation.Name = camelize(operation.Name)
-			operation.Method = camelize(strings.ToLower(operation.Method))
-
 			m.CollectFromRequests(operation.Requests)
 			m.CollectFromResponses(operation.Responses)
 		}
@@ -84,7 +78,6 @@ func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
 		return
 	}
 
-	descriptor.Name = camelize(descriptor.Name)
 	key := descriptor.Name
 
 	if _, ok := m[key]; ok {
@@ -98,7 +91,6 @@ func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
 	}
 
 	for _, property := range descriptor.Properties {
-		property.Name = camelize(property.Name)
 		m.add(property.PropertyType)
 	}
 }
@@ -138,23 +130,6 @@ type TypeDescriptor struct {
 	Default     interface{}
 	Metadata    Metadata
 	Properties  PropertyDescriptorCollection
-}
-
-// Fields returns the fields
-func (d *TypeDescriptor) Fields() []*Field {
-	fields := []*Field{}
-
-	for _, property := range d.Properties {
-		field := &Field{
-			Name: property.Name,
-			Type: property.PropertyType.Kind(),
-			Tags: property.Tags(),
-		}
-
-		fields = append(fields, field)
-	}
-
-	return fields
 }
 
 // Tags returns the associated tagss
@@ -265,31 +240,37 @@ func (d *TypeDescriptor) Tags(required bool) []*Tag {
 
 // Kind returns the golang kind
 func (d *TypeDescriptor) Kind() string {
-	var (
-		elem = element(d)
-		name = d.Name
-	)
+	name := strings.ToLower(d.Name)
 
-	switch d.Name {
+	switch name {
 	case "date-time":
-		name = "time.Time"
+		return "time.Time"
 	case "date":
-		name = "time.Time"
+		return "time.Time"
 	case "uuid":
-		name = "schema.UUID"
+		return "schema.UUID"
 	}
 
-	if elem.IsClass {
-		if len(elem.Properties) == 0 {
-			return "interface{}"
-		}
+	elem := element(d)
+
+	if elem.IsClass && !elem.HasProperties() {
+		return "interface{}"
+	}
+
+	if !d.IsPrimitive {
+		name = camelize(name)
 	}
 
 	if elem.IsNullable {
-		return fmt.Sprintf("*%s", name)
+		name = fmt.Sprintf("*%s", name)
 	}
 
 	return name
+}
+
+// HasProperties returns true if the type has properties
+func (d *TypeDescriptor) HasProperties() bool {
+	return len(d.Properties) > 0
 }
 
 // PropertyDescriptor definition

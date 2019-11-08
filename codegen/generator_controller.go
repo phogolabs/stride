@@ -50,8 +50,8 @@ func (g *ControllerGenerator) Generate() *File {
 
 func (g *ControllerGenerator) schema(root *FileBuilder) {
 	param := func(kind string, parent *StructTypeBuilder, parameters ParameterDescriptorCollection) {
-		builder := root.Type(parent.Name + kind)
-		builder.Commentf("%s is the %s of %s", builder.Name, strings.ToLower(kind), parent.Name)
+		builder := root.Type(parent.Name() + kind)
+		builder.Commentf("%s is the %s of %s", builder.Name(), strings.ToLower(kind), parent.Name())
 
 		for _, param := range parameters {
 			if strings.EqualFold(param.In, kind) {
@@ -59,13 +59,15 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 			}
 		}
 
-		parent.Field(kind, pointer(builder.Name), g.tagOfArg(kind))
+		parent.Field(kind, pointer(builder.Name()), g.tagOfArg(kind))
 	}
 
 	for _, operation := range g.Controller.Operations {
+		name := camelize(operation.Name)
+
 		// input
-		input := root.Type(operation.Name + "Input")
-		input.Commentf("%s is the input of %s operation", input.Name, operation.Name)
+		input := root.Type(name + "Input")
+		input.Commentf("%s is the input of %s operation", input.Name(), name)
 
 		for _, request := range operation.Requests {
 			// path input
@@ -86,7 +88,7 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 
 		// output
 		output := root.Type(operation.Name + "Output")
-		output.Commentf("%s is the output of %s operation", output.Name, operation.Name)
+		output.Commentf("%s is the output of %s operation", output.Name(), name)
 
 		for _, response := range operation.Responses {
 			// output header
@@ -123,8 +125,10 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 
 	// operations
 	for _, operation := range g.Controller.Operations {
+		name := camelize(operation.Name)
+
 		method = builder.Method(operation.Name)
-		method.Commentf("%s handles endpoint %s %s", operation.Name, operation.Method, operation.Path)
+		method.Commentf("%s handles endpoint %s %s", name, operation.Method, operation.Path)
 
 		if operation.Deprecated {
 			method.Commentf("Deprecated: The operation is obsolete")
@@ -143,7 +147,7 @@ func (g *ControllerGenerator) spec(root *FileBuilder) {
 }
 
 func (g *ControllerGenerator) filename() string {
-	name := g.Controller.Name + "_api"
+	name := inflect.Underscore(g.Controller.Name) + "_api"
 
 	switch g.Mode {
 	case ControllerGeneratorModeAPI:
@@ -154,11 +158,11 @@ func (g *ControllerGenerator) filename() string {
 		name = name + "_test.go"
 	}
 
-	return inflect.Underscore(name)
+	return name
 }
 
 func (g *ControllerGenerator) name() string {
-	name := g.Controller.Name + "API"
+	name := camelize(g.Controller.Name) + "API"
 	return name
 }
 
