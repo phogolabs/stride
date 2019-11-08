@@ -242,26 +242,20 @@ func (d *TypeDescriptor) Tags(required bool) []*Tag {
 func (d *TypeDescriptor) Kind() string {
 	name := strings.ToLower(d.Name)
 
-	switch name {
-	case "date-time":
+	switch {
+	case name == "date-time":
 		return "time.Time"
-	case "date":
+	case name == "date":
 		return "time.Time"
-	case "uuid":
+	case name == "uuid":
 		return "schema.UUID"
+	case d.IsPrimitive:
+		return name
 	}
 
-	elem := element(d)
+	name = camelize(name)
 
-	if elem.IsClass && !elem.HasProperties() {
-		return "interface{}"
-	}
-
-	if !d.IsPrimitive {
-		name = camelize(name)
-	}
-
-	if elem.IsNullable {
+	if item := element(d); item.IsNullable {
 		name = fmt.Sprintf("*%s", name)
 	}
 

@@ -30,7 +30,7 @@ func (g *ContractGenerator) Generate() *File {
 			parent = builder
 		case descriptor.IsArray:
 			builder := root.Array(descriptor.Name)
-			builder.Element(descriptor.Element.Name)
+			builder.Element(descriptor.Element.Kind())
 			parent = builder
 		case descriptor.IsClass:
 			builder := root.Type(descriptor.Name)

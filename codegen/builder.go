@@ -286,7 +286,6 @@ func (b *LiteralTypeBuilder) Commentf(pattern string, args ...interface{}) {
 // Element sets the element
 func (b *LiteralTypeBuilder) Element(name string) {
 	name = camelize(name)
-
 	b.element = name
 }
 
@@ -299,10 +298,8 @@ func (b *LiteralTypeBuilder) Build() []dst.Decl {
 				Name: &dst.Ident{
 					Name: b.name,
 				},
-				Type: &dst.ArrayType{
-					Elt: &dst.Ident{
-						Name: b.element,
-					},
+				Type: &dst.Ident{
+					Name: b.element,
 				},
 			},
 		},
@@ -336,6 +333,7 @@ func (b *ArrayTypeBuilder) Name() string {
 
 // Element sets the element
 func (b *ArrayTypeBuilder) Element(name string) {
+	name = camelize(name)
 	b.element = name
 }
 
@@ -357,8 +355,10 @@ func (b *ArrayTypeBuilder) Build() []dst.Decl {
 				Name: &dst.Ident{
 					Name: b.name,
 				},
-				Type: &dst.Ident{
-					Name: b.element,
+				Type: &dst.ArrayType{
+					Elt: &dst.Ident{
+						Name: b.element,
+					},
 				},
 			},
 		},
