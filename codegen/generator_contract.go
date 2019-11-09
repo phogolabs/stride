@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"fmt"
 	"path/filepath"
 )
 
@@ -13,25 +12,21 @@ type ContractGenerator struct {
 
 // Generate generates the file
 func (g *ContractGenerator) Generate() *File {
-	root := &FileBuilder{
-		Package: "service",
-	}
+	root := NewFileBuilder("service")
 
 	// generate contract
 	for _, descriptor := range g.Collection {
 		var parent Builder
 
-		fmt.Println(descriptor.Name)
-
 		switch {
 		case descriptor.IsAlias:
-			builder := root.Literal(descriptor.Name)
-			builder.Element(descriptor.Element.Name)
-			parent = builder
+			parent = root.
+				Literal(descriptor.Name).
+				Element(descriptor.Element.Name)
 		case descriptor.IsArray:
-			builder := root.Array(descriptor.Name)
-			builder.Element(descriptor.Element.Kind())
-			parent = builder
+			parent = root.
+				Array(descriptor.Name).
+				Element(descriptor.Element.Kind())
 		case descriptor.IsClass:
 			builder := root.Type(descriptor.Name)
 			parent = builder
@@ -53,8 +48,5 @@ func (g *ContractGenerator) Generate() *File {
 		parent.Commentf(descriptor.Description)
 	}
 
-	return &File{
-		Name:    filepath.Join(g.Path, "contract.go"),
-		Content: root.Build(),
-	}
+	return root.Build(filepath.Join(g.Path, "contract.go"))
 }

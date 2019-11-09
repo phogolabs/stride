@@ -1,7 +1,6 @@
 package codegen
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -29,9 +28,7 @@ type ControllerGenerator struct {
 
 // Generate generates a file
 func (g *ControllerGenerator) Generate() *File {
-	builder := &FileBuilder{
-		Package: "service",
-	}
+	builder := NewFileBuilder("service")
 
 	switch g.Mode {
 	case ControllerGeneratorModeAPI:
@@ -42,10 +39,7 @@ func (g *ControllerGenerator) Generate() *File {
 		g.spec(builder)
 	}
 
-	return &File{
-		Name:    filepath.Join(g.Path, g.filename()),
-		Content: builder.Build(),
-	}
+	return builder.Build(filepath.Join(g.Path, g.filename()))
 }
 
 func (g *ControllerGenerator) schema(root *FileBuilder) {
@@ -85,12 +79,11 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 			input.Field("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
 
 			// output status method
-			method := output.Method("Status")
+			method := output.Method("Status").Return("int")
 			method.Commentf("Status returns the response status code")
-			method.Return("int")
 
 			// output status mmethod body
-			method.Block(fmt.Sprintf("return %d", response.Code))
+			// method.Block(fmt.Sprintf("return %d", response.Code))
 
 			// NOTE: we handle the first response for now
 			break
@@ -147,37 +140,37 @@ func (g *ControllerGenerator) controller(root *FileBuilder) {
 }
 
 func (g *ControllerGenerator) mount(builder *MethodTypeBuilder) {
-	for _, operation := range g.Controller.Operations {
-		var (
-			path    = operation.Path
-			method  = camelize(strings.ToLower(operation.Method))
-			handler = camelize(operation.Name)
-		)
+	// for _, operation := range g.Controller.Operations {
+	// var (
+	// 	path    = operation.Path
+	// 	method  = camelize(strings.ToLower(operation.Method))
+	// 	handler = camelize(operation.Name)
+	// )
 
-		builder.Block("r.%s(%q, x.%s)", method, path, handler)
-	}
+	// builder.Block("r.%s(%q, x.%s)", method, path, handler)
+	// }
 }
 
 func (g *ControllerGenerator) operation(name string, builder *MethodTypeBuilder) {
-	builder.Block("reactor := restify.NewReactor(w, r)")
-	builder.Block("")
-	builder.Block("var (")
-	builder.Block("   input  = &%sInput{}", name)
-	builder.Block("   output = &%sOutput{}", name)
-	builder.Block(")")
-	builder.Block("")
-	builder.Block("if err := reactor.Bind(input); err != nil {")
-	builder.Block("   reactor.Render(err)")
-	builder.Block("   return")
-	builder.Block("}")
-	builder.Block("")
-	builder.Block("// stride:block open")
-	builder.Block("// TODO: Please add your implementation here")
-	builder.Block("// stride:block close")
-	builder.Block("")
-	builder.Block("if err := reactor.Render(output); err != nil {")
-	builder.Block("   reactor.Render(err)")
-	builder.Block("}")
+	// builder.Block("reactor := restify.NewReactor(w, r)")
+	// builder.Block("")
+	// builder.Block("var (")
+	// builder.Block("   input  = &%sInput{}", name)
+	// builder.Block("   output = &%sOutput{}", name)
+	// builder.Block(")")
+	// builder.Block("")
+	// builder.Block("if err := reactor.Bind(input); err != nil {")
+	// builder.Block("   reactor.Render(err)")
+	// builder.Block("   return")
+	// builder.Block("}")
+	// builder.Block("")
+	// builder.Block("// stride:block open")
+	// builder.Block("// TODO: Please add your implementation here")
+	// builder.Block("// stride:block close")
+	// builder.Block("")
+	// builder.Block("if err := reactor.Render(output); err != nil {")
+	// builder.Block("   reactor.Render(err)")
+	// builder.Block("}")
 }
 
 func (g *ControllerGenerator) spec(root *FileBuilder) {
