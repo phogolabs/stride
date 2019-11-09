@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/dave/dst"
+	"github.com/dave/dst/decorator"
 	"github.com/fatih/structtag"
 	"github.com/go-openapi/inflect"
 )
@@ -26,7 +27,8 @@ type File struct {
 
 // FileBuilder builds a file
 type FileBuilder struct {
-	node *dst.File
+	node     *dst.File
+	builders []Builder
 }
 
 // NewFileBuilder creates a new file
@@ -44,6 +46,11 @@ func NewFileBuilder(name string) *FileBuilder {
 
 // Build builds the file
 func (b *FileBuilder) Build(name string) *File {
+	for _, builder := range b.builders {
+		nodes := builder.Build()
+		b.node.Decls = append(b.node.Decls, nodes...)
+	}
+
 	return &File{
 		Name:    name,
 		Content: b.node,
@@ -53,21 +60,21 @@ func (b *FileBuilder) Build(name string) *File {
 // Type returns a struct type
 func (b *FileBuilder) Type(name string) *StructTypeBuilder {
 	builder := NewStructTypeBuilder(camelize(name))
-	b.node.Decls = append(b.node.Decls, builder.node)
+	b.builders = append(b.builders, builder)
 	return builder
 }
 
 // Literal returns a literal type
 func (b *FileBuilder) Literal(name string) *LiteralTypeBuilder {
 	builder := NewLiteralTypeBuilder(camelize(name))
-	b.node.Decls = append(b.node.Decls, builder.node)
+	b.builders = append(b.builders, builder)
 	return builder
 }
 
 // Array returns a array type
 func (b *FileBuilder) Array(name string) *ArrayTypeBuilder {
 	builder := NewArrayTypeBuilder(camelize(name))
-	b.node.Decls = append(b.node.Decls, builder.node)
+	b.builders = append(b.builders, builder)
 	return builder
 }
 
@@ -358,6 +365,28 @@ func (b *MethodTypeBuilder) Param(name, kind string) *MethodTypeBuilder {
 	return b
 }
 
+// Block sets the block
+func (b *MethodTypeBuilder) Block(content string, args ...interface{}) *MethodTypeBuilder {
+	content = fmt.Sprintf(content, args...)
+	buffer := &bytes.Buffer{}
+
+	fmt.Fprintln(buffer, "package block")
+	fmt.Fprintln(buffer, "func block() {")
+	fmt.Fprintln(buffer, content)
+	fmt.Fprintln(buffer, "}")
+
+	file, err := decorator.Parse(buffer.String())
+	if err != nil {
+		panic(err)
+	}
+
+	if node, ok := file.Decls[0].(*dst.FuncDecl); ok {
+		b.node.Body = node.Body
+	}
+
+	return b
+}
+
 // Return creates a return parameter
 func (b *MethodTypeBuilder) Return(kind string) *MethodTypeBuilder {
 	field := property("", kind)
@@ -370,13 +399,38 @@ func (b *MethodTypeBuilder) Build() []dst.Decl {
 	return []dst.Decl{b.node}
 }
 
-func property(name, kind string) *dst.Field {
-	field := &dst.Field{
-		Type: &dst.Ident{
-			Name: kind,
-		},
+// BlockWriter writes the block
+type BlockWriter struct {
+	buffer *bytes.Buffer
+}
+
+// NewBlockWriter creates a new block writera
+func NewBlockWriter() *BlockWriter {
+	return &BlockWriter{
+		buffer: &bytes.Buffer{},
+	}
+}
+
+// Write the block
+func (b *BlockWriter) Write(content string, args ...interface{}) {
+	if b.buffer.Len() > 0 {
+		fmt.Fprintln(b.buffer)
 	}
 
+	fmt.Fprintf(b.buffer, content, args...)
+}
+
+// String returns the block as string
+func (b *BlockWriter) String() string {
+	return b.buffer.String()
+}
+
+func property(name, kind string) *dst.Field {
+	const star = "*"
+
+	field := &dst.Field{}
+
+	// set field name
 	if name != "" {
 		field.Names = []*dst.Ident{
 			&dst.Ident{
@@ -384,6 +438,35 @@ func property(name, kind string) *dst.Field {
 			},
 		}
 	}
+
+	getType := func() dst.Expr {
+		if parts := strings.Split(kind, "."); len(parts) == 2 {
+			return &dst.SelectorExpr{
+				X: &dst.Ident{
+					Name: parts[0],
+				},
+				Sel: &dst.Ident{
+					Name: parts[1],
+				},
+			}
+		}
+
+		return &dst.Ident{
+			Name: kind,
+		}
+	}
+
+	if strings.HasPrefix(kind, star) {
+		kind = strings.TrimPrefix(kind, star)
+
+		field.Type = &dst.StarExpr{
+			X: getType(),
+		}
+
+		return field
+	}
+
+	field.Type = getType()
 
 	return field
 }
