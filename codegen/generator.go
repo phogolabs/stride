@@ -3,9 +3,13 @@ package codegen
 import (
 	"os"
 	"path/filepath"
-
-	"github.com/dave/dst/decorator"
 )
+
+// FileGenerator is a file generator
+type FileGenerator interface {
+	// Generate generates the file
+	Generate() *File
+}
 
 // Generator generates the source code
 type Generator struct {
@@ -21,51 +25,50 @@ func (g *Generator) Generate(spec *SpecDescriptor) error {
 		return err
 	}
 
-	contract := &ContractGenerator{
+	generator := &ContractGenerator{
 		Path:       path,
 		Collection: spec.Types,
 	}
 
-	// write the common types
-	if err := g.write(contract.Generate()); err != nil {
+	if err := g.sync(generator); err != nil {
 		return err
 	}
 
 	// write the controller's schema
 	for _, descriptor := range spec.Controllers {
-		controller := &ControllerGenerator{
+		generator := &ControllerGenerator{
 			Mode:       ControllerGeneratorModeSchema,
 			Path:       path,
 			Controller: descriptor,
 		}
 
-		if err := g.write(controller.Generate()); err != nil {
+		if err := g.sync(generator); err != nil {
 			return err
 		}
 	}
 
 	// write the controller's api
 	for _, descriptor := range spec.Controllers {
-		controller := &ControllerGenerator{
+		generator := &ControllerGenerator{
 			Mode:       ControllerGeneratorModeAPI,
 			Path:       path,
 			Controller: descriptor,
 		}
 
-		if err := g.write(controller.Generate()); err != nil {
+		if err := g.sync(generator); err != nil {
 			return err
 		}
 	}
 
 	// write the controller's spec
 	for _, descriptor := range spec.Controllers {
-		controller := &ControllerGenerator{
+		generator := &ControllerGenerator{
 			Mode:       ControllerGeneratorModeSpec,
 			Path:       path,
 			Controller: descriptor,
 		}
 
-		if err := g.write(controller.Generate()); err != nil {
+		if err := g.sync(generator); err != nil {
 			return err
 		}
 	}
@@ -73,26 +76,12 @@ func (g *Generator) Generate(spec *SpecDescriptor) error {
 	return nil
 }
 
-func (g *Generator) write(file *File) error {
-	writer, err := os.Create(file.Name)
-	if err != nil {
-		return err
-	}
-	defer writer.Close()
-
-	if err := decorator.Fprint(writer, file.Content); err != nil {
-		return err
+func (g *Generator) sync(generator FileGenerator) error {
+	if file := generator.Generate(); file != nil {
+		if err := file.Sync(); err != nil {
+			return err
+		}
 	}
 
 	return nil
-}
-
-func element(descriptor *TypeDescriptor) *TypeDescriptor {
-	element := descriptor
-
-	for element.IsAlias {
-		element = element.Element
-	}
-
-	return element
 }

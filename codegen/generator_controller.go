@@ -21,34 +21,34 @@ const (
 
 // ControllerGenerator builds a controller
 type ControllerGenerator struct {
-	Mode       ControllerGeneratorMode
 	Path       string
+	Mode       ControllerGeneratorMode
 	Controller *ControllerDescriptor
 }
 
 // Generate generates a file
 func (g *ControllerGenerator) Generate() *File {
-	builder := NewFileBuilder("service")
+	root := NewFile(filepath.Join(g.Path, g.filename()))
 
 	switch g.Mode {
 	case ControllerGeneratorModeAPI:
-		g.controller(builder)
+		g.controller(root)
 	case ControllerGeneratorModeSchema:
-		g.schema(builder)
+		g.schema(root)
 	case ControllerGeneratorModeSpec:
-		g.spec(builder)
+		g.spec(root)
 	}
 
-	return builder.Build(filepath.Join(g.Path, g.filename()))
+	return root
 }
 
-func (g *ControllerGenerator) schema(root *FileBuilder) {
+func (g *ControllerGenerator) schema(root *File) {
 	for _, operation := range g.Controller.Operations {
 		name := camelize(operation.Name)
 
 		// input
-		input := root.Type(name + "Input")
-		input.Commentf("%s is the input of %s operation", input.Name(), name)
+		input := root.Struct(name + "Input")
+		input.Commentf("It is the input of %s operation", name)
 
 		for _, request := range operation.Requests {
 			// path input
@@ -68,8 +68,8 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 		}
 
 		// output
-		output := root.Type(operation.Name + "Output")
-		output.Commentf("%s is the output of %s operation", output.Name(), name)
+		output := root.Struct(name + "Output")
+		output.Commentf("It is the output of %s operation", name)
 
 		for _, response := range operation.Responses {
 			// output header
@@ -91,9 +91,9 @@ func (g *ControllerGenerator) schema(root *FileBuilder) {
 	}
 }
 
-func (g *ControllerGenerator) param(kind string, root *FileBuilder, parent *StructTypeBuilder, parameters ParameterDescriptorCollection) {
-	builder := root.Type(parent.Name() + kind)
-	builder.Commentf("%s is the %s of %s", builder.Name(), strings.ToLower(kind), parent.Name())
+func (g *ControllerGenerator) param(kind string, root *File, parent *StructTypeBuilder, parameters ParameterDescriptorCollection) {
+	builder := root.Struct(parent.Name() + kind)
+	builder.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
 
 	for _, param := range parameters {
 		if strings.EqualFold(param.In, kind) {
@@ -104,10 +104,9 @@ func (g *ControllerGenerator) param(kind string, root *FileBuilder, parent *Stru
 	parent.Field(kind, pointer(builder.Name()), g.tagOfArg(kind))
 }
 
-func (g *ControllerGenerator) controller(root *FileBuilder) {
+func (g *ControllerGenerator) controller(root *File) {
 	// struct
-	builder := root.Type(g.name())
-	builder.Commentf("%s is a struct type auto-generated from OpenAPI spec", g.name())
+	builder := root.Struct(g.name())
 	builder.Commentf(g.Controller.Description)
 
 	// method mount
@@ -182,7 +181,7 @@ func (g *ControllerGenerator) operation(name string, builder *MethodTypeBuilder)
 	builder.Block(buffer.String())
 }
 
-func (g *ControllerGenerator) spec(root *FileBuilder) {
+func (g *ControllerGenerator) spec(root *File) {
 	//TODO:
 }
 

@@ -578,3 +578,13 @@ func (t OperationDescriptorCollection) Swap(i, j int) {
 	t[i] = t[j]
 	t[j] = x
 }
+
+func element(descriptor *TypeDescriptor) *TypeDescriptor {
+	element := descriptor
+
+	for element.IsAlias {
+		element = element.Element
+	}
+
+	return element
+}

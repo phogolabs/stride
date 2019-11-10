@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"fmt"
 	"go/token"
+	"io"
+	"os"
 	"strings"
 
 	"github.com/dave/dst"
@@ -14,67 +16,81 @@ import (
 
 // Builder builds a node from the code
 type Builder interface {
-	Build() []dst.Decl
 	Name() string
 	Commentf(string, ...interface{})
 }
 
 // File represents the generated file
 type File struct {
-	Name    string
-	Content *dst.File
+	name string
+	node *dst.File
 }
 
-// FileBuilder builds a file
-type FileBuilder struct {
-	node     *dst.File
-	builders []Builder
-}
-
-// NewFileBuilder creates a new file
-func NewFileBuilder(name string) *FileBuilder {
-	node := &dst.File{
-		Name: &dst.Ident{
-			Name: name,
+// NewFile creates a new file
+func NewFile(name string) *File {
+	return &File{
+		name: name,
+		node: &dst.File{
+			Name: &dst.Ident{
+				Name: "service",
+			},
 		},
 	}
-
-	return &FileBuilder{
-		node: node,
-	}
 }
 
-// Build builds the file
-func (b *FileBuilder) Build(name string) *File {
-	for _, builder := range b.builders {
-		nodes := builder.Build()
-		b.node.Decls = append(b.node.Decls, nodes...)
-	}
-
-	return &File{
-		Name:    name,
-		Content: b.node,
-	}
+// Name returns the name of the file
+func (f *File) Name() string {
+	return f.name
 }
 
-// Type returns a struct type
-func (b *FileBuilder) Type(name string) *StructTypeBuilder {
-	builder := NewStructTypeBuilder(camelize(name))
-	b.builders = append(b.builders, builder)
+// Merge merges the files
+func (f *File) Merge(source *File) {
+
+}
+
+// Sync syncs the content to the file system
+func (f *File) Sync() error {
+	w, err := os.Create(f.name)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	_, err = f.WriteTo(w)
+	return err
+}
+
+// WriteTo writes to a file
+func (f *File) WriteTo(w io.Writer) (int64, error) {
+	if err := decorator.Fprint(w, f.node); err != nil {
+		return 0, err
+	}
+
+	return 0, nil
+}
+
+// Struct returns a struct type
+func (f *File) Struct(name string) *StructTypeBuilder {
+	builder := NewStructTypeBuilder(name)
+	builder.file = f.node
+
+	f.node.Decls = append(f.node.Decls, builder.node)
 	return builder
 }
 
 // Literal returns a literal type
-func (b *FileBuilder) Literal(name string) *LiteralTypeBuilder {
-	builder := NewLiteralTypeBuilder(camelize(name))
-	b.builders = append(b.builders, builder)
+func (f *File) Literal(name string) *LiteralTypeBuilder {
+	builder := NewLiteralTypeBuilder(name)
+
+	f.node.Decls = append(f.node.Decls, builder.node)
 	return builder
 }
 
 // Array returns a array type
-func (b *FileBuilder) Array(name string) *ArrayTypeBuilder {
-	builder := NewArrayTypeBuilder(camelize(name))
-	b.builders = append(b.builders, builder)
+func (f *File) Array(name string) *ArrayTypeBuilder {
+	builder := NewArrayTypeBuilder(name)
+
+	f.node.Decls = append(f.node.Decls, builder.node)
 	return builder
 }
 
@@ -106,16 +122,23 @@ func (tags Tags) String() string {
 	return ""
 }
 
-var _ Builder = &StructTypeBuilder{}
-
 // StructTypeBuilder builds a struct
 type StructTypeBuilder struct {
-	node    *dst.GenDecl
-	methods []*dst.FuncDecl
+	node *dst.GenDecl
+	file *dst.File
 }
 
 // NewStructTypeBuilder creates a new struct type builder
 func NewStructTypeBuilder(name string) *StructTypeBuilder {
+	fields := &dst.FieldList{}
+	fields.Closing = true
+
+	fields.Decs.Before = dst.NewLine
+	fields.Decs.After = dst.NewLine
+	fields.Decs.Opening.Append("// stride:field open")
+	fields.Decs.Opening.Append("// TODO: Please add your implementation here")
+	fields.Decs.Opening.Append("// stride:field close")
+
 	node := &dst.GenDecl{
 		Tok: token.TYPE,
 		Specs: []dst.Spec{
@@ -124,7 +147,7 @@ func NewStructTypeBuilder(name string) *StructTypeBuilder {
 					Name: camelize(name),
 				},
 				Type: &dst.StructType{
-					Fields: &dst.FieldList{},
+					Fields: fields,
 				},
 			},
 		},
@@ -133,7 +156,9 @@ func NewStructTypeBuilder(name string) *StructTypeBuilder {
 	// formatting
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
-	node.Decs.Start.Append("// stride:generate")
+	// comments
+	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", camelize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:struct %s", dasherize(name)))
 
 	return &StructTypeBuilder{
 		node: node,
@@ -168,25 +193,9 @@ func (b *StructTypeBuilder) Field(name, kind string, tags ...*Tag) {
 // Method returns a struct method
 func (b *StructTypeBuilder) Method(name string) *MethodTypeBuilder {
 	builder := NewMethodTypeBuilder(name).Receiver("x", pointer(b.Name()))
-	b.methods = append(b.methods, builder.node)
-
+	b.file.Decls = append(b.file.Decls, builder.node)
 	return builder
 }
-
-// Build builds the type
-func (b *StructTypeBuilder) Build() []dst.Decl {
-	// tree
-	tree := []dst.Decl{}
-	tree = append(tree, b.node)
-
-	for _, method := range b.methods {
-		tree = append(tree, method)
-	}
-
-	return tree
-}
-
-var _ Builder = &LiteralTypeBuilder{}
 
 // LiteralTypeBuilder builds a literal type
 type LiteralTypeBuilder struct {
@@ -209,7 +218,9 @@ func NewLiteralTypeBuilder(name string) *LiteralTypeBuilder {
 	// formatting
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
-	node.Decs.Start.Append("// stride:generate")
+	// comments
+	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", camelize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:literal %s", dasherize(name)))
 
 	return &LiteralTypeBuilder{
 		node: node,
@@ -235,13 +246,6 @@ func (b *LiteralTypeBuilder) Element(name string) *LiteralTypeBuilder {
 	return b
 }
 
-// Build builds the type
-func (b *LiteralTypeBuilder) Build() []dst.Decl {
-	return []dst.Decl{b.node}
-}
-
-var _ Builder = &ArrayTypeBuilder{}
-
 // ArrayTypeBuilder builds an array type
 type ArrayTypeBuilder struct {
 	node *dst.GenDecl
@@ -264,7 +268,9 @@ func NewArrayTypeBuilder(name string) *ArrayTypeBuilder {
 	// formatting
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
-	node.Decs.Start.Append("// stride:generate")
+	// comments
+	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", camelize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:array %s", dasherize(name)))
 
 	return &ArrayTypeBuilder{
 		node: node,
@@ -288,16 +294,6 @@ func (b *ArrayTypeBuilder) Element(name string) *ArrayTypeBuilder {
 	}
 
 	return b
-}
-
-// Build builds the type
-func (b *ArrayTypeBuilder) Build() []dst.Decl {
-	// formatting
-	b.node.Decs.Before = dst.EmptyLine
-	b.node.Decs.After = dst.EmptyLine
-	b.node.Decs.Start.Append("// stride:generate")
-
-	return []dst.Decl{b.node}
 }
 
 var _ Builder = &MethodTypeBuilder{}
@@ -332,9 +328,11 @@ func NewMethodTypeBuilder(name string) *MethodTypeBuilder {
 		},
 	}
 
+	// formatting
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
-	node.Decs.Start.Append("// stride:generate")
+	// comments
+	node.Decs.Start.Append(fmt.Sprintf("// stride:method %s", dasherize(name)))
 
 	return &MethodTypeBuilder{
 		node: node,
@@ -497,6 +495,10 @@ func camelize(text string) string {
 	return inflect.Camelize(buffer.String())
 }
 
+func dasherize(text string) string {
+	return inflect.Dasherize(text)
+}
+
 func commentf(decorator *dst.Decorations, text string, args ...interface{}) {
 	if text == "" {
 		return
@@ -510,7 +512,8 @@ func commentf(decorator *dst.Decorations, text string, args ...interface{}) {
 	text = fmt.Sprintf(text, args...)
 	text = fmt.Sprintf("// %s", text)
 
-	decorator.Replace(comments[:index]...)
+	decorator.Clear()
+	decorator.Append(comments[:index]...)
 	decorator.Append(text)
 	decorator.Append(comments[index:]...)
 }

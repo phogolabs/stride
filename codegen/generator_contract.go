@@ -1,8 +1,6 @@
 package codegen
 
-import (
-	"path/filepath"
-)
+import "path/filepath"
 
 // ContractGenerator generates a contract
 type ContractGenerator struct {
@@ -12,24 +10,23 @@ type ContractGenerator struct {
 
 // Generate generates the file
 func (g *ContractGenerator) Generate() *File {
-	root := NewFileBuilder("service")
+	root := NewFile(filepath.Join(g.Path, "contract.go"))
 
 	// generate contract
 	for _, descriptor := range g.Collection {
-		var parent Builder
-
 		switch {
 		case descriptor.IsAlias:
-			parent = root.
+			root.
 				Literal(descriptor.Name).
-				Element(descriptor.Element.Name)
+				Element(descriptor.Element.Name).
+				Commentf(descriptor.Description)
 		case descriptor.IsArray:
-			parent = root.
+			root.
 				Array(descriptor.Name).
-				Element(descriptor.Element.Kind())
+				Element(descriptor.Element.Kind()).
+				Commentf(descriptor.Description)
 		case descriptor.IsClass:
-			builder := root.Type(descriptor.Name)
-			parent = builder
+			builder := root.Struct(descriptor.Name)
 
 			// add fields
 			for _, property := range descriptor.Properties {
@@ -43,10 +40,7 @@ func (g *ContractGenerator) Generate() *File {
 			//TODO: implement enum builder
 			continue
 		}
-
-		parent.Commentf("%s is a struct type auto-generated from OpenAPI spec", parent.Name())
-		parent.Commentf(descriptor.Description)
 	}
 
-	return root.Build(filepath.Join(g.Path, "contract.go"))
+	return root
 }
