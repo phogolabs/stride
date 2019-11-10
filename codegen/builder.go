@@ -105,18 +105,22 @@ func (f *File) Merge(source *File) error {
 			finder := Finder{node: node}
 
 			if kind := finder.Find("stride:struct"); kind != "" {
-				// fmt.Println("STRUCT", cursor.Name(), kind)
+				fmt.Println("STRUCT", cursor.Name(), kind)
+				return true
+			}
+
+			if kind := finder.Find("stride:field"); kind != "" {
+				fmt.Println("FIELD", cursor.Name(), kind)
 				return false
 			}
 
 			if kind := finder.Find("stride:function"); kind != "" {
-				// fmt.Println("FUNC", cursor.Name(), kind)
+				fmt.Println("FUNC", cursor.Name(), kind)
 				return true
 			}
 
 			if kind := finder.Find("stride:block"); kind != "" {
 				fmt.Println("BLOCK", cursor.Name(), kind)
-				fmt.Printf("%T\n", node)
 				return false
 			}
 		}
