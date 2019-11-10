@@ -10,6 +10,7 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
+	"github.com/dave/dst/dstutil"
 	"github.com/go-openapi/inflect"
 )
 
@@ -61,8 +62,69 @@ func (f *File) Name() string {
 	return f.name
 }
 
+// Finder finds attributes
+type Finder struct {
+	node dst.Node
+}
+
+func (f *Finder) extract(text, prefix string) string {
+	text = strings.TrimPrefix(text, "//")
+	text = strings.TrimSpace(text)
+
+	if strings.HasPrefix(text, prefix) {
+		text = strings.TrimPrefix(text, prefix)
+		text = strings.TrimSpace(text)
+
+		return text
+	}
+
+	return ""
+}
+
+// Find finds the special comment
+func (f *Finder) Find(prefix string) string {
+	for _, line := range f.node.Decorations().Start.All() {
+		if name := f.extract(line, prefix); name != "" {
+			return name
+		}
+	}
+
+	for _, line := range f.node.Decorations().End.All() {
+		if name := f.extract(line, prefix); name != "" {
+			return name
+		}
+	}
+
+	return ""
+}
+
 // Merge merges the files
 func (f *File) Merge(source *File) error {
+	merge := func(cursor *dstutil.Cursor) bool {
+		if node := cursor.Node(); node != nil {
+			finder := Finder{node: node}
+
+			if kind := finder.Find("stride:struct"); kind != "" {
+				// fmt.Println("STRUCT", cursor.Name(), kind)
+				return false
+			}
+
+			if kind := finder.Find("stride:function"); kind != "" {
+				// fmt.Println("FUNC", cursor.Name(), kind)
+				return true
+			}
+
+			if kind := finder.Find("stride:block"); kind != "" {
+				fmt.Println("BLOCK", cursor.Name(), kind)
+				fmt.Printf("%T\n", node)
+				return false
+			}
+		}
+
+		return true
+	}
+
+	dstutil.Apply(f.node, merge, nil)
 	return nil
 }
 
@@ -322,7 +384,7 @@ func NewMethodTypeBuilder(name string) *MethodTypeBuilder {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// stride:method %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:function %s", dasherize(name)))
 
 	return &MethodTypeBuilder{
 		node: node,
