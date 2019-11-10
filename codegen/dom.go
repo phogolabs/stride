@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"github.com/fatih/structtag"
 )
 
 // Metadata of the TypeDescriptor
@@ -577,6 +579,34 @@ func (t OperationDescriptorCollection) Swap(i, j int) {
 	var x = t[i]
 	t[i] = t[j]
 	t[j] = x
+}
+
+// Tag represents a tag
+type Tag struct {
+	Key     string
+	Name    string
+	Options []string
+}
+
+// Tags represents a field tag list
+type Tags []*Tag
+
+func (tags Tags) String() string {
+	builder := &structtag.Tags{}
+
+	for _, descriptor := range tags {
+		builder.Set(&structtag.Tag{
+			Key:     descriptor.Key,
+			Name:    descriptor.Name,
+			Options: descriptor.Options,
+		})
+	}
+
+	if value := builder.String(); value != "" {
+		return fmt.Sprintf("`%s`", value)
+	}
+
+	return ""
 }
 
 func element(descriptor *TypeDescriptor) *TypeDescriptor {

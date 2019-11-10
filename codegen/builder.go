@@ -10,7 +10,6 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
-	"github.com/fatih/structtag"
 	"github.com/go-openapi/inflect"
 )
 
@@ -38,14 +37,33 @@ func NewFile(name string) *File {
 	}
 }
 
+// Open opens a file
+func Open(name string) (*File, error) {
+	reader, err := os.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	node, err := decorator.Parse(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return &File{
+		name: name,
+		node: node,
+	}, nil
+}
+
 // Name returns the name of the file
 func (f *File) Name() string {
 	return f.name
 }
 
 // Merge merges the files
-func (f *File) Merge(source *File) {
-
+func (f *File) Merge(source *File) error {
+	return nil
 }
 
 // Sync syncs the content to the file system
@@ -92,34 +110,6 @@ func (f *File) Array(name string) *ArrayTypeBuilder {
 
 	f.node.Decls = append(f.node.Decls, builder.node)
 	return builder
-}
-
-// Tag represents a tag
-type Tag struct {
-	Key     string
-	Name    string
-	Options []string
-}
-
-// Tags represents a field tag list
-type Tags []*Tag
-
-func (tags Tags) String() string {
-	builder := &structtag.Tags{}
-
-	for _, descriptor := range tags {
-		builder.Set(&structtag.Tag{
-			Key:     descriptor.Key,
-			Name:    descriptor.Name,
-			Options: descriptor.Options,
-		})
-	}
-
-	if value := builder.String(); value != "" {
-		return fmt.Sprintf("`%s`", value)
-	}
-
-	return ""
 }
 
 // StructTypeBuilder builds a struct

@@ -10,7 +10,10 @@ type ContractGenerator struct {
 
 // Generate generates the file
 func (g *ContractGenerator) Generate() *File {
-	root := NewFile(filepath.Join(g.Path, "contract.go"))
+	var (
+		filename = filepath.Join(g.Path, "contract.go")
+		root     = NewFile(filename)
+	)
 
 	// generate contract
 	for _, descriptor := range g.Collection {

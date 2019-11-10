@@ -28,7 +28,10 @@ type ControllerGenerator struct {
 
 // Generate generates a file
 func (g *ControllerGenerator) Generate() *File {
-	root := NewFile(filepath.Join(g.Path, g.filename()))
+	var (
+		filename = filepath.Join(g.Path, g.filename())
+		root     = NewFile(filename)
+	)
 
 	switch g.Mode {
 	case ControllerGeneratorModeAPI:
