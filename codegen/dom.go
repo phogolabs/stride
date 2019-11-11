@@ -10,7 +10,6 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
-	"github.com/dave/dst/dstutil"
 	"github.com/go-openapi/inflect"
 )
 
@@ -62,74 +61,14 @@ func (f *File) Name() string {
 	return f.name
 }
 
-// Finder finds attributes
-type Finder struct {
-	node dst.Node
-}
-
-func (f *Finder) extract(text, prefix string) string {
-	text = strings.TrimPrefix(text, "//")
-	text = strings.TrimSpace(text)
-
-	if strings.HasPrefix(text, prefix) {
-		text = strings.TrimPrefix(text, prefix)
-		text = strings.TrimSpace(text)
-
-		return text
-	}
-
-	return ""
-}
-
-// Find finds the special comment
-func (f *Finder) Find(prefix string) string {
-	for _, line := range f.node.Decorations().Start.All() {
-		if name := f.extract(line, prefix); name != "" {
-			return name
-		}
-	}
-
-	for _, line := range f.node.Decorations().End.All() {
-		if name := f.extract(line, prefix); name != "" {
-			return name
-		}
-	}
-
-	return ""
-}
-
 // Merge merges the files
 func (f *File) Merge(source *File) error {
-	merge := func(cursor *dstutil.Cursor) bool {
-		if node := cursor.Node(); node != nil {
-			finder := Finder{node: node}
-
-			if kind := finder.Find("stride:struct"); kind != "" {
-				fmt.Println("STRUCT", cursor.Name(), kind)
-				return true
-			}
-
-			if kind := finder.Find("stride:field"); kind != "" {
-				fmt.Println("FIELD", cursor.Name(), kind)
-				return false
-			}
-
-			if kind := finder.Find("stride:function"); kind != "" {
-				fmt.Println("FUNC", cursor.Name(), kind)
-				return true
-			}
-
-			if kind := finder.Find("stride:block"); kind != "" {
-				fmt.Println("BLOCK", cursor.Name(), kind)
-				return false
-			}
-		}
-
-		return true
+	merger := &Merger{
+		target: f,
+		source: source,
 	}
 
-	dstutil.Apply(f.node, merge, nil)
-	return nil
+	return merger.Merge()
 }
 
 // Sync syncs the content to the file system
@@ -191,9 +130,6 @@ func NewStructType(name string) *StructType {
 
 	fields.Decs.Before = dst.NewLine
 	fields.Decs.After = dst.NewLine
-	fields.Decs.Opening.Append("// stride:field open")
-	fields.Decs.Opening.Append("// TODO: Please add your implementation here")
-	fields.Decs.Opening.Append("// stride:field close")
 
 	node := &dst.GenDecl{
 		Tok: token.TYPE,
@@ -214,7 +150,7 @@ func NewStructType(name string) *StructType {
 	node.Decs.After = dst.EmptyLine
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:struct %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:struct %s", dasherize(name)))
 
 	return &StructType{
 		node: node,
@@ -234,6 +170,9 @@ func (b *StructType) Commentf(pattern string, args ...interface{}) {
 // AddField defines a field
 func (b *StructType) AddField(name, kind string, tags ...*TagDescriptor) {
 	field := property(camelize(name), kind)
+	field.Decs.Before = dst.NewLine
+	field.Decs.After = dst.NewLine
+	field.Decs.Start.Append("// stride:generate:field " + dasherize(name))
 
 	if tag := TagDescriptorCollection(tags).String(); tag != "" {
 		field.Tag = &dst.BasicLit{
@@ -276,7 +215,7 @@ func NewLiteralType(name string) *LiteralType {
 	node.Decs.After = dst.EmptyLine
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:literal %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:literal %s", dasherize(name)))
 
 	return &LiteralType{
 		node: node,
@@ -326,7 +265,7 @@ func NewArrayType(name string) *ArrayType {
 	node.Decs.After = dst.EmptyLine
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:array %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:array %s", dasherize(name)))
 
 	return &ArrayType{
 		node: node,
@@ -388,7 +327,7 @@ func NewFunctionType(name string) *FunctionType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// stride:function %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:function %s", dasherize(name)))
 
 	return &FunctionType{
 		node: node,
@@ -419,13 +358,13 @@ func (b *FunctionType) AddParam(name, kind string) *FunctionType {
 	return b
 }
 
-// Block sets the block
-func (b *FunctionType) Block(content string, args ...interface{}) *FunctionType {
+// Body sets the body
+func (b *FunctionType) Body(content string, args ...interface{}) *FunctionType {
 	content = fmt.Sprintf(content, args...)
 	buffer := &bytes.Buffer{}
 
-	fmt.Fprintln(buffer, "package block")
-	fmt.Fprintln(buffer, "func block() {")
+	fmt.Fprintln(buffer, "package body")
+	fmt.Fprintln(buffer, "func body() {")
 	fmt.Fprintln(buffer, content)
 	fmt.Fprintln(buffer, "}")
 

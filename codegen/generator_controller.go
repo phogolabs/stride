@@ -85,7 +85,7 @@ func (g *ControllerGenerator) schema(root *File) {
 			method := output.
 				Function("Status").
 				AddReturn("int").
-				Block("return %d", response.Code)
+				Body("return %d", response.Code)
 
 			method.Commentf("Status returns the response status code")
 			// NOTE: we handle the first response for now
@@ -153,7 +153,7 @@ func (g *ControllerGenerator) mount(builder *FunctionType) {
 		buffer.Write("r.%s(%q, x.%s)", method, path, handler)
 	}
 
-	builder.Block(buffer.String())
+	builder.Body(buffer.String())
 }
 
 func (g *ControllerGenerator) operation(name string, builder *FunctionType) {
@@ -180,7 +180,7 @@ func (g *ControllerGenerator) operation(name string, builder *FunctionType) {
 	buffer.Write("}")
 
 	// define the block
-	builder.Block(buffer.String())
+	builder.Body(buffer.String())
 }
 
 func (g *ControllerGenerator) spec(root *File) {
