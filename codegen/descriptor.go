@@ -135,10 +135,10 @@ type TypeDescriptor struct {
 }
 
 // Tags returns the associated tagss
-func (d *TypeDescriptor) Tags(required bool) []*Tag {
+func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 	var (
-		tags []*Tag
-		tag  *Tag
+		tags = TagDescriptorCollection{}
+		tag  *TagDescriptor
 	)
 
 	oneof := func(values []interface{}) string {
@@ -156,7 +156,7 @@ func (d *TypeDescriptor) Tags(required bool) []*Tag {
 	}
 
 	// validation
-	tag = &Tag{
+	tag = &TagDescriptor{
 		Key:  "validate",
 		Name: "-",
 	}
@@ -229,7 +229,7 @@ func (d *TypeDescriptor) Tags(required bool) []*Tag {
 
 	// default
 	if value := d.Default; value != nil {
-		tag = &Tag{
+		tag = &TagDescriptor{
 			Key:  "default",
 			Name: fmt.Sprintf("%v", value),
 		}
@@ -280,10 +280,10 @@ type PropertyDescriptor struct {
 }
 
 // Tags returns the underlying tags
-func (p *PropertyDescriptor) Tags() []*Tag {
+func (p *PropertyDescriptor) Tags() TagDescriptorCollection {
 	var (
-		tags = []*Tag{}
-		tag  *Tag
+		tags = TagDescriptorCollection{}
+		tag  *TagDescriptor
 	)
 
 	omitempty := func() []string {
@@ -297,7 +297,7 @@ func (p *PropertyDescriptor) Tags() []*Tag {
 	}
 
 	// json marshalling
-	tag = &Tag{
+	tag = &TagDescriptor{
 		Key:     "json",
 		Name:    p.Name,
 		Options: omitempty(),
@@ -366,14 +366,14 @@ type ParameterDescriptor struct {
 }
 
 // Tags returns the tags for this parameter
-func (p *ParameterDescriptor) Tags() []*Tag {
+func (p *ParameterDescriptor) Tags() TagDescriptorCollection {
 	var (
-		tags = []*Tag{}
-		tag  *Tag
+		tags = TagDescriptorCollection{}
+		tag  *TagDescriptor
 	)
 
 	// style
-	tag = &Tag{
+	tag = &TagDescriptor{
 		Key:  p.In,
 		Name: p.Name,
 	}
@@ -581,17 +581,17 @@ func (t OperationDescriptorCollection) Swap(i, j int) {
 	t[j] = x
 }
 
-// Tag represents a tag
-type Tag struct {
+// TagDescriptor represents a tag
+type TagDescriptor struct {
 	Key     string
 	Name    string
 	Options []string
 }
 
-// Tags represents a field tag list
-type Tags []*Tag
+// TagDescriptorCollection represents a field tag list
+type TagDescriptorCollection []*TagDescriptor
 
-func (tags Tags) String() string {
+func (tags TagDescriptorCollection) String() string {
 	builder := &structtag.Tags{}
 
 	for _, descriptor := range tags {

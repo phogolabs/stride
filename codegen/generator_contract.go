@@ -37,7 +37,7 @@ func (g *ContractGenerator) Generate() *File {
 					tags = property.Tags()
 					kind = property.PropertyType.Kind()
 				)
-				builder.Field(property.Name, kind, tags...)
+				builder.AddField(property.Name, kind, tags...)
 			}
 		case descriptor.IsEnum:
 			//TODO: implement enum builder

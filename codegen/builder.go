@@ -154,8 +154,8 @@ func (f *File) WriteTo(w io.Writer) (int64, error) {
 }
 
 // Struct returns a struct type
-func (f *File) Struct(name string) *StructTypeBuilder {
-	builder := NewStructTypeBuilder(name)
+func (f *File) Struct(name string) *StructType {
+	builder := NewStructType(name)
 	builder.file = f.node
 
 	f.node.Decls = append(f.node.Decls, builder.node)
@@ -163,29 +163,29 @@ func (f *File) Struct(name string) *StructTypeBuilder {
 }
 
 // Literal returns a literal type
-func (f *File) Literal(name string) *LiteralTypeBuilder {
-	builder := NewLiteralTypeBuilder(name)
+func (f *File) Literal(name string) *LiteralType {
+	builder := NewLiteralType(name)
 
 	f.node.Decls = append(f.node.Decls, builder.node)
 	return builder
 }
 
 // Array returns a array type
-func (f *File) Array(name string) *ArrayTypeBuilder {
-	builder := NewArrayTypeBuilder(name)
+func (f *File) Array(name string) *ArrayType {
+	builder := NewArrayType(name)
 
 	f.node.Decls = append(f.node.Decls, builder.node)
 	return builder
 }
 
-// StructTypeBuilder builds a struct
-type StructTypeBuilder struct {
+// StructType builds a struct
+type StructType struct {
 	node *dst.GenDecl
 	file *dst.File
 }
 
-// NewStructTypeBuilder creates a new struct type builder
-func NewStructTypeBuilder(name string) *StructTypeBuilder {
+// NewStructType creates a new struct type builder
+func NewStructType(name string) *StructType {
 	fields := &dst.FieldList{}
 	fields.Closing = true
 
@@ -216,29 +216,29 @@ func NewStructTypeBuilder(name string) *StructTypeBuilder {
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", camelize(name)))
 	node.Decs.Start.Append(fmt.Sprintf("// stride:struct %s", dasherize(name)))
 
-	return &StructTypeBuilder{
+	return &StructType{
 		node: node,
 	}
 }
 
 // Name returns the type name
-func (b *StructTypeBuilder) Name() string {
+func (b *StructType) Name() string {
 	return b.node.Specs[0].(*dst.TypeSpec).Name.Name
 }
 
 // Commentf adds a comment
-func (b *StructTypeBuilder) Commentf(pattern string, args ...interface{}) {
+func (b *StructType) Commentf(pattern string, args ...interface{}) {
 	commentf(&b.node.Decs.Start, pattern, args...)
 }
 
-// Field defines a field
-func (b *StructTypeBuilder) Field(name, kind string, tags ...*Tag) {
+// AddField defines a field
+func (b *StructType) AddField(name, kind string, tags ...*TagDescriptor) {
 	field := property(camelize(name), kind)
 
-	if options := Tags(tags).String(); options != "" {
+	if tag := TagDescriptorCollection(tags).String(); tag != "" {
 		field.Tag = &dst.BasicLit{
 			Kind:  token.STRING,
-			Value: options,
+			Value: tag,
 		}
 	}
 
@@ -246,20 +246,20 @@ func (b *StructTypeBuilder) Field(name, kind string, tags ...*Tag) {
 	spec.Fields.List = append(spec.Fields.List, field)
 }
 
-// Method returns a struct method
-func (b *StructTypeBuilder) Method(name string) *MethodTypeBuilder {
-	builder := NewMethodTypeBuilder(name).Receiver("x", pointer(b.Name()))
+// Function returns a struct method
+func (b *StructType) Function(name string) *FunctionType {
+	builder := NewFunctionType(name).AddReceiver("x", pointer(b.Name()))
 	b.file.Decls = append(b.file.Decls, builder.node)
 	return builder
 }
 
-// LiteralTypeBuilder builds a literal type
-type LiteralTypeBuilder struct {
+// LiteralType builds a literal type
+type LiteralType struct {
 	node *dst.GenDecl
 }
 
-// NewLiteralTypeBuilder creates a new literal type builder
-func NewLiteralTypeBuilder(name string) *LiteralTypeBuilder {
+// NewLiteralType creates a new literal type builder
+func NewLiteralType(name string) *LiteralType {
 	node := &dst.GenDecl{
 		Tok: token.TYPE,
 		Specs: []dst.Spec{
@@ -278,23 +278,23 @@ func NewLiteralTypeBuilder(name string) *LiteralTypeBuilder {
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", camelize(name)))
 	node.Decs.Start.Append(fmt.Sprintf("// stride:literal %s", dasherize(name)))
 
-	return &LiteralTypeBuilder{
+	return &LiteralType{
 		node: node,
 	}
 }
 
 // Name returns the type name
-func (b *LiteralTypeBuilder) Name() string {
+func (b *LiteralType) Name() string {
 	return b.node.Specs[0].(*dst.TypeSpec).Name.Name
 }
 
 // Commentf adds a comment
-func (b *LiteralTypeBuilder) Commentf(pattern string, args ...interface{}) {
+func (b *LiteralType) Commentf(pattern string, args ...interface{}) {
 	commentf(&b.node.Decs.Start, pattern, args...)
 }
 
 // Element sets the element
-func (b *LiteralTypeBuilder) Element(name string) *LiteralTypeBuilder {
+func (b *LiteralType) Element(name string) *LiteralType {
 	b.node.Specs[0].(*dst.TypeSpec).Type = &dst.Ident{
 		Name: camelize(name),
 	}
@@ -302,13 +302,13 @@ func (b *LiteralTypeBuilder) Element(name string) *LiteralTypeBuilder {
 	return b
 }
 
-// ArrayTypeBuilder builds an array type
-type ArrayTypeBuilder struct {
+// ArrayType builds an array type
+type ArrayType struct {
 	node *dst.GenDecl
 }
 
-// NewArrayTypeBuilder creates a new ArrayTypeBuilder
-func NewArrayTypeBuilder(name string) *ArrayTypeBuilder {
+// NewArrayType creates a new ArrayType
+func NewArrayType(name string) *ArrayType {
 	node := &dst.GenDecl{
 		Tok: token.TYPE,
 		Specs: []dst.Spec{
@@ -328,23 +328,23 @@ func NewArrayTypeBuilder(name string) *ArrayTypeBuilder {
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", camelize(name)))
 	node.Decs.Start.Append(fmt.Sprintf("// stride:array %s", dasherize(name)))
 
-	return &ArrayTypeBuilder{
+	return &ArrayType{
 		node: node,
 	}
 }
 
 // Name returns the type name
-func (b *ArrayTypeBuilder) Name() string {
+func (b *ArrayType) Name() string {
 	return b.node.Specs[0].(*dst.TypeSpec).Name.Name
 }
 
 // Commentf adds a comment
-func (b *ArrayTypeBuilder) Commentf(pattern string, args ...interface{}) {
+func (b *ArrayType) Commentf(pattern string, args ...interface{}) {
 	commentf(&b.node.Decs.Start, pattern, args...)
 }
 
 // Element sets the element
-func (b *ArrayTypeBuilder) Element(name string) *ArrayTypeBuilder {
+func (b *ArrayType) Element(name string) *ArrayType {
 	b.node.Specs[0].(*dst.TypeSpec).Type.(*dst.ArrayType).Elt = &dst.Ident{
 		Name: camelize(name),
 	}
@@ -352,15 +352,15 @@ func (b *ArrayTypeBuilder) Element(name string) *ArrayTypeBuilder {
 	return b
 }
 
-var _ Builder = &MethodTypeBuilder{}
+var _ Builder = &FunctionType{}
 
-// MethodTypeBuilder builds a method
-type MethodTypeBuilder struct {
+// FunctionType builds a method
+type FunctionType struct {
 	node *dst.FuncDecl
 }
 
-// NewMethodTypeBuilder creates a new method type builder
-func NewMethodTypeBuilder(name string) *MethodTypeBuilder {
+// NewFunctionType creates a new method type builder
+func NewFunctionType(name string) *FunctionType {
 	node := &dst.FuncDecl{
 		// function receiver
 		Recv: &dst.FieldList{
@@ -390,37 +390,37 @@ func NewMethodTypeBuilder(name string) *MethodTypeBuilder {
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// stride:function %s", dasherize(name)))
 
-	return &MethodTypeBuilder{
+	return &FunctionType{
 		node: node,
 	}
 }
 
 // Name returns the type name
-func (b *MethodTypeBuilder) Name() string {
+func (b *FunctionType) Name() string {
 	return b.node.Name.Name
 }
 
 // Commentf adds a comment
-func (b *MethodTypeBuilder) Commentf(pattern string, args ...interface{}) {
+func (b *FunctionType) Commentf(pattern string, args ...interface{}) {
 	commentf(&b.node.Decs.Start, pattern, args...)
 }
 
-// Receiver creates a return parameter
-func (b *MethodTypeBuilder) Receiver(name, kind string) *MethodTypeBuilder {
+// AddReceiver creates a return parameter
+func (b *FunctionType) AddReceiver(name, kind string) *FunctionType {
 	field := property(name, kind)
 	b.node.Recv.List = append(b.node.Recv.List, field)
 	return b
 }
 
-// Param creates a parameter
-func (b *MethodTypeBuilder) Param(name, kind string) *MethodTypeBuilder {
+// AddParam creates a parameter
+func (b *FunctionType) AddParam(name, kind string) *FunctionType {
 	field := property(name, kind)
 	b.node.Type.Params.List = append(b.node.Type.Params.List, field)
 	return b
 }
 
 // Block sets the block
-func (b *MethodTypeBuilder) Block(content string, args ...interface{}) *MethodTypeBuilder {
+func (b *FunctionType) Block(content string, args ...interface{}) *FunctionType {
 	content = fmt.Sprintf(content, args...)
 	buffer := &bytes.Buffer{}
 
@@ -441,16 +441,11 @@ func (b *MethodTypeBuilder) Block(content string, args ...interface{}) *MethodTy
 	return b
 }
 
-// Return creates a return parameter
-func (b *MethodTypeBuilder) Return(kind string) *MethodTypeBuilder {
+// AddReturn creates a return parameter
+func (b *FunctionType) AddReturn(kind string) *FunctionType {
 	field := property("", kind)
 	b.node.Type.Results.List = append(b.node.Type.Results.List, field)
 	return b
-}
-
-// Build builds the method
-func (b *MethodTypeBuilder) Build() []dst.Decl {
-	return []dst.Decl{b.node}
 }
 
 // BlockWriter writes the block

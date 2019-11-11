@@ -64,7 +64,7 @@ func (g *ControllerGenerator) schema(root *File) {
 			g.param("Cookie", root, input, request.Parameters)
 
 			// input body
-			input.Field("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
+			input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
 
 			// NOTE: we handle the first request for now
 			break
@@ -79,12 +79,12 @@ func (g *ControllerGenerator) schema(root *File) {
 			g.param("Header", root, output, response.Parameters)
 
 			// output body
-			input.Field("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+			input.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
 
 			// output status method
 			method := output.
-				Method("Status").
-				Return("int").
+				Function("Status").
+				AddReturn("int").
 				Block("return %d", response.Code)
 
 			method.Commentf("Status returns the response status code")
@@ -94,17 +94,17 @@ func (g *ControllerGenerator) schema(root *File) {
 	}
 }
 
-func (g *ControllerGenerator) param(kind string, root *File, parent *StructTypeBuilder, parameters ParameterDescriptorCollection) {
+func (g *ControllerGenerator) param(kind string, root *File, parent *StructType, parameters ParameterDescriptorCollection) {
 	builder := root.Struct(parent.Name() + kind)
 	builder.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
 
 	for _, param := range parameters {
 		if strings.EqualFold(param.In, kind) {
-			builder.Field(param.Name, param.ParameterType.Kind(), param.Tags()...)
+			builder.AddField(param.Name, param.ParameterType.Kind(), param.Tags()...)
 		}
 	}
 
-	parent.Field(kind, pointer(builder.Name()), g.tagOfArg(kind))
+	parent.AddField(kind, pointer(builder.Name()), g.tagOfArg(kind))
 }
 
 func (g *ControllerGenerator) controller(root *File) {
@@ -113,9 +113,8 @@ func (g *ControllerGenerator) controller(root *File) {
 	builder.Commentf(g.Controller.Description)
 
 	// method mount
-	method := builder.Method("Mount")
+	method := builder.Function("Mount").AddParam("r", "chi.Router")
 	method.Commentf("Mount mounts all operations to the corresponding paths")
-	method.Param("r", "chi.Router")
 
 	// mount method block
 	g.mount(method)
@@ -124,7 +123,10 @@ func (g *ControllerGenerator) controller(root *File) {
 	for _, operation := range g.Controller.Operations {
 		name := camelize(operation.Name)
 
-		method = builder.Method(operation.Name)
+		method = builder.Function(operation.Name).
+			AddParam("w", "http.ResponseWriter").
+			AddParam("r", "*http.Request")
+
 		method.Commentf("%s handles endpoint %s %s", name, operation.Method, operation.Path)
 
 		if operation.Deprecated {
@@ -134,14 +136,11 @@ func (g *ControllerGenerator) controller(root *File) {
 		method.Commentf(operation.Description)
 		method.Commentf(operation.Summary)
 
-		method.Param("w", "http.ResponseWriter")
-		method.Param("r", "*http.Request")
-
 		g.operation(name, method)
 	}
 }
 
-func (g *ControllerGenerator) mount(builder *MethodTypeBuilder) {
+func (g *ControllerGenerator) mount(builder *FunctionType) {
 	buffer := NewBlockWriter()
 
 	for _, operation := range g.Controller.Operations {
@@ -157,7 +156,7 @@ func (g *ControllerGenerator) mount(builder *MethodTypeBuilder) {
 	builder.Block(buffer.String())
 }
 
-func (g *ControllerGenerator) operation(name string, builder *MethodTypeBuilder) {
+func (g *ControllerGenerator) operation(name string, builder *FunctionType) {
 	buffer := NewBlockWriter()
 
 	buffer.Write("reactor := restify.NewReactor(w, r)")
@@ -208,8 +207,8 @@ func (g *ControllerGenerator) name() string {
 	return name
 }
 
-func (g *ControllerGenerator) tagOfArg(kind string) *Tag {
-	return &Tag{
+func (g *ControllerGenerator) tagOfArg(kind string) *TagDescriptor {
+	return &TagDescriptor{
 		Key:  strings.ToLower(kind),
 		Name: "~",
 	}
