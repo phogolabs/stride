@@ -359,25 +359,12 @@ func (b *FunctionType) AddParam(name, kind string) *FunctionType {
 }
 
 // Body sets the body
-func (b *FunctionType) Body(content string, args ...interface{}) *FunctionType {
-	content = fmt.Sprintf(content, args...)
-	buffer := &bytes.Buffer{}
-
-	fmt.Fprintln(buffer, "package body")
-	fmt.Fprintln(buffer, "func body() {")
-	fmt.Fprintln(buffer, content)
-	fmt.Fprintln(buffer, "}")
-
-	file, err := decorator.Parse(buffer.String())
-	if err != nil {
-		panic(err)
+func (b *FunctionType) Body() *BlockType {
+	block := &BlockType{
+		node:   b.node.Body,
+		buffer: &bytes.Buffer{},
 	}
-
-	if node, ok := file.Decls[0].(*dst.FuncDecl); ok {
-		b.node.Body = node.Body
-	}
-
-	return b
+	return block
 }
 
 // AddReturn creates a return parameter
@@ -387,30 +374,50 @@ func (b *FunctionType) AddReturn(kind string) *FunctionType {
 	return b
 }
 
-// BlockWriter writes the block
-type BlockWriter struct {
+// BlockType represents a block type
+type BlockType struct {
+	node   *dst.BlockStmt
 	buffer *bytes.Buffer
 }
 
-// NewBlockWriter creates a new block writera
-func NewBlockWriter() *BlockWriter {
-	return &BlockWriter{
-		buffer: &bytes.Buffer{},
-	}
-}
-
 // Write the block
-func (b *BlockWriter) Write(content string, args ...interface{}) {
-	if b.buffer.Len() > 0 {
-		fmt.Fprintln(b.buffer)
-	}
-
+func (b *BlockType) Write(content string, args ...interface{}) {
 	fmt.Fprintf(b.buffer, content, args...)
+	fmt.Fprintln(b.buffer)
 }
 
-// String returns the block as string
-func (b *BlockWriter) String() string {
-	return b.buffer.String()
+// Build builds the block
+func (b *BlockType) Build() error {
+	const newline = "\n"
+
+	var (
+		content = b.buffer.String()
+		buffer  = &bytes.Buffer{}
+	)
+
+	fmt.Fprintln(buffer, "package body")
+	fmt.Fprintln(buffer, "func body() {")
+	fmt.Fprintln(buffer, strings.TrimSuffix(content, newline))
+	fmt.Fprintln(buffer, "}")
+
+	file, err := decorator.Parse(buffer.String())
+	if err != nil {
+		return err
+	}
+
+	if node, ok := file.Decls[0].(*dst.FuncDecl); ok {
+		b.node.List = append(b.node.List, node.Body.List...)
+	}
+
+	b.buffer.Reset()
+	return nil
+}
+
+// WriteComment writes the body block comment
+func (b *BlockType) WriteComment() {
+	fmt.Fprintln(b.buffer, "// stride:define:block:start body")
+	fmt.Fprintln(b.buffer, "// NOTE: You can your code within the comment block")
+	fmt.Fprintln(b.buffer, "// stride:define:block:end body")
 }
 
 func property(name, kind string) *dst.Field {

@@ -84,8 +84,16 @@ func (g *ControllerGenerator) schema(root *File) {
 			// output status method
 			method := output.
 				Function("Status").
-				AddReturn("int").
-				Body("return %d", response.Code)
+				AddReturn("int")
+
+			if body := method.Body(); body != nil {
+				body.WriteComment()
+				body.Write("return %d", response.Code)
+
+				if err := body.Build(); err != nil {
+					panic(err)
+				}
+			}
 
 			method.Commentf("Status returns the response status code")
 			// NOTE: we handle the first response for now
@@ -136,12 +144,12 @@ func (g *ControllerGenerator) controller(root *File) {
 		method.Commentf(operation.Description)
 		method.Commentf(operation.Summary)
 
-		g.operation(name, method)
+		g.operation(method)
 	}
 }
 
 func (g *ControllerGenerator) mount(builder *FunctionType) {
-	buffer := NewBlockWriter()
+	body := builder.Body()
 
 	for _, operation := range g.Controller.Operations {
 		var (
@@ -150,37 +158,41 @@ func (g *ControllerGenerator) mount(builder *FunctionType) {
 			handler = camelize(operation.Name)
 		)
 
-		buffer.Write("r.%s(%q, x.%s)", method, path, handler)
+		body.Write("r.%s(%q, x.%s)", method, path, handler)
 	}
 
-	builder.Body(buffer.String())
+	if err := body.Build(); err != nil {
+		panic(err)
+	}
 }
 
-func (g *ControllerGenerator) operation(name string, builder *FunctionType) {
-	buffer := NewBlockWriter()
+func (g *ControllerGenerator) operation(builder *FunctionType) {
+	var (
+		name = camelize(builder.Name())
+		body = builder.Body()
+	)
 
-	buffer.Write("reactor := restify.NewReactor(w, r)")
-	buffer.Write("")
-	buffer.Write("var (")
-	buffer.Write("   input  = &%sInput{}", name)
-	buffer.Write("   output = &%sOutput{}", name)
-	buffer.Write(")")
-	buffer.Write("")
-	buffer.Write("if err := reactor.Bind(input); err != nil {")
-	buffer.Write("   reactor.Render(err)")
-	buffer.Write("   return")
-	buffer.Write("}")
-	buffer.Write("")
-	buffer.Write("// stride:define:block:start body")
-	buffer.Write("// TODO: Please add your implementation here")
-	buffer.Write("// stride:define:block:end body")
-	buffer.Write("")
-	buffer.Write("if err := reactor.Render(output); err != nil {")
-	buffer.Write("   reactor.Render(err)")
-	buffer.Write("}")
+	body.Write("reactor := restify.NewReactor(w, r)")
+	body.Write("")
+	body.Write("var (")
+	body.Write("   input  = &%sInput{}", name)
+	body.Write("   output = &%sOutput{}", name)
+	body.Write(")")
+	body.Write("")
+	body.Write("if err := reactor.Bind(input); err != nil {")
+	body.Write("   reactor.Render(err)")
+	body.Write("   return")
+	body.Write("}")
+	body.Write("")
+	body.WriteComment()
+	body.Write("")
+	body.Write("if err := reactor.Render(output); err != nil {")
+	body.Write("   reactor.Render(err)")
+	body.Write("}")
 
-	// define the block
-	builder.Body(buffer.String())
+	if err := body.Build(); err != nil {
+		panic(err)
+	}
 }
 
 func (g *ControllerGenerator) spec(root *File) {

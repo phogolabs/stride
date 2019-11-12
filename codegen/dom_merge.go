@@ -49,7 +49,6 @@ func (m *Merger) Merge() error {
 	dstutil.Apply(m.source.node, m.append, nil)
 
 	//TODO: sort declarations
-
 	return nil
 }
 
