@@ -1,13 +1,11 @@
 package codegen
 
 import (
-	"fmt"
 	"go/token"
 	"strings"
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/dstutil"
-	"github.com/davecgh/go-spew/spew"
 )
 
 const (
@@ -17,13 +15,27 @@ const (
 	AnnotationGenerateFunction = "stride:generate:function"
 	// AnnotationGenerateField represents the annotation for fields
 	AnnotationGenerateField = "stride:generate:field"
+	// AnnotationDefineLiteral represents the annotation for user defined literal
+	AnnotationDefineLiteral = "stride:define:literal"
+	// AnnotationDefineArray represents the annotation for user defined array
+	AnnotationDefineArray = "stride:define:array"
 	// AnnotationDefineStruct represents the annotation for user defined struct
 	AnnotationDefineStruct = "stride:define:struct"
 	// AnnotationDefineField represents the annotation for user defined field
 	AnnotationDefineField = "stride:define:field"
 	// AnnotationDefineFunction represents the annotation for defined function
 	AnnotationDefineFunction = "stride:define:function"
+	// AnnotationDefineBlockStart represents the annotation for defined block start
+	AnnotationDefineBlockStart = "stride:define:block:start"
+	// AnnotationDefineBlockEnd represents the annotation for defined block end
+	AnnotationDefineBlockEnd = "stride:define:block:end"
 )
+
+// Range represents a range
+type Range struct {
+	Start int
+	End   int
+}
 
 // Merger merges files
 type Merger struct {
@@ -35,6 +47,9 @@ type Merger struct {
 func (m *Merger) Merge() error {
 	dstutil.Apply(m.target.node, m.merge, nil)
 	dstutil.Apply(m.source.node, m.append, nil)
+
+	//TODO: sort declarations
+
 	return nil
 }
 
@@ -57,7 +72,7 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 				name := dasherize(field.Names[0].Name)
 
 				// handle stride:define:field annotation
-				if key := m.annotation(AnnotationDefineField, field); strings.EqualFold(name, key) {
+				if key := m.annotation(AnnotationDefineField, field.Decorations().Start); strings.EqualFold(name, key) {
 					left.List = append(left.List, field)
 				}
 			}
@@ -69,19 +84,34 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 	if name, target := m.functionType(AnnotationGenerateFunction, node); target != nil {
 		if source := m.find(AnnotationGenerateFunction, name, m.source.node); source != nil {
 			var (
-				// left  = m.functionTypeBody(target)
+				left  = m.functionTypeBody(target)
 				right = m.functionTypeBody(source)
 			)
 
-			for _, stmt := range right.List {
-				fmt.Println("---")
-				spew.Dump(stmt)
-			}
+			if leftRange := m.functionTypeBodyRange(left); leftRange != nil {
+				if rightRange := m.functionTypeBodyRange(right); rightRange != nil {
+					var (
+						result = []dst.Stmt{}
+						items  = right.List[rightRange.Start : rightRange.End+1]
+					)
 
-			// fmt.Println("LEFT >>")
-			// dst.Print(left)
-			// fmt.Println("RIGHT >>")
-			// dst.Print(right)
+					for index, item := range left.List {
+						if index < leftRange.Start {
+							result = append(result, item)
+						}
+					}
+
+					result = append(result, items...)
+
+					for index, item := range left.List {
+						if index > leftRange.End {
+							result = append(result, item)
+						}
+					}
+
+					left.List = result
+				}
+			}
 		}
 
 		return false
@@ -95,6 +125,18 @@ func (m *Merger) append(cursor *dstutil.Cursor) bool {
 
 	if node == nil {
 		return true
+	}
+
+	// handle stride:define:literal annotation
+	if _, declaration := m.structType(AnnotationDefineLiteral, node); declaration != nil {
+		m.target.node.Decls = append(m.target.node.Decls, declaration)
+		return false
+	}
+
+	// handle stride:define:array annotation
+	if _, declaration := m.structType(AnnotationDefineArray, node); declaration != nil {
+		m.target.node.Decls = append(m.target.node.Decls, declaration)
+		return false
 	}
 
 	// handle stride:define:struct annotation
@@ -119,7 +161,7 @@ func (m *Merger) find(prefix, name string, target dst.Node) (tree dst.Node) {
 		}
 
 		if node := cursor.Node(); node != nil {
-			if key := m.annotation(prefix, node); strings.EqualFold(key, name) {
+			if key := m.annotation(prefix, node.Decorations().Start); strings.EqualFold(key, name) {
 				tree = node
 			}
 		}
@@ -137,7 +179,7 @@ func (m *Merger) structType(annotation string, node dst.Node) (string, *dst.GenD
 			if specs := declaration.Specs; len(specs) == 1 {
 				if typeSpec, ok := specs[0].(*dst.TypeSpec); ok {
 					name := dasherize(typeSpec.Name.Name)
-					if key := m.annotation(annotation, declaration); strings.EqualFold(name, key) {
+					if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {
 						return name, declaration
 					}
 				}
@@ -165,7 +207,7 @@ func (m *Merger) structTypeProperties(node dst.Node) *dst.FieldList {
 func (m *Merger) functionType(annotation string, node dst.Node) (string, *dst.FuncDecl) {
 	if declaration, ok := node.(*dst.FuncDecl); ok {
 		name := dasherize(declaration.Name.Name)
-		if key := m.annotation(annotation, node); strings.EqualFold(name, key) {
+		if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {
 			return name, declaration
 		}
 	}
@@ -177,11 +219,58 @@ func (m *Merger) functionTypeBody(node dst.Node) *dst.BlockStmt {
 	if declaration, ok := node.(*dst.FuncDecl); ok {
 		return declaration.Body
 	}
+	return &dst.BlockStmt{List: []dst.Stmt{}}
+}
+
+func (m *Merger) functionTypeBodyRange(block *dst.BlockStmt) *Range {
+	var (
+		count = len(block.List)
+		start = -1
+		end   = -1
+	)
+
+	annotated := func(key string) bool {
+		return strings.EqualFold(key, "body")
+	}
+
+	for index, node := range block.List {
+		decorations := node.Decorations()
+
+		if start < 0 {
+			name := AnnotationDefineBlockStart
+
+			if key := m.annotation(name, decorations.Start); annotated(key) {
+				start = index
+			} else if key := m.annotation(name, decorations.End); annotated(key) {
+				start = index + 1
+			}
+		}
+
+		if end < 0 {
+			name := AnnotationDefineBlockEnd
+
+			if key := m.annotation(name, decorations.Start); annotated(key) {
+				end = index - 1
+			} else if key := m.annotation(name, decorations.End); annotated(key) {
+				end = index
+			}
+		}
+	}
+
+	if start >= 0 && start <= count {
+		if end >= 0 && end <= count {
+			return &Range{
+				Start: start,
+				End:   end,
+			}
+		}
+	}
+
 	return nil
 }
 
-func (m *Merger) annotation(prefix string, node dst.Node) string {
-	for _, comment := range m.decorations(node) {
+func (m *Merger) annotation(prefix string, decorations dst.Decorations) string {
+	for _, comment := range decorations.All() {
 
 		comment = strings.TrimPrefix(comment, "//")
 		comment = strings.TrimSpace(comment)
