@@ -95,16 +95,25 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 						items  = right.List[rightRange.Start : rightRange.End+1]
 					)
 
+					// add top statements from the left
 					for index, item := range left.List {
 						if index < leftRange.Start {
+							if index == leftRange.Start-1 {
+								item.Decorations().End.Clear()
+							}
 							result = append(result, item)
 						}
 					}
 
+					// append the statements from the right
 					result = append(result, items...)
 
+					// append bottom statements from the left
 					for index, item := range left.List {
 						if index > leftRange.End {
+							if index == leftRange.End+1 {
+								item.Decorations().Start.Clear()
+							}
 							result = append(result, item)
 						}
 					}
