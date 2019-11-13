@@ -1,0 +1,31 @@
+package service
+
+// AddUserOutputHeader is a struct type auto-generated from OpenAPI spec
+// It is the header of AddUserOutput
+// stride:generate:struct add-user-output-header
+type AddUserOutputHeader struct {
+}
+
+// Status returns the response status code
+// stride:generate:function status
+func (x *AddUserOutput) Status() int {
+	// stride:define:block:start body
+	// NOTE: You can your code within the comment block
+	// stride:define:block:end body
+	return 200
+}
+
+// GetAccountsOutputHeader is a struct type auto-generated from OpenAPI spec
+// It is the header of GetAccountsOutput
+// stride:generate:struct get-accounts-output-header
+type GetAccountsOutputHeader struct {
+}
+
+// Status returns the response status code
+// stride:generate:function status
+func (x *GetAccountsOutput) Status() int {
+	// stride:define:block:start body
+	// NOTE: You can your code within the comment block
+	// stride:define:block:end body
+	return 200
+}

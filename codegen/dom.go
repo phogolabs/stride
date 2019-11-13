@@ -64,8 +64,8 @@ func (f *File) Name() string {
 // Merge merges the files
 func (f *File) Merge(source *File) error {
 	merger := &Merger{
-		target: f,
-		source: source,
+		Target: f,
+		Source: source,
 	}
 
 	return merger.Merge()
@@ -348,6 +348,17 @@ func (b *FunctionType) Commentf(pattern string, args ...interface{}) {
 func (b *FunctionType) AddReceiver(name, kind string) *FunctionType {
 	field := property(name, kind)
 	b.node.Recv.List = append(b.node.Recv.List, field)
+
+	key := fmt.Sprintf("%s:%s", dasherize(kind), dasherize(b.Name()))
+
+	var (
+		comments = b.node.Decs.Start.All()
+		index    = len(comments) - 1
+	)
+
+	comments[index] = fmt.Sprintf("// stride:generate:function %s", key)
+	b.node.Decs.Start.Replace(comments...)
+
 	return b
 }
 
@@ -418,6 +429,26 @@ func (b *BlockType) WriteComment() {
 	fmt.Fprintln(b.buffer, "// stride:define:block:start body")
 	fmt.Fprintln(b.buffer, "// NOTE: You can your code within the comment block")
 	fmt.Fprintln(b.buffer, "// stride:define:block:end body")
+}
+
+func kind(field *dst.Field) string {
+	kind := field.Type
+
+	if starExpr, ok := kind.(*dst.StarExpr); ok {
+		kind = starExpr.X
+	}
+
+	if selectorExpr, ok := kind.(*dst.SelectorExpr); ok {
+		if ident, ok := selectorExpr.X.(*dst.Ident); ok {
+			return fmt.Sprintf("%s.%s", ident.Name, selectorExpr.Sel.Name)
+		}
+	}
+
+	if ident, ok := kind.(*dst.Ident); ok {
+		return ident.Name
+	}
+
+	return ""
 }
 
 func property(name, kind string) *dst.Field {
@@ -493,6 +524,7 @@ func camelize(text string) string {
 }
 
 func dasherize(text string) string {
+	text = strings.TrimPrefix(text, "*")
 	return inflect.Dasherize(text)
 }
 

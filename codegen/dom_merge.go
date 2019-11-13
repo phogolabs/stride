@@ -1,6 +1,7 @@
 package codegen
 
 import (
+	"fmt"
 	"go/token"
 	"strings"
 
@@ -39,16 +40,17 @@ type Range struct {
 
 // Merger merges files
 type Merger struct {
-	target *File
-	source *File
+	Target *File
+	Source *File
 }
 
 // Merge merges the files
 func (m *Merger) Merge() error {
-	dstutil.Apply(m.target.node, m.merge, nil)
-	dstutil.Apply(m.source.node, m.append, nil)
+	dstutil.Apply(m.Target.node, m.merge, nil)
+	dstutil.Apply(m.Source.node, m.append, nil)
 
 	//TODO: sort declarations
+
 	return nil
 }
 
@@ -61,7 +63,7 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 
 	// handle stride:generate:struct annotation
 	if name, target := m.structType(AnnotationGenerateStruct, node); target != nil {
-		if source := m.find(AnnotationGenerateStruct, name, m.source.node); source != nil {
+		if source := m.find(AnnotationGenerateStruct, name, m.Source.node); source != nil {
 			var (
 				left  = m.structTypeProperties(target)
 				right = m.structTypeProperties(source)
@@ -81,44 +83,41 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 
 	// handle stride:generate:function annotation
 	if name, target := m.functionType(AnnotationGenerateFunction, node); target != nil {
-		if source := m.find(AnnotationGenerateFunction, name, m.source.node); source != nil {
+		if source := m.find(AnnotationGenerateFunction, name, m.Source.node); source != nil {
+			fmt.Println("-------")
+			fmt.Println("NAME", name)
+
 			var (
-				left  = m.functionTypeBody(target)
-				right = m.functionTypeBody(source)
+				left       = m.functionTypeBody(target)
+				leftRange  = m.functionTypeBodyRange(left)
+				right      = m.functionTypeBody(source)
+				rightRange = m.functionTypeBodyRange(right)
 			)
 
-			if leftRange := m.functionTypeBodyRange(left); leftRange != nil {
-				if rightRange := m.functionTypeBodyRange(right); rightRange != nil {
-					var (
-						result = []dst.Stmt{}
-						items  = right.List[rightRange.Start : rightRange.End+1]
-					)
+			if leftRange != nil && rightRange != nil {
+				fmt.Println("LEFT", leftRange)
+				fmt.Println("RIGHT", rightRange)
 
-					// add top statements from the left
-					for index, item := range left.List {
-						if index < leftRange.Start {
-							if index == leftRange.Start-1 {
-								item.Decorations().End.Clear()
-							}
-							result = append(result, item)
-						}
+				var (
+					result = []dst.Stmt{}
+					items  = right.List[rightRange.Start : rightRange.End+1]
+				)
+
+				for index, item := range left.List {
+					if index < leftRange.Start {
+						result = append(result, item)
 					}
-
-					// append the statements from the right
-					result = append(result, items...)
-
-					// append bottom statements from the left
-					for index, item := range left.List {
-						if index > leftRange.End {
-							if index == leftRange.End+1 {
-								item.Decorations().Start.Clear()
-							}
-							result = append(result, item)
-						}
-					}
-
-					left.List = result
 				}
+
+				result = append(result, items...)
+
+				for index, item := range left.List {
+					if index > leftRange.End {
+						result = append(result, item)
+					}
+				}
+
+				left.List = result
 			}
 		}
 
@@ -137,25 +136,25 @@ func (m *Merger) append(cursor *dstutil.Cursor) bool {
 
 	// handle stride:define:literal annotation
 	if _, declaration := m.structType(AnnotationDefineLiteral, node); declaration != nil {
-		m.target.node.Decls = append(m.target.node.Decls, declaration)
+		m.Target.node.Decls = append(m.Target.node.Decls, declaration)
 		return false
 	}
 
 	// handle stride:define:array annotation
 	if _, declaration := m.structType(AnnotationDefineArray, node); declaration != nil {
-		m.target.node.Decls = append(m.target.node.Decls, declaration)
+		m.Target.node.Decls = append(m.Target.node.Decls, declaration)
 		return false
 	}
 
 	// handle stride:define:struct annotation
 	if _, declaration := m.structType(AnnotationDefineStruct, node); declaration != nil {
-		m.target.node.Decls = append(m.target.node.Decls, declaration)
+		m.Target.node.Decls = append(m.Target.node.Decls, declaration)
 		return false
 	}
 
 	// handle stride:define:function annotation
 	if _, declaration := m.functionType(AnnotationDefineFunction, node); declaration != nil {
-		m.target.node.Decls = append(m.target.node.Decls, declaration)
+		m.Target.node.Decls = append(m.Target.node.Decls, declaration)
 		return false
 	}
 
@@ -215,7 +214,13 @@ func (m *Merger) structTypeProperties(node dst.Node) *dst.FieldList {
 func (m *Merger) functionType(annotation string, node dst.Node) (string, *dst.FuncDecl) {
 	if declaration, ok := node.(*dst.FuncDecl); ok {
 		name := dasherize(declaration.Name.Name)
+
+		if recv := declaration.Recv.List; len(recv) > 0 {
+			name = fmt.Sprintf("%s:%s", dasherize(kind(recv[0])), name)
+		}
+
 		if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {
+			fmt.Println(name, "FOUND")
 			return name, declaration
 		}
 	}
@@ -232,10 +237,13 @@ func (m *Merger) functionTypeBody(node dst.Node) *dst.BlockStmt {
 
 func (m *Merger) functionTypeBodyRange(block *dst.BlockStmt) *Range {
 	var (
-		count = len(block.List)
-		start = -1
-		end   = -1
+		start *int
+		end   *int
 	)
+
+	intPtr := func(value int) *int {
+		return &value
+	}
 
 	annotated := func(key string) bool {
 		return strings.EqualFold(key, "body")
@@ -244,37 +252,39 @@ func (m *Merger) functionTypeBodyRange(block *dst.BlockStmt) *Range {
 	for index, node := range block.List {
 		decorations := node.Decorations()
 
-		if start < 0 {
+		if start == nil {
 			name := AnnotationDefineBlockStart
 
 			if key := m.annotation(name, decorations.Start); annotated(key) {
-				start = index
+				start = intPtr(index)
+				fmt.Println("START", *start)
 			} else if key := m.annotation(name, decorations.End); annotated(key) {
-				start = index + 1
+				start = intPtr(index + 1)
+				fmt.Println("START", *start)
 			}
 		}
 
-		if end < 0 {
+		if end == nil {
 			name := AnnotationDefineBlockEnd
 
 			if key := m.annotation(name, decorations.Start); annotated(key) {
-				end = index - 1
+				end = intPtr(index - 1)
+				fmt.Println("END", *end)
 			} else if key := m.annotation(name, decorations.End); annotated(key) {
-				end = index
+				end = intPtr(index)
+				fmt.Println("END", *end)
 			}
 		}
 	}
 
-	if start >= 0 && start <= count {
-		if end >= 0 && end <= count {
-			return &Range{
-				Start: start,
-				End:   end,
-			}
-		}
+	if start == nil || end == nil {
+		return nil
 	}
 
-	return nil
+	return &Range{
+		Start: *start,
+		End:   *end,
+	}
 }
 
 func (m *Merger) annotation(prefix string, decorations dst.Decorations) string {

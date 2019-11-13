@@ -1,0 +1,16 @@
+package service
+
+// GetAccountsOutputHeader is a struct type auto-generated from OpenAPI spec
+// It is the header of GetAccountsOutput
+// stride:generate:struct get-accounts-output-header
+type GetAccountsOutputHeader struct {
+}
+
+// Status returns the response status code
+// stride:generate:function status
+func (x *GetAccountsOutput) Status() int {
+	return 200
+	// stride:define:block:start body
+  fmt.Println("BOTTOM")
+	// stride:define:block:end body
+}
