@@ -7,6 +7,7 @@ import (
 
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/phogolabs/log"
 	"github.com/phogolabs/parcello"
 )
 
@@ -54,15 +55,17 @@ func (e *Editor) load(w http.ResponseWriter, r *http.Request) {
 }
 
 func (e *Editor) save(w http.ResponseWriter, r *http.Request) {
+	logger := log.GetContext(r.Context())
+
 	spec, err := os.Create(e.Path)
 	if err != nil {
-		// middleware.GetLogger(r).WithError(err).Error("failed to save the spec")
+		logger.WithError(err).Error("failed to save the spec")
 		return
 	}
 	defer spec.Close()
 
 	if _, err := io.Copy(spec, r.Body); err != nil {
-		// middleware.GetLogger(r).WithError(err).Error("failed to save the spec")
+		logger.WithError(err).Error("failed to save the spec")
 	}
 }
 
