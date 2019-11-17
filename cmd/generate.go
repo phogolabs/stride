@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
 	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/service"
 )
 
 // OpenAPIGenerator provides a subcommands to generate source code from OpenAPI specification
@@ -35,21 +35,13 @@ func (m *OpenAPIGenerator) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
-	var (
-		loader = openapi3.NewSwaggerLoader()
-		path   = ctx.String("file-path")
-	)
-
-	spec, err := loader.LoadSwaggerFromFile(path)
-	if err != nil {
-		return err
+	generator := &service.Generator{
+		Path:     ctx.String("file-path"),
+		Resolver: codegen.NewResolver(),
+		Generator: &codegen.Generator{
+			Path: "./test",
+		},
 	}
 
-	resolver := codegen.NewResolver()
-	resolved := resolver.Resolve(spec)
-	generator := &codegen.Generator{
-		Path: "./test",
-	}
-
-	return generator.Generate(resolved)
+	return generator.Generate()
 }
