@@ -57,16 +57,15 @@ func (e *Editor) load(w http.ResponseWriter, r *http.Request) {
 func (e *Editor) save(w http.ResponseWriter, r *http.Request) {
 	logger := log.GetContext(r.Context())
 
-	spec, err := os.Create(e.Path)
+	file, err := os.Create(e.Path)
 	if err != nil {
-		logger.WithError(err).Error("failed to save the spec")
-		return
+		logger.WithError(err).Error("failed to create the spec file")
+	} else if _, err := io.Copy(file, r.Body); err != nil {
+		logger.WithError(err).Error("failed to save the spec fiel")
 	}
-	defer spec.Close()
 
-	if _, err := io.Copy(spec, r.Body); err != nil {
-		logger.WithError(err).Error("failed to save the spec")
-	}
+	// close the file
+	file.Close()
 }
 
 func (e *Editor) serve(w http.ResponseWriter, r *http.Request) {
