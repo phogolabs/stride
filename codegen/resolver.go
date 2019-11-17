@@ -15,6 +15,13 @@ type Resolver struct {
 	cache TypeDescriptorMap
 }
 
+// NewResolver creates a new resolver
+func NewResolver() *Resolver {
+	return &Resolver{
+		cache: TypeDescriptorMap{},
+	}
+}
+
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
 	defer r.cache.Clear()
