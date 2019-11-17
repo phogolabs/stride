@@ -15,8 +15,8 @@ require (
 	github.com/phogolabs/flaw v0.0.0-20191023101459-361ba19d20f2 // indirect
 	github.com/phogolabs/log v0.0.0-20191023072150-db076f8d3d3e
 	github.com/phogolabs/parcello v0.8.1
-	github.com/stretchr/testify v1.4.0 // indirect
+	github.com/phogolabs/restify v0.0.0-20191023072640-89e37aece274 // indirect
+	github.com/phogolabs/schema v0.0.0-20190406105649-68a93910a72e
 	golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7 // indirect
-	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20191101174307-f02a19dded36 // indirect
 )
