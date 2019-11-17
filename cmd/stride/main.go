@@ -10,21 +10,23 @@ import (
 
 func main() {
 	var (
-		generator = &cmd.OpenAPIGenerator{}
-		viewer    = &cmd.OpenAPIViewer{}
 		editor    = &cmd.OpenAPIEditor{}
+		viewer    = &cmd.OpenAPIViewer{}
+		generator = &cmd.OpenAPIGenerator{}
+		validator = &cmd.OpenAPIValidator{}
 	)
 
 	commands := []*cli.Command{
-		generator.CreateCommand(),
-		viewer.CreateCommand(),
 		editor.CreateCommand(),
+		viewer.CreateCommand(),
+		generator.CreateCommand(),
+		validator.CreateCommand(),
 	}
 
 	app := &cli.App{
 		Name:      "stride",
 		HelpName:  "stride",
-		Usage:     "OpenAPI Viewer and Generator",
+		Usage:     "OpenAPI viewer, editor, generator and validator",
 		UsageText: "stride [global options]",
 		Version:   "1.0-beta-05",
 		Writer:    os.Stdout,

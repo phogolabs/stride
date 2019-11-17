@@ -1,14 +1,10 @@
 package cmd
 
 import (
-	"net/http"
-
-	"github.com/go-chi/chi"
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
-	"github.com/phogolabs/parcello"
-	"github.com/phogolabs/rest/middleware"
+	"github.com/phogolabs/stride/service"
 )
 
 // OpenAPIViewer provides a subcommands to view OpenAPI specification in the browser
@@ -43,22 +39,14 @@ func (m *OpenAPIViewer) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIViewer) view(ctx *cli.Context) error {
-	router := chi.NewRouter()
+	var (
+		config = &service.ViewerConfig{
+			Addr: ctx.String("listen-addr"),
+			Path: ctx.String("file-path"),
+		}
+		server = service.NewViewer(config)
+	)
 
-	router.Use(middleware.StripSlashes)
-	router.Use(middleware.RealIP)
-	router.Use(middleware.Recoverer)
-	router.Use(middleware.NoCache)
-	router.Use(middleware.Logger)
-	router.Use(middleware.LiveReloader)
-
-	router.Mount("/", http.FileServer(parcello.ManagerAt("viewer")))
-	// router.Mount("/", http.FileServer(http.Dir("./template/viewer")))
-	router.Mount("/swagger.spec", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, ctx.String("file-path"))
-	}))
-
-	log.Infof("http server is listening on http://%v", ctx.String("listen-addr"))
-
-	return http.ListenAndServe(ctx.String("listen-addr"), router)
+	log.Infof("http server is listening on http://%v", config.Addr)
+	return server.ListenAndServe()
 }
