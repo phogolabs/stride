@@ -17,6 +17,8 @@ type Resolver struct {
 
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
+	defer r.cache.Clear()
+
 	var (
 		components  = swagger.Components
 		ctx         = emptyCtx

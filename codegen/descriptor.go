@@ -35,6 +35,13 @@ func (m TypeDescriptorMap) Get(name string) *TypeDescriptor {
 	return nil
 }
 
+// Clear clears the map
+func (m TypeDescriptorMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
+}
+
 // Collection return the map as collection
 func (m TypeDescriptorMap) Collection() TypeDescriptorCollection {
 	descriptors := TypeDescriptorCollection{}
