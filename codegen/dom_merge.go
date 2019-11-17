@@ -84,41 +84,84 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 	// handle stride:generate:function annotation
 	if name, target := m.functionType(AnnotationGenerateFunction, node); target != nil {
 		if source := m.find(AnnotationGenerateFunction, name, m.Source.node); source != nil {
-			var (
-				left       = m.functionTypeBody(target)
-				leftRange  = m.functionTypeBodyRange(left)
-				right      = m.functionTypeBody(source)
-				rightRange = m.functionTypeBodyRange(right)
-			)
-
-			if leftRange != nil && rightRange != nil {
-				var (
-					result = []dst.Stmt{}
-					items  = right.List[rightRange.Start : rightRange.End+1]
-				)
-
-				for index, item := range left.List {
-					if index < leftRange.Start {
-						result = append(result, item)
-					}
-				}
-
-				result = append(result, items...)
-
-				for index, item := range left.List {
-					if index > leftRange.End {
-						result = append(result, item)
-					}
-				}
-
-				left.List = result
-			}
+			m.squash(target, source)
 		}
 
 		return false
 	}
 
 	return true
+}
+
+func (m *Merger) squash(target, source dst.Node) {
+	var (
+		left       = m.functionTypeBody(target)
+		leftRange  = m.functionTypeBodyRange(left)
+		right      = m.functionTypeBody(source)
+		rightRange = m.functionTypeBodyRange(right)
+	)
+
+	if leftRange != nil && rightRange != nil {
+		var (
+			result = []dst.Stmt{}
+			items  = right.List[rightRange.Start : rightRange.End+1]
+		)
+
+		// append top block
+		for index, item := range left.List {
+			if index < leftRange.Start {
+				result = append(result, item)
+			}
+		}
+
+		// append the range block
+		result = append(result, items...)
+
+		// append bottom block
+		for index, item := range left.List {
+			if index > leftRange.End {
+				result = append(result, item)
+			}
+		}
+
+		// sanitize comments
+		m.sanitize(result)
+
+		left.List = result
+	}
+}
+
+func (m *Merger) sanitize(items []dst.Stmt) {
+	// const name = "body"
+
+	// for index := 0; index < len(items)-1; index++ {
+	// 	node := items[index].Decorations()
+	// 	next := items[index+1].Decorations()
+
+	// 	for _, upper := range node.Start.All() {
+	// 		for _, lower := range next.Start.All() {
+	// 			if upper == lower {
+	// 			}
+	// 		}
+
+	// 		for _, lower := range next.End.All() {
+	// 			if upper == lower {
+	// 			}
+	// 		}
+	// 	}
+
+	// 	for _, upper := range node.End.All() {
+	// 		for _, lower := range next.Start.All() {
+	// 			if upper == lower {
+	// 			}
+	// 		}
+
+	// 		for _, lower := range next.End.All() {
+	// 			if upper == lower {
+	// 			}
+	// 		}
+	// 	}
+	// }
 }
 
 func (m *Merger) append(cursor *dstutil.Cursor) bool {

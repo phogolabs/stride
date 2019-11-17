@@ -21,44 +21,18 @@ type SpecDescriptor struct {
 // TypeDescriptorMap definition
 type TypeDescriptorMap map[string]*TypeDescriptor
 
-// CollectFromParameters collect the type descriptors from parameters collection
-func (m TypeDescriptorMap) CollectFromParameters(descriptors ParameterDescriptorCollection) {
-	for _, descriptor := range descriptors {
-		m.add(descriptor.ParameterType)
-	}
+// Add adds a type descriptor
+func (m TypeDescriptorMap) Add(descriptor *TypeDescriptor) {
+	m[descriptor.Name] = descriptor
 }
 
-// CollectFromRequests collect the type descriptors from requests collection
-func (m TypeDescriptorMap) CollectFromRequests(descriptors RequestDescriptorCollection) {
-	for _, descriptor := range descriptors {
-		m.CollectFromParameters(descriptor.Parameters)
-		m.add(descriptor.RequestType)
+// Get returns the TypeDescriptor for given name
+func (m TypeDescriptorMap) Get(name string) *TypeDescriptor {
+	if descriptor, ok := m[name]; ok {
+		return descriptor
 	}
-}
 
-// CollectFromResponses collect the type descriptors from responses collection
-func (m TypeDescriptorMap) CollectFromResponses(descriptors ResponseDescriptorCollection) {
-	for _, descriptor := range descriptors {
-		m.CollectFromParameters(descriptor.Parameters)
-		m.add(descriptor.ResponseType)
-	}
-}
-
-// CollectFromSchemas collect the type descriptors from types collection
-func (m TypeDescriptorMap) CollectFromSchemas(descriptors TypeDescriptorCollection) {
-	for _, descriptor := range descriptors {
-		m.add(descriptor)
-	}
-}
-
-// CollectFromControllers collect the type descriptors from controllers collection
-func (m TypeDescriptorMap) CollectFromControllers(descriptors ControllerDescriptorCollection) {
-	for _, controller := range descriptors {
-		for _, operation := range controller.Operations {
-			m.CollectFromRequests(operation.Requests)
-			m.CollectFromResponses(operation.Responses)
-		}
-	}
+	return nil
 }
 
 // Collection return the map as collection
@@ -73,28 +47,6 @@ func (m TypeDescriptorMap) Collection() TypeDescriptorCollection {
 	sort.Sort(descriptors)
 
 	return descriptors
-}
-
-func (m TypeDescriptorMap) add(descriptor *TypeDescriptor) {
-	if descriptor.IsPrimitive {
-		return
-	}
-
-	key := descriptor.Name
-
-	if _, ok := m[key]; ok {
-		return
-	}
-
-	m[key] = descriptor
-
-	if element := descriptor.Element; element != nil {
-		m.add(element)
-	}
-
-	for _, property := range descriptor.Properties {
-		m.add(property.PropertyType)
-	}
 }
 
 // TypeDescriptorCollection definition

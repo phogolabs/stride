@@ -11,26 +11,26 @@ import (
 )
 
 // Resolver resolves all swagger spec
-type Resolver struct{}
+type Resolver struct {
+	cache TypeDescriptorMap
+}
 
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
 	var (
 		components  = swagger.Components
 		ctx         = emptyCtx
-		types       = TypeDescriptorMap{}
 		controllers = r.operations(ctx, swagger.Paths)
 	)
 
-	types.CollectFromSchemas(r.schemas(ctx, components.Schemas))
-	types.CollectFromParameters(r.parameters(ctx, components.Parameters))
-	types.CollectFromParameters(r.headers(ctx, components.Headers))
-	types.CollectFromRequests(r.requests(ctx, components.RequestBodies))
-	types.CollectFromResponses(r.responses(ctx, components.Responses))
-	types.CollectFromControllers(controllers)
+	r.schemas(ctx, components.Schemas)
+	r.parameters(ctx, components.Parameters)
+	r.headers(ctx, components.Headers)
+	r.requests(ctx, components.RequestBodies)
+	r.responses(ctx, components.Responses)
 
 	return &SpecDescriptor{
-		Types:       types.Collection(),
+		Types:       r.cache.Collection(),
 		Controllers: controllers,
 	}
 }
@@ -212,17 +212,24 @@ func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.He
 }
 
 func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
+	if descriptor := r.cache.Get(ctx.Name); descriptor != nil {
+		return descriptor
+	}
+
 	// reference type descriptor
 	if reference := ctx.Schema.Ref; reference != "" {
 		descriptor := r.resolve(ctx.Dereference())
 
 		if ctx.Parent.IsRoot() {
-			return &TypeDescriptor{
+			descriptor = &TypeDescriptor{
 				Name:        inflect.Dasherize(ctx.Name),
 				Description: ctx.Schema.Value.Description,
 				IsAlias:     true,
 				Element:     descriptor,
 			}
+
+			// add the descriptor to the cache
+			r.cache.Add(descriptor)
 		}
 
 		return descriptor
@@ -271,6 +278,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		// sort properties by name
 		sort.Sort(descriptor.Properties)
 
+		// add the descriptor to the cache
+		r.cache.Add(descriptor)
+
 		return descriptor
 	}
 
@@ -290,6 +300,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			},
 		}
 
+		// add the descriptor to the cache
+		r.cache.Add(descriptor)
+
 		return descriptor
 	}
 
@@ -306,6 +319,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 					"values": values,
 				},
 			}
+
+			// add the descriptor to the cache
+			r.cache.Add(descriptor)
 
 			return descriptor
 		}
@@ -343,6 +359,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			Element:     descriptor,
 		}
 	}
+
+	// add the descriptor to the cache
+	r.cache.Add(descriptor)
 
 	return descriptor
 }
