@@ -361,16 +361,16 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	}
 
 	if ctx.Parent.IsRoot() {
-		return &TypeDescriptor{
+		descriptor = &TypeDescriptor{
 			Name:        ctx.Name,
 			Description: ctx.Schema.Value.Description,
 			IsAlias:     true,
 			Element:     descriptor,
 		}
-	}
 
-	// add the descriptor to the cache
-	r.cache.Add(descriptor)
+		// add the descriptor to the cache
+		r.cache.Add(descriptor)
+	}
 
 	return descriptor
 }

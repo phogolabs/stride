@@ -482,6 +482,9 @@ func (m ControllerDescriptorMap) Collection() ControllerDescriptorCollection {
 		descriptors = append(descriptors, descriptor)
 	}
 
+	// sort the descriptors
+	sort.Sort(descriptors)
+
 	return descriptors
 }
 
