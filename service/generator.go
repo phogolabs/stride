@@ -5,11 +5,15 @@ import (
 	"github.com/phogolabs/stride/codegen"
 )
 
+//go:generate counterfeiter -fake-name SpecResolver -o ../fake/spec_resolver.go . SpecResolver
+
 // SpecResolver resolves the spec
 type SpecResolver interface {
 	// Resolve resolves the spec
 	Resolve(spec *openapi3.Swagger) *codegen.SpecDescriptor
 }
+
+//go:generate counterfeiter -fake-name CodeGenerator -o ../fake/code_generator.go . CodeGenerator
 
 // CodeGenerator generates the code
 type CodeGenerator interface {
@@ -33,10 +37,10 @@ func (g *Generator) Generate() error {
 		return err
 	}
 
-	spec := g.Resolver.Resolve(swagger)
-
-	if err := g.Generator.Generate(spec); err != nil {
-		return err
+	if spec := g.Resolver.Resolve(swagger); spec != nil {
+		if err := g.Generator.Generate(spec); err != nil {
+			return err
+		}
 	}
 
 	return nil

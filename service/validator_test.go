@@ -12,7 +12,7 @@ var _ = Describe("Validator", func() {
 
 	BeforeEach(func() {
 		validator = &service.Validator{
-			Path: "../fixture/schemas-array.yaml",
+			Path: path("../fixture/schemas-array.yaml"),
 		}
 	})
 

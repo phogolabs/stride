@@ -11,12 +11,15 @@ import (
 )
 
 var _ = Describe("Viewer", func() {
-	var server *http.Server
+	var (
+		server *http.Server
+		config *service.ViewerConfig
+	)
 
 	BeforeEach(func() {
-		config := &service.ViewerConfig{
+		config = &service.ViewerConfig{
 			Addr: ":8080",
-			Path: "../fixture/schemas-array.yaml",
+			Path: path("../fixture/schemas-array.yaml"),
 		}
 
 		server = service.NewViewer(config)

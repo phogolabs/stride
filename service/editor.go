@@ -60,8 +60,12 @@ func (e *Editor) save(w http.ResponseWriter, r *http.Request) {
 	file, err := os.Create(e.Path)
 	if err != nil {
 		logger.WithError(err).Error("failed to create the spec file")
-	} else if _, err := io.Copy(file, r.Body); err != nil {
+	} else if _, err = io.Copy(file, r.Body); err != nil {
 		logger.WithError(err).Error("failed to save the spec fiel")
+	}
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 
 	// close the file
