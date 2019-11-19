@@ -1,0 +1,53 @@
+package service_test
+
+import (
+	"context"
+	"net/http"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
+
+	"github.com/phogolabs/stride/service"
+)
+
+var _ = FDescribe("Editor", func() {
+	var server *http.Server
+
+	BeforeEach(func() {
+		config := &service.EditorConfig{
+			Addr: ":8080",
+			Path: "../fixture/schemas-array.yaml",
+		}
+
+		server = service.NewEditor(config)
+		go server.ListenAndServe()
+	})
+
+	AfterEach(func() {
+		Expect(server.Shutdown(context.TODO())).To(Succeed())
+	})
+
+	Context("POST /swagger.spec", func() {
+		It("saves the spec successfully", func() {
+			response, err := http.Post("http://127.0.0.1:8080/swagger.spec", "", nil)
+			Expect(err).To(BeNil())
+			Expect(response.StatusCode).To(Equal(200))
+		})
+	})
+
+	Context("GET /swagger.spec", func() {
+		It("returns the spec successfully", func() {
+			response, err := http.Get("http://127.0.0.1:8080/swagger.spec")
+			Expect(err).To(BeNil())
+			Expect(response.StatusCode).To(Equal(200))
+		})
+	})
+
+	Context("GET /*", func() {
+		It("returns the assets", func() {
+			response, err := http.Get("http://127.0.0.1:8080/")
+			Expect(err).To(BeNil())
+			Expect(response.StatusCode).To(Equal(200))
+		})
+	})
+})
