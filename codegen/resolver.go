@@ -1,11 +1,13 @@
 package codegen
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/davecgh/go-spew/spew"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-openapi/inflect"
 )
@@ -237,6 +239,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 
 	// reference type descriptor
 	if reference := ctx.Schema.Ref; reference != "" {
+		fmt.Println("------------")
+		spew.Dump(ctx.Schema)
+
 		descriptor := r.resolve(ctx.Dereference())
 
 		if ctx.Parent.IsRoot() {
@@ -398,6 +403,10 @@ func (r *Resolver) kind(schema *openapi3.Schema) string {
 	switch kind {
 	case "string":
 		switch format {
+		case "binary":
+			return "binary"
+		case "byte":
+			return "byte"
 		case "uuid":
 			return "uuid"
 		case "date":

@@ -35,10 +35,12 @@ func (r *ResolverContext) Child(name string, schema *openapi3.SchemaRef) *Resolv
 
 // Dereference returns the dereferenced context
 func (r *ResolverContext) Dereference() *ResolverContext {
+	nick := filepath.Base(r.Schema.Ref)
+
 	ctx := &ResolverContext{
-		Name:   filepath.Base(r.Schema.Ref),
+		Name:   dasherize(nick),
 		Schema: &openapi3.SchemaRef{Value: r.Schema.Value},
-		Parent: r,
+		Parent: emptyCtx,
 	}
 
 	return ctx
@@ -66,8 +68,8 @@ func (r *ResolverContext) name(text string) string {
 		items = append(items, text)
 	}
 
-	text = strings.Join(items, "_")
-	text = inflect.Underscore(text)
+	text = strings.Join(items, "-")
+	text = dasherize(text)
 
 	return text
 }

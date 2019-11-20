@@ -1,32 +1,32 @@
 openapi: 3.0.1
 components:
   schemas:
-    Binary:
+    BinaryKind:
       type: string
       format: binary
     BinaryRef:
-      $ref: '#/components/schemas/Binary'
-    Byte:
+      $ref: '#/components/schemas/BinaryKind'
+    ByteKind:
       type: string
       format: byte
     ByteRef:
-      $ref: '#/components/schemas/Byte'
-    Date:
+      $ref: '#/components/schemas/ByteKind'
+    DateKind:
       type: string
       format: date
     DateRef:
-      $ref: '#/components/schemas/Date'
-    DateTime:
+      $ref: '#/components/schemas/DateKind'
+    DateTimeKind:
       type: string
       format: date-time
     DateTimeRef:
-      $ref: '#/components/schemas/DateTime'
-    String:
+      $ref: '#/components/schemas/DateTimeKind'
+    StringKind:
       type: string
     StringRef:
-      $ref: '#/components/schemas/String'
-    UUID:
+      $ref: '#/components/schemas/StringKind'
+    UUIDKind:
       type: string
       format: uuid
     UUIDRef:
-      $ref: '#/components/schemas/UUID'
+      $ref: '#/components/schemas/UUIDKind'

@@ -9,7 +9,7 @@ import (
 	"github.com/phogolabs/stride/codegen"
 )
 
-var _ = XDescribe("Resolver", func() {
+var _ = FDescribe("Resolver", func() {
 	var spec *codegen.SpecDescriptor
 
 	SchemaAt := func(index int) func() *codegen.TypeDescriptor {
@@ -122,7 +122,7 @@ var _ = XDescribe("Resolver", func() {
 
 	Describe("Components", func() {
 		Describe("Schemas", func() {
-			Describe("Integer", func() {
+			Describe("integer", func() {
 				BeforeEach(func() {
 					spec = resolve("schemas-integer.yaml")
 					Expect(spec.Types).To(HaveLen(4))
@@ -132,20 +132,22 @@ var _ = XDescribe("Resolver", func() {
 					ItResolvesPrimitiveType("int32", SchemaElementAt(0))
 
 					ItResolvesAliasType("int32", SchemaAt(0))
-					ItResolvesAliasType("int32", SchemaElementAt(1))
 					ItResolvesAliasType("int32-ref", SchemaAt(1))
+
+					ItResolvesAliasType("int32", SchemaElementAt(1))
 				})
 
 				Describe("int64", func() {
 					ItResolvesPrimitiveType("int64", SchemaElementAt(2))
 
 					ItResolvesAliasType("int64", SchemaAt(2))
-					ItResolvesAliasType("int64", SchemaElementAt(3))
 					ItResolvesAliasType("int64-ref", SchemaAt(3))
+
+					ItResolvesAliasType("int64", SchemaElementAt(3))
 				})
 			})
 
-			Describe("Number", func() {
+			Describe("number", func() {
 				BeforeEach(func() {
 					spec = resolve("schemas-number.yaml")
 					Expect(spec.Types).To(HaveLen(4))
@@ -154,72 +156,86 @@ var _ = XDescribe("Resolver", func() {
 				Describe("double", func() {
 					ItResolvesPrimitiveType("double", SchemaElementAt(0))
 
-					ItResolvesAliasType("Double", SchemaAt(0))
-					ItResolvesAliasType("Double", SchemaElementAt(1))
-					ItResolvesAliasType("DoubleRef", SchemaAt(1))
+					ItResolvesAliasType("double", SchemaAt(0))
+					ItResolvesAliasType("double-ref", SchemaAt(1))
+
+					ItResolvesAliasType("double", SchemaElementAt(1))
 				})
 
 				Describe("float", func() {
 					ItResolvesPrimitiveType("float", SchemaElementAt(2))
 
 					ItResolvesAliasType("float", SchemaAt(2))
-					ItResolvesAliasType("float", SchemaElementAt(3))
 					ItResolvesAliasType("float-ref", SchemaAt(3))
+
+					ItResolvesAliasType("float", SchemaElementAt(3))
 				})
 			})
 
-			Describe("String", func() {
+			Describe("string", func() {
 				BeforeEach(func() {
 					spec = resolve("schemas-string.yaml")
 					Expect(spec.Types).To(HaveLen(12))
+
+					fmt.Println("------------------")
+
+					for index, descriptor := range spec.Types {
+						fmt.Println(index, descriptor.Name, descriptor.Element)
+					}
 				})
 
 				Describe("binary", func() {
-					ItResolvesPrimitiveType("binary", SchemaElementAt(0))
+					ItResolvesPrimitiveType("string", SchemaElementAt(0))
 
 					ItResolvesAliasType("binary", SchemaAt(0))
-					ItResolvesAliasType("binary", SchemaElementAt(1))
 					ItResolvesAliasType("binary-ref", SchemaAt(1))
+
+					ItResolvesAliasType("binary", SchemaElementAt(1))
 				})
 
 				Describe("byte", func() {
 					ItResolvesPrimitiveType("byte", SchemaElementAt(2))
 
 					ItResolvesAliasType("byte", SchemaAt(2))
-					ItResolvesAliasType("byte", SchemaElementAt(3))
 					ItResolvesAliasType("byte-ref", SchemaAt(3))
+
+					ItResolvesAliasType("byte", SchemaElementAt(3))
 				})
 
 				Describe("date", func() {
 					ItResolvesPrimitiveType("date", SchemaElementAt(4))
 
 					ItResolvesAliasType("date", SchemaAt(4))
-					ItResolvesAliasType("date", SchemaElementAt(5))
 					ItResolvesAliasType("date-ref", SchemaAt(5))
+
+					ItResolvesAliasType("date", SchemaElementAt(5))
 				})
 
 				Describe("date-time", func() {
 					ItResolvesPrimitiveType("date-time", SchemaElementAt(6))
 
 					ItResolvesAliasType("date-time", SchemaAt(6))
-					ItResolvesAliasType("date-time", SchemaElementAt(7))
 					ItResolvesAliasType("date-time-ref", SchemaAt(7))
+
+					ItResolvesAliasType("date-time", SchemaElementAt(7))
 				})
 
-				Describe("string", func() {
-					ItResolvesPrimitiveType("string", SchemaElementAt(8))
+				FDescribe("string", func() {
+					// ItResolvesPrimitiveType("string", SchemaElementAt(8))
 
-					ItResolvesAliasType("string", SchemaAt(8))
-					ItResolvesAliasType("string", SchemaElementAt(9))
-					ItResolvesAliasType("string-ref", SchemaAt(9))
+					// ItResolvesAliasType("string-kind", SchemaAt(8))
+					// ItResolvesAliasType("string-ref", SchemaAt(9))
+
+					ItResolvesAliasType("string-kind", SchemaElementAt(9))
 				})
 
 				Describe("uuid", func() {
 					ItResolvesPrimitiveType("uuid", SchemaElementAt(10))
 
 					ItResolvesAliasType("uuid", SchemaAt(10))
-					ItResolvesAliasType("uuid", SchemaElementAt(11))
 					ItResolvesAliasType("uuid-ref", SchemaAt(11))
+
+					ItResolvesAliasType("uuid", SchemaElementAt(11))
 				})
 			})
 
@@ -256,6 +272,7 @@ var _ = XDescribe("Resolver", func() {
 				BeforeEach(func() {
 					spec = resolve("schemas-object.yaml")
 					Expect(spec.Types).To(HaveLen(5))
+
 				})
 
 				ItResolvesObjectType("account", SchemaAt(0))
@@ -269,26 +286,26 @@ var _ = XDescribe("Resolver", func() {
 					var property *codegen.PropertyDescriptor
 
 					property = spec.Types[0].Properties[0]
+					Expect(property.Name).To(Equal("id"))
+					Expect(property.PropertyType.Name).To(Equal("uuid"))
+					Expect(property.PropertyType.IsPrimitive).To(BeTrue())
+
+					property = spec.Types[0].Properties[1]
 					Expect(property.Name).To(Equal("address"))
 					Expect(property.PropertyType.Name).To(Equal("account-address"))
 					Expect(property.PropertyType.IsClass).To(BeTrue())
 					Expect(property.PropertyType.Properties[2].Name).To(Equal("location"))
-					Expect(property.PropertyType.Properties[2].PropertyType.Name).To(Equal("AccountAddressLocation"))
+					Expect(property.PropertyType.Properties[2].PropertyType.Name).To(Equal("account-address-location"))
 					Expect(property.PropertyType.Properties[2].PropertyType.IsClass).To(BeTrue())
 
-					property = spec.Types[0].Properties[1]
+					property = spec.Types[0].Properties[2]
 					Expect(property.Name).To(Equal("age"))
 					Expect(property.PropertyType.Name).To(Equal("int32"))
 					Expect(property.PropertyType.IsPrimitive).To(BeTrue())
 
-					property = spec.Types[0].Properties[2]
+					property = spec.Types[0].Properties[3]
 					Expect(property.Name).To(Equal("first_name"))
 					Expect(property.PropertyType.Name).To(Equal("string"))
-					Expect(property.PropertyType.IsPrimitive).To(BeTrue())
-
-					property = spec.Types[0].Properties[3]
-					Expect(property.Name).To(Equal("id"))
-					Expect(property.PropertyType.Name).To(Equal("uuid"))
 					Expect(property.PropertyType.IsPrimitive).To(BeTrue())
 
 					property = spec.Types[0].Properties[4]
