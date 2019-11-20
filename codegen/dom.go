@@ -10,7 +10,6 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
-	"github.com/go-openapi/inflect"
 )
 
 // Builder builds a node from the code
@@ -495,58 +494,4 @@ func property(name, kind string) *dst.Field {
 	field.Type = getType()
 
 	return field
-}
-
-func camelize(text string) string {
-	const (
-		separator = "-"
-		suffix    = "id"
-	)
-
-	var (
-		parts  = strings.Split(inflect.Dasherize(text), separator)
-		buffer = &bytes.Buffer{}
-	)
-
-	for index, part := range parts {
-		if index > 0 {
-			buffer.WriteString(separator)
-		}
-
-		if strings.EqualFold(part, suffix) {
-			part = strings.ToUpper(part)
-		}
-
-		buffer.WriteString(part)
-	}
-
-	return inflect.Camelize(buffer.String())
-}
-
-func dasherize(text string) string {
-	text = strings.TrimPrefix(text, "*")
-	return inflect.Dasherize(text)
-}
-
-func commentf(decorator *dst.Decorations, text string, args ...interface{}) {
-	if text == "" {
-		return
-	}
-
-	var (
-		comments = decorator.All()
-		index    = len(comments) - 1
-	)
-
-	text = fmt.Sprintf(text, args...)
-	text = fmt.Sprintf("// %s", text)
-
-	decorator.Clear()
-	decorator.Append(comments[:index]...)
-	decorator.Append(text)
-	decorator.Append(comments[index:]...)
-}
-
-func pointer(text string) string {
-	return fmt.Sprintf("*%s", text)
 }

@@ -3,6 +3,7 @@ package codegen
 import (
 	"bytes"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -72,9 +73,7 @@ func (t TypeDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t TypeDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // TypeDescriptor represents a type
@@ -205,19 +204,19 @@ func (d *TypeDescriptor) Kind() string {
 
 	switch {
 	case name == "date-time":
-		return "time.Time"
+		name = "time.Time"
 	case name == "date":
-		return "time.Time"
+		name = "time.Time"
 	case name == "uuid":
-		return "schema.UUID"
-	case d.IsPrimitive:
-		return name
+		name = "schema.UUID"
+	default:
+		if !d.IsPrimitive {
+			name = camelize(name)
+		}
 	}
 
-	name = camelize(name)
-
 	if item := element(d); item.IsNullable {
-		name = fmt.Sprintf("*%s", name)
+		name = pointer(name)
 	}
 
 	return name
@@ -307,9 +306,7 @@ func (t PropertyDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t PropertyDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // ParameterDescriptor definition
@@ -369,9 +366,7 @@ func (t ParameterDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t ParameterDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // RequestDescriptor definition
@@ -399,9 +394,7 @@ func (t RequestDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t RequestDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // ResponseDescriptor definition
@@ -438,9 +431,7 @@ func (t ResponseDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t ResponseDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // ControllerDescriptor definition
@@ -453,25 +444,35 @@ type ControllerDescriptor struct {
 // ControllerDescriptorMap definition
 type ControllerDescriptorMap map[string]*ControllerDescriptor
 
-// Get returns a descriptor
-func (m ControllerDescriptorMap) Get(keys []string) *ControllerDescriptor {
-	if len(keys) == 0 {
-		keys = []string{"default"}
+// Add adds a descriptor to the map
+func (m ControllerDescriptorMap) Add(descriptor *ControllerDescriptor) {
+	if _, ok := m[descriptor.Name]; ok {
+		return
 	}
 
-	var (
-		name           = keys[0]
-		controller, ok = m[name]
-	)
+	m[descriptor.Name] = descriptor
+}
+
+// Get returns a descriptor
+func (m ControllerDescriptorMap) Get(key string) *ControllerDescriptor {
+	descriptor, ok := m[key]
 
 	if !ok {
-		controller = &ControllerDescriptor{
-			Name: name,
+		descriptor = &ControllerDescriptor{
+			Name: key,
 		}
+
+		m[key] = descriptor
 	}
 
-	m[name] = controller
-	return controller
+	return descriptor
+}
+
+// Clear clears the map
+func (m ControllerDescriptorMap) Clear() {
+	for k := range m {
+		delete(m, k)
+	}
 }
 
 // Collection returns the descriptors as collection
@@ -504,9 +505,7 @@ func (t ControllerDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t ControllerDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // OperationDescriptor definition
@@ -538,9 +537,7 @@ func (t OperationDescriptorCollection) Less(i, j int) bool {
 
 // Swap swaps the elements with indexes i and j.
 func (t OperationDescriptorCollection) Swap(i, j int) {
-	var x = t[i]
-	t[i] = t[j]
-	t[j] = x
+	reflect.Swapper(t)(i, j)
 }
 
 // TagDescriptor represents a tag

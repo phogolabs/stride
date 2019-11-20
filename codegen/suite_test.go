@@ -22,7 +22,7 @@ func resolve(name string) *codegen.SpecDescriptor {
 	var (
 		path     = fmt.Sprintf("../fixture/%s", name)
 		loader   = openapi3.NewSwaggerLoader()
-		resolver = &codegen.Resolver{}
+		resolver = codegen.NewResolver()
 	)
 
 	spec, err := loader.LoadSwaggerFromFile(path)

@@ -9,7 +9,7 @@ import (
 	"github.com/phogolabs/stride/codegen"
 )
 
-var _ = FDescribe("Merge", func() {
+var _ = PDescribe("Merge", func() {
 	var merger *codegen.Merger
 
 	BeforeEach(func() {

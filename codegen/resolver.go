@@ -58,10 +58,20 @@ func (r *Resolver) schemas(ctx *ResolverContext, schemas map[string]*openapi3.Sc
 func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*openapi3.PathItem) ControllerDescriptorCollection {
 	descriptors := ControllerDescriptorMap{}
 
+	key := func(tags []string) string {
+		key := "default"
+
+		if len(tags) > 0 {
+			key = tags[0]
+		}
+
+		return key
+	}
+
 	for path, spec := range operations {
 		for method, spec := range spec.Operations() {
 			var (
-				controller = descriptors.Get(spec.Tags)
+				controller = descriptors.Get(key(spec.Tags))
 				cctx       = ctx.Child(spec.OperationID, nil)
 			)
 
