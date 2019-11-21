@@ -123,7 +123,7 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 			schema := content.Schema
 
 			if reference := spec.Ref; reference != "" {
-				if spec.Ref != "" {
+				if schema.Ref == "" {
 					schema = &openapi3.SchemaRef{
 						Ref:   reference,
 						Value: schema.Value,
@@ -170,7 +170,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 			schema := content.Schema
 
 			if reference := spec.Ref; reference != "" {
-				if spec.Ref != "" {
+				if schema.Ref == "" {
 					schema = &openapi3.SchemaRef{
 						Ref:   reference,
 						Value: schema.Value,
@@ -203,8 +203,19 @@ func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*opena
 	descriptors := ParameterDescriptorCollection{}
 
 	for name, spec := range parameters {
+		schema := spec.Value.Schema
+
+		if reference := spec.Ref; reference != "" {
+			if schema.Ref == "" {
+				schema = &openapi3.SchemaRef{
+					Ref:   reference,
+					Value: schema.Value,
+				}
+			}
+		}
+
 		var (
-			cctx      = ctx.Child(name, spec.Value.Schema)
+			cctx      = ctx.Child(name, schema)
 			parameter = &ParameterDescriptor{
 				Name:          spec.Value.Name,
 				In:            spec.Value.In,
