@@ -9,7 +9,7 @@ require (
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-openapi/inflect v0.19.0
 	github.com/golang/protobuf v1.3.2 // indirect
-	github.com/onsi/ginkgo v1.10.2
+	github.com/onsi/ginkgo v1.10.3
 	github.com/onsi/gomega v1.7.0
 	github.com/phogolabs/cli v0.0.0-20191117115633-737d0af245aa
 	github.com/phogolabs/flaw v0.0.0-20191023101459-361ba19d20f2 // indirect
