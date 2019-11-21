@@ -131,19 +131,19 @@ var _ = FDescribe("Resolver", func() {
 				Describe("Int32", func() {
 					ItResolvesPrimitiveType("int32", SchemaElementAt(0))
 
-					ItResolvesAliasType("int32", SchemaAt(0))
+					ItResolvesAliasType("int32-kind", SchemaAt(0))
 					ItResolvesAliasType("int32-ref", SchemaAt(1))
 
-					ItResolvesAliasType("int32", SchemaElementAt(1))
+					ItResolvesAliasType("int32-kind", SchemaElementAt(1))
 				})
 
 				Describe("int64", func() {
 					ItResolvesPrimitiveType("int64", SchemaElementAt(2))
 
-					ItResolvesAliasType("int64", SchemaAt(2))
+					ItResolvesAliasType("int64-kind", SchemaAt(2))
 					ItResolvesAliasType("int64-ref", SchemaAt(3))
 
-					ItResolvesAliasType("int64", SchemaElementAt(3))
+					ItResolvesAliasType("int64-kind", SchemaElementAt(3))
 				})
 			})
 
@@ -154,21 +154,21 @@ var _ = FDescribe("Resolver", func() {
 				})
 
 				Describe("double", func() {
-					ItResolvesPrimitiveType("double", SchemaElementAt(0))
+					ItResolvesPrimitiveType("float64", SchemaElementAt(0))
 
-					ItResolvesAliasType("double", SchemaAt(0))
+					ItResolvesAliasType("double-kind", SchemaAt(0))
 					ItResolvesAliasType("double-ref", SchemaAt(1))
 
-					ItResolvesAliasType("double", SchemaElementAt(1))
+					ItResolvesAliasType("double-kind", SchemaElementAt(1))
 				})
 
 				Describe("float", func() {
-					ItResolvesPrimitiveType("float", SchemaElementAt(2))
+					ItResolvesPrimitiveType("float32", SchemaElementAt(2))
 
-					ItResolvesAliasType("float", SchemaAt(2))
+					ItResolvesAliasType("float-kind", SchemaAt(2))
 					ItResolvesAliasType("float-ref", SchemaAt(3))
 
-					ItResolvesAliasType("float", SchemaElementAt(3))
+					ItResolvesAliasType("float-kind", SchemaElementAt(3))
 				})
 			})
 
@@ -176,55 +176,49 @@ var _ = FDescribe("Resolver", func() {
 				BeforeEach(func() {
 					spec = resolve("schemas-string.yaml")
 					Expect(spec.Types).To(HaveLen(12))
-
-					fmt.Println("------------------")
-
-					for index, descriptor := range spec.Types {
-						fmt.Println(index, descriptor.Name, descriptor.Element)
-					}
 				})
 
 				Describe("binary", func() {
-					ItResolvesPrimitiveType("string", SchemaElementAt(0))
+					ItResolvesPrimitiveType("binary", SchemaElementAt(0))
 
-					ItResolvesAliasType("binary", SchemaAt(0))
+					ItResolvesAliasType("binary-kind", SchemaAt(0))
 					ItResolvesAliasType("binary-ref", SchemaAt(1))
 
-					ItResolvesAliasType("binary", SchemaElementAt(1))
+					ItResolvesAliasType("binary-kind", SchemaElementAt(1))
 				})
 
 				Describe("byte", func() {
 					ItResolvesPrimitiveType("byte", SchemaElementAt(2))
 
-					ItResolvesAliasType("byte", SchemaAt(2))
+					ItResolvesAliasType("byte-kind", SchemaAt(2))
 					ItResolvesAliasType("byte-ref", SchemaAt(3))
 
-					ItResolvesAliasType("byte", SchemaElementAt(3))
+					ItResolvesAliasType("byte-kind", SchemaElementAt(3))
 				})
 
 				Describe("date", func() {
 					ItResolvesPrimitiveType("date", SchemaElementAt(4))
 
-					ItResolvesAliasType("date", SchemaAt(4))
+					ItResolvesAliasType("date-kind", SchemaAt(4))
 					ItResolvesAliasType("date-ref", SchemaAt(5))
 
-					ItResolvesAliasType("date", SchemaElementAt(5))
+					ItResolvesAliasType("date-kind", SchemaElementAt(5))
 				})
 
 				Describe("date-time", func() {
 					ItResolvesPrimitiveType("date-time", SchemaElementAt(6))
 
-					ItResolvesAliasType("date-time", SchemaAt(6))
+					ItResolvesAliasType("date-time-kind", SchemaAt(6))
 					ItResolvesAliasType("date-time-ref", SchemaAt(7))
 
-					ItResolvesAliasType("date-time", SchemaElementAt(7))
+					ItResolvesAliasType("date-time-kind", SchemaElementAt(7))
 				})
 
-				FDescribe("string", func() {
-					// ItResolvesPrimitiveType("string", SchemaElementAt(8))
+				Describe("string", func() {
+					ItResolvesPrimitiveType("string", SchemaElementAt(8))
 
-					// ItResolvesAliasType("string-kind", SchemaAt(8))
-					// ItResolvesAliasType("string-ref", SchemaAt(9))
+					ItResolvesAliasType("string-kind", SchemaAt(8))
+					ItResolvesAliasType("string-ref", SchemaAt(9))
 
 					ItResolvesAliasType("string-kind", SchemaElementAt(9))
 				})
@@ -232,10 +226,10 @@ var _ = FDescribe("Resolver", func() {
 				Describe("uuid", func() {
 					ItResolvesPrimitiveType("uuid", SchemaElementAt(10))
 
-					ItResolvesAliasType("uuid", SchemaAt(10))
+					ItResolvesAliasType("uuid-kind", SchemaAt(10))
 					ItResolvesAliasType("uuid-ref", SchemaAt(11))
 
-					ItResolvesAliasType("uuid", SchemaElementAt(11))
+					ItResolvesAliasType("uuid-kind", SchemaElementAt(11))
 				})
 			})
 
@@ -259,11 +253,14 @@ var _ = FDescribe("Resolver", func() {
 					Expect(spec.Types).To(HaveLen(2))
 				})
 
-				ItResolvesArrayType("array", SchemaAt(0))
-				ItResolvesPrimitiveType("string", SchemaElementAt(0))
+				Describe("array", func() {
+					ItResolvesPrimitiveType("string", SchemaElementAt(0))
 
-				ItResolvesAliasType("array-ref", SchemaAt(1))
-				ItResolvesArrayType("array", SchemaElementAt(1))
+					ItResolvesArrayType("array-kind", SchemaAt(0))
+					ItResolvesAliasType("array-ref", SchemaAt(1))
+
+					ItResolvesArrayType("array-kind", SchemaElementAt(1))
+				})
 			})
 
 			Describe("Object", func() {
