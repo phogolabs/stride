@@ -1,20 +1,4 @@
 openapi: 3.0.1
-servers: []
-info:
-  description: |
-    This is a sample HTTP API. The purpose of the project is to demonstrate
-    best practices for designing a good architecture for HTTP Restful server in
-    Golag.  
-  version: "1.0.0"
-  title: Bank API 12s2aaaa s123111333
-  termsOfService: https://wwww.phogolabs.com
-  contact:
-    email: contact@phogolabs.com
-    url: https://wwww.phogolabs.com
-  license:
-    name: MIT
-    url: 'http://www.apache.org/licenses/LICENSE-2.0.html'
-paths:
 components:
   schemas:
     AccountStatus:

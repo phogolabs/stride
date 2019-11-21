@@ -1,0 +1,19 @@
+openapi: 3.0.1
+components:
+  responses:
+    DoubleKind:
+      content:
+        application/json:
+          schema:
+            type: number
+            format: double
+    DoubleRef:
+      $ref: '#/components/responses/DoubleKind'
+    FloatKind:
+      content:
+        application/json:
+          schema:
+            type: number
+            format: float
+    FloatRef:
+      $ref: '#/components/responses/FloatKind'

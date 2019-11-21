@@ -1,0 +1,19 @@
+openapi: 3.0.1
+components:
+  responses:
+    Int32Kind:
+      content:
+        application/json:
+          schema:
+            type: integer
+            format: int32
+    Int32Ref:
+      $ref: '#/components/responses/Int32Kind'
+    Int64Kind:
+      content:
+        application/json:
+          schema:
+            type: integer
+            format: int64
+    Int64Ref:
+      $ref: '#/components/responses/Int64Kind'

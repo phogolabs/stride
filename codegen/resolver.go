@@ -120,8 +120,19 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 				continue
 			}
 
+			schema := content.Schema
+
+			if reference := spec.Ref; reference != "" {
+				if spec.Ref != "" {
+					schema = &openapi3.SchemaRef{
+						Ref:   reference,
+						Value: schema.Value,
+					}
+				}
+			}
+
 			var (
-				cctx    = ctx.Child(name, content.Schema)
+				cctx    = ctx.Child(name, schema)
 				request = &RequestDescriptor{
 					ContentType: contentType,
 					Description: spec.Value.Description,
@@ -156,8 +167,19 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 				continue
 			}
 
+			schema := content.Schema
+
+			if reference := spec.Ref; reference != "" {
+				if spec.Ref != "" {
+					schema = &openapi3.SchemaRef{
+						Ref:   reference,
+						Value: schema.Value,
+					}
+				}
+			}
+
 			var (
-				cctx     = ctx.Child(name, content.Schema)
+				cctx     = ctx.Child(name, schema)
 				response = &ResponseDescriptor{
 					Code:         code,
 					ContentType:  contentType,
