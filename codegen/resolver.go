@@ -245,8 +245,19 @@ func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.He
 	descriptors := ParameterDescriptorCollection{}
 
 	for name, spec := range headers {
+		schema := spec.Value.Schema
+
+		if reference := spec.Ref; reference != "" {
+			if schema.Ref == "" {
+				schema = &openapi3.SchemaRef{
+					Ref:   reference,
+					Value: schema.Value,
+				}
+			}
+		}
+
 		var (
-			cctx   = ctx.Child(name, spec.Value.Schema)
+			cctx   = ctx.Child(name, schema)
 			header = &ParameterDescriptor{
 				Name:          name,
 				In:            "header",

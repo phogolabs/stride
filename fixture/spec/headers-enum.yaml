@@ -1,10 +1,9 @@
 openapi: 3.0.1
 components:
-  parameters:
+  headers:
     AccountStatus:
-      $ref: '#/components/parameters/TransactionStatus'
+      $ref: '#/components/headers/TransactionStatus'
     TransactionStatus:
-      name: TransactionStatus
       schema:
         type: string
         enum: [pending, completed]

@@ -1,8 +1,7 @@
 openapi: 3.0.1
 components:
-  parameters:
+  headers:
     Account:
-      name: Account
       schema:
         type: object
         required:
@@ -41,4 +40,4 @@ components:
             type: string
             enum: [pending, completed]
     AccountRef:
-      $ref: '#/components/parameters/Account'
+      $ref: '#/components/headers/Account'
