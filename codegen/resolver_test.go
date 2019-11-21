@@ -9,7 +9,7 @@ import (
 	"github.com/phogolabs/stride/codegen"
 )
 
-var _ = FDescribe("Resolver", func() {
+var _ = Describe("Resolver", func() {
 	var spec *codegen.SpecDescriptor
 
 	SchemaAt := func(index int) func() *codegen.TypeDescriptor {
@@ -268,8 +268,7 @@ var _ = FDescribe("Resolver", func() {
 
 				BeforeEach(func() {
 					spec = resolve("schemas-object.yaml")
-					Expect(spec.Types).To(HaveLen(5))
-
+					Expect(spec.Types).To(HaveLen(6))
 				})
 
 				ItResolvesObjectType("account", SchemaAt(0))
@@ -278,6 +277,12 @@ var _ = FDescribe("Resolver", func() {
 				ItResolvesAliasType("account-ref", SchemaAt(3))
 				ItResolvesObjectType("account", SchemaElementAt(3))
 				ItResolvesEnumType("account-status", SchemaAt(4), values)
+
+				It("resolves schemas without type successfully", func() {
+					descriptor := spec.Types[5]
+					Expect(descriptor.Name).To(Equal("z-map"))
+					Expect(descriptor.IsClass).To(BeTrue())
+				})
 
 				It("has a nested property types", func() {
 					var property *codegen.PropertyDescriptor

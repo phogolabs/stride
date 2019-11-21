@@ -413,19 +413,19 @@ func (r *Resolver) kind(schema *openapi3.Schema) string {
 		}
 	case "integer":
 		switch format {
-		case "int", "int32":
-			return "int32"
 		case "int64":
 			return "int64"
+		case "int", "int32":
+			fallthrough
 		default:
 			return "int32"
 		}
 	case "number":
 		switch format {
-		case "float", "float32":
-			return "float32"
 		case "double", "float64":
 			return "float64"
+		case "float", "float32":
+			fallthrough
 		default:
 			return "float32"
 		}

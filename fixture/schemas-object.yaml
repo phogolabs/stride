@@ -1,8 +1,12 @@
 openapi: 3.0.1
 components:
   schemas:
+    ZMap:
+      type:
     Account:
       type: object
+      required:
+      - id
       properties:
         address:
           type: object
