@@ -1112,4 +1112,37 @@ var _ = Describe("Resolver", func() {
 			})
 		})
 	})
+
+	Describe("Operations", func() {
+		BeforeEach(func() {
+			spec = resolve("operations.yaml")
+			Expect(len(spec.Types)).To(Equal(2))
+		})
+
+		ItResolvesObjectType("account", SchemaAt(0))
+		ItResolvesArrayType("account-array", SchemaAt(1))
+
+		It("resolves all operations successfully", func() {
+			Expect(spec.Controllers).To(HaveLen(1))
+
+			descriptor := spec.Controllers[0]
+			Expect(descriptor.Name).To(Equal("account"))
+			Expect(descriptor.Operations).To(HaveLen(2))
+
+			var op *codegen.OperationDescriptor
+
+			op = descriptor.Operations[0]
+			Expect(op.Name).To(Equal("get-account-by-id"))
+			Expect(op.Requests).To(HaveLen(0))
+			Expect(op.Responses).To(HaveLen(1))
+			Expect(op.Parameters).To(HaveLen(1))
+			Expect(op.Parameters[0].Name).To(Equal("accountId"))
+
+			op = descriptor.Operations[1]
+			Expect(op.Name).To(Equal("get-accounts"))
+			Expect(op.Requests).To(HaveLen(0))
+			Expect(op.Responses).To(HaveLen(1))
+			Expect(op.Parameters).To(HaveLen(0))
+		})
+	})
 })

@@ -375,7 +375,6 @@ type RequestDescriptor struct {
 	Description string
 	Required    bool
 	RequestType *TypeDescriptor
-	Parameters  ParameterDescriptorCollection
 }
 
 // RequestDescriptorCollection definition
@@ -517,6 +516,7 @@ type OperationDescriptor struct {
 	Description string
 	Deprecated  bool
 	Tags        []string
+	Parameters  ParameterDescriptorCollection
 	Requests    RequestDescriptorCollection
 	Responses   ResponseDescriptorCollection
 }

@@ -55,13 +55,13 @@ func (g *ControllerGenerator) schema(root *File) {
 
 		for _, request := range operation.Requests {
 			// path input
-			g.param("Path", root, input, request.Parameters)
+			g.param("Path", root, input, operation.Parameters)
 			// query input
-			g.param("Query", root, input, request.Parameters)
+			g.param("Query", root, input, operation.Parameters)
 			// header input
-			g.param("Header", root, input, request.Parameters)
+			g.param("Header", root, input, operation.Parameters)
 			// cookie input
-			g.param("Cookie", root, input, request.Parameters)
+			g.param("Cookie", root, input, operation.Parameters)
 
 			// input body
 			input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
@@ -79,7 +79,7 @@ func (g *ControllerGenerator) schema(root *File) {
 			g.param("Header", root, output, response.Parameters)
 
 			// output body
-			input.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+			output.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
 
 			// output status method
 			method := output.

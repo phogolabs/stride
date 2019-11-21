@@ -90,12 +90,13 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 			operation := &OperationDescriptor{
 				Path:        path,
 				Method:      method,
-				Name:        spec.OperationID,
+				Name:        dasherize(spec.OperationID),
 				Description: spec.Description,
 				Summary:     spec.Summary,
 				Deprecated:  spec.Deprecated,
 				Tags:        spec.Tags,
-				Requests:    r.requests(cctx, requests, r.parameters(cctx, parameters)...),
+				Parameters:  r.parameters(cctx, parameters),
+				Requests:    r.requests(cctx, requests),
 				Responses:   r.responses(cctx, responses),
 			}
 
@@ -106,7 +107,7 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 	return descriptors.Collection()
 }
 
-func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.RequestBodyRef, params ...*ParameterDescriptor) RequestDescriptorCollection {
+func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.RequestBodyRef) RequestDescriptorCollection {
 	descriptors := RequestDescriptorCollection{}
 
 	for name, spec := range bodies {
@@ -132,17 +133,16 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 			}
 
 			var (
-				cctx    = ctx.Child(name, schema)
-				request = &RequestDescriptor{
+				cctx       = ctx.Child(name, schema)
+				descriptor = &RequestDescriptor{
 					ContentType: contentType,
 					Description: spec.Value.Description,
 					Required:    spec.Value.Required,
 					RequestType: r.resolve(cctx),
-					Parameters:  params,
 				}
 			)
 
-			descriptors = append(descriptors, request)
+			descriptors = append(descriptors, descriptor)
 		}
 	}
 
@@ -277,6 +277,10 @@ func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.He
 func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	if descriptor := r.cache.Get(ctx.Name); descriptor != nil {
 		return descriptor
+	}
+
+	if ctx.Schema == nil {
+		return nil
 	}
 
 	// reference type descriptor
