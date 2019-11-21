@@ -479,6 +479,9 @@ func (m ControllerDescriptorMap) Collection() ControllerDescriptorCollection {
 	descriptors := ControllerDescriptorCollection{}
 
 	for _, descriptor := range m {
+		// sort the operations
+		sort.Sort(descriptor.Operations)
+
 		descriptors = append(descriptors, descriptor)
 	}
 

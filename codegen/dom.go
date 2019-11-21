@@ -12,6 +12,11 @@ import (
 	"github.com/dave/dst/decorator"
 )
 
+//go:generate counterfeiter -fake-name Writer -o ../fake/writer.go . Writer
+
+// Writer represents a writer
+type Writer io.Writer
+
 // Builder builds a node from the code
 type Builder interface {
 	Name() string
@@ -36,8 +41,8 @@ func NewFile(name string) *File {
 	}
 }
 
-// Open opens a file
-func Open(name string) (*File, error) {
+// OpenFile opens a file
+func OpenFile(name string) (*File, error) {
 	reader, err := os.Open(name)
 	if err != nil {
 		return nil, err
@@ -58,6 +63,11 @@ func Open(name string) (*File, error) {
 // Name returns the name of the file
 func (f *File) Name() string {
 	return f.name
+}
+
+// Node returns the node
+func (f *File) Node() *dst.File {
+	return f.node
 }
 
 // Merge merges the files
@@ -156,6 +166,11 @@ func NewStructType(name string) *StructType {
 	}
 }
 
+// Node returns the node
+func (b *StructType) Node() *dst.GenDecl {
+	return b.node
+}
+
 // Name returns the type name
 func (b *StructType) Name() string {
 	return b.node.Specs[0].(*dst.TypeSpec).Name.Name
@@ -187,7 +202,11 @@ func (b *StructType) AddField(name, kind string, tags ...*TagDescriptor) {
 // Function returns a struct method
 func (b *StructType) Function(name string) *FunctionType {
 	builder := NewFunctionType(name).AddReceiver("x", pointer(b.Name()))
-	b.file.Decls = append(b.file.Decls, builder.node)
+
+	if b.file != nil {
+		b.file.Decls = append(b.file.Decls, builder.node)
+	}
+
 	return builder
 }
 
@@ -226,6 +245,11 @@ func (b *LiteralType) Name() string {
 	return b.node.Specs[0].(*dst.TypeSpec).Name.Name
 }
 
+// Node returns the node
+func (b *LiteralType) Node() *dst.GenDecl {
+	return b.node
+}
+
 // Commentf adds a comment
 func (b *LiteralType) Commentf(pattern string, args ...interface{}) {
 	commentf(&b.node.Decs.Start, pattern, args...)
@@ -234,7 +258,7 @@ func (b *LiteralType) Commentf(pattern string, args ...interface{}) {
 // Element sets the element
 func (b *LiteralType) Element(name string) *LiteralType {
 	b.node.Specs[0].(*dst.TypeSpec).Type = &dst.Ident{
-		Name: camelize(name),
+		Name: name,
 	}
 
 	return b
@@ -271,6 +295,11 @@ func NewArrayType(name string) *ArrayType {
 	}
 }
 
+// Node returns the node
+func (b *ArrayType) Node() *dst.GenDecl {
+	return b.node
+}
+
 // Name returns the type name
 func (b *ArrayType) Name() string {
 	return b.node.Specs[0].(*dst.TypeSpec).Name.Name
@@ -284,7 +313,7 @@ func (b *ArrayType) Commentf(pattern string, args ...interface{}) {
 // Element sets the element
 func (b *ArrayType) Element(name string) *ArrayType {
 	b.node.Specs[0].(*dst.TypeSpec).Type.(*dst.ArrayType).Elt = &dst.Ident{
-		Name: camelize(name),
+		Name: name,
 	}
 
 	return b
@@ -331,6 +360,11 @@ func NewFunctionType(name string) *FunctionType {
 	return &FunctionType{
 		node: node,
 	}
+}
+
+// Node returns the node
+func (b *FunctionType) Node() *dst.FuncDecl {
+	return b.node
 }
 
 // Name returns the type name
@@ -388,6 +422,19 @@ func (b *FunctionType) AddReturn(kind string) *FunctionType {
 type BlockType struct {
 	node   *dst.BlockStmt
 	buffer *bytes.Buffer
+}
+
+// NewBlockType creates a new block type
+func NewBlockType() *BlockType {
+	return &BlockType{
+		node:   &dst.BlockStmt{},
+		buffer: &bytes.Buffer{},
+	}
+}
+
+// Node returns the node
+func (b *BlockType) Node() *dst.BlockStmt {
+	return b.node
 }
 
 // Write the block

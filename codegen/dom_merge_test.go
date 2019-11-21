@@ -18,10 +18,10 @@ var _ = PDescribe("Merge", func() {
 
 	Context("when the range is in the beginning", func() {
 		BeforeEach(func() {
-			target, err := codegen.Open("../fixture/merge_top_target.go.fixture")
+			target, err := codegen.OpenFile("../fixture/merge_top_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := codegen.Open("../fixture/merge_top_source.go.fixture")
+			source, err := codegen.OpenFile("../fixture/merge_top_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
@@ -36,10 +36,10 @@ var _ = PDescribe("Merge", func() {
 
 	Context("when the range is in the end", func() {
 		BeforeEach(func() {
-			target, err := codegen.Open("../fixture/merge_bottom_target.go.fixture")
+			target, err := codegen.OpenFile("../fixture/merge_bottom_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := codegen.Open("../fixture/merge_bottom_source.go.fixture")
+			source, err := codegen.OpenFile("../fixture/merge_bottom_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
@@ -54,10 +54,10 @@ var _ = PDescribe("Merge", func() {
 
 	FContext("when the range is in the middle", func() {
 		BeforeEach(func() {
-			target, err := codegen.Open("../fixture/merge_middle_target.go.fixture")
+			target, err := codegen.OpenFile("../fixture/merge_middle_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := codegen.Open("../fixture/merge_middle_source.go.fixture")
+			source, err := codegen.OpenFile("../fixture/merge_middle_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target

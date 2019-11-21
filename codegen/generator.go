@@ -79,7 +79,7 @@ func (g *Generator) Generate(spec *SpecDescriptor) error {
 func (g *Generator) sync(generator FileGenerator) error {
 	if target := generator.Generate(); target != nil {
 		// merge if the file exist
-		if source, err := Open(target.Name()); err == nil {
+		if source, err := OpenFile(target.Name()); err == nil {
 			if err := target.Merge(source); err != nil {
 				return err
 			}

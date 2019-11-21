@@ -1,0 +1,6 @@
+package mypkg
+
+type User struct {
+  ID   string
+  Name string
+}
