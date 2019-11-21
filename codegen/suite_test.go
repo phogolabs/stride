@@ -20,7 +20,7 @@ func TestCodegen(t *testing.T) {
 
 func resolve(name string) *codegen.SpecDescriptor {
 	var (
-		path     = fmt.Sprintf("../fixture/%s", name)
+		path     = fmt.Sprintf("../fixture/spec/%s", name)
 		loader   = openapi3.NewSwaggerLoader()
 		resolver = codegen.NewResolver()
 	)

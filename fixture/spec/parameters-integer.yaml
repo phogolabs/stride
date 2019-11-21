@@ -1,0 +1,17 @@
+openapi: 3.0.1
+components:
+  parameters:
+    Int32Kind:
+      name: Int32Kind
+      schema:
+        type: integer
+        format: int32
+    Int32Ref:
+      $ref: '#/components/parameters/Int32Kind'
+    Int64Kind:
+      name: Int64Kind
+      schema:
+        type: integer
+        format: int64
+    Int64Ref:
+      $ref: '#/components/parameters/Int64Kind'
