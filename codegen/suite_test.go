@@ -43,3 +43,10 @@ func tmpfile() string {
 	Expect(os.Remove(name)).To(Succeed())
 	return name
 }
+
+func tmpdir() string {
+	dir, err := ioutil.TempDir("", "example")
+	Expect(err).To(BeNil())
+	Expect(os.Remove(dir)).To(Succeed())
+	return dir
+}
