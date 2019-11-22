@@ -14,8 +14,14 @@ func init() {
 	inflect.AddAcronym("ID")
 }
 
-func camelize(text string) string {
+func camelize(text string, tail ...string) string {
 	const star = "*"
+
+	items := []string{}
+	items = append(items, text)
+	items = append(items, tail...)
+
+	text = strings.Join(items, "-")
 
 	text = strings.TrimPrefix(text, star)
 	return inflect.Camelize(text)

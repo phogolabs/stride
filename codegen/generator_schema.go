@@ -1,17 +1,20 @@
 package codegen
 
-import "path/filepath"
+import (
+	"fmt"
+	"path/filepath"
+)
 
-// ContractGenerator generates a contract
-type ContractGenerator struct {
+// SchemaGenerator generates a contract
+type SchemaGenerator struct {
 	Path       string
 	Collection TypeDescriptorCollection
 }
 
 // Generate generates the file
-func (g *ContractGenerator) Generate() *File {
+func (g *SchemaGenerator) Generate() *File {
 	var (
-		filename = filepath.Join(g.Path, "contract.go")
+		filename = filepath.Join(g.Path, "schema.go")
 		root     = NewFile(filename)
 	)
 
@@ -40,7 +43,24 @@ func (g *ContractGenerator) Generate() *File {
 				builder.AddField(property.Name, kind, tags...)
 			}
 		case descriptor.IsEnum:
-			//TODO: implement enum builder
+			builder := root.
+				Literal(descriptor.Name).
+				Element("string")
+
+			builder.Commentf(descriptor.Description)
+
+			block := root.Const()
+
+			if values, ok := descriptor.Metadata["values"].([]interface{}); ok {
+				for _, item := range values {
+					var (
+						value = fmt.Sprintf("%v", item)
+						name  = camelize(builder.Name(), value)
+					)
+
+					block.AddConst(name, builder.Name(), value)
+				}
+			}
 			continue
 		}
 	}

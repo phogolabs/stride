@@ -126,6 +126,14 @@ func (f *File) Array(name string) *ArrayType {
 	return builder
 }
 
+// Const returns a var type
+func (f *File) Const() *ConstBlockType {
+	builder := NewConstBlockType()
+
+	f.node.Decls = append(f.node.Decls, builder.node)
+	return builder
+}
+
 // StructType builds a struct
 type StructType struct {
 	node *dst.GenDecl
@@ -262,6 +270,63 @@ func (b *LiteralType) Element(name string) *LiteralType {
 	}
 
 	return b
+}
+
+// ConstBlockType builds a var block type
+type ConstBlockType struct {
+	node *dst.GenDecl
+}
+
+// NewConstBlockType creates a new ConstBlcokType
+func NewConstBlockType() *ConstBlockType {
+	node := &dst.GenDecl{
+		Tok:   token.CONST,
+		Specs: []dst.Spec{},
+	}
+
+	// formatting
+	node.Decs.Before = dst.EmptyLine
+	node.Decs.After = dst.EmptyLine
+
+	return &ConstBlockType{
+		node: node,
+	}
+}
+
+// Node returns the node
+func (b *ConstBlockType) Node() *dst.GenDecl {
+	return b.node
+}
+
+// Commentf adds a comment
+func (b *ConstBlockType) Commentf(pattern string, args ...interface{}) {
+	commentf(&b.node.Decs.Start, pattern, args...)
+}
+
+// AddConst defines a var
+func (b *ConstBlockType) AddConst(name, kind, value string) {
+	field := property(name, kind)
+
+	spec := &dst.ValueSpec{
+		Names: field.Names,
+		Type:  field.Type,
+	}
+
+	spec.Decs.Before = dst.NewLine
+	spec.Decs.After = dst.EmptyLine
+	spec.Decs.Start.Append(fmt.Sprintf("// %s is a %q enum value auto-generated from OpenAPI spec", camelize(name), value))
+	spec.Decs.Start.Append(fmt.Sprintf("// stride:generate:const %s", dasherize(name)))
+
+	if value != "" {
+		spec.Values = []dst.Expr{
+			&dst.BasicLit{
+				Kind:  token.STRING,
+				Value: fmt.Sprintf("%q", value),
+			},
+		}
+	}
+
+	b.node.Specs = append(b.node.Specs, spec)
 }
 
 // ArrayType builds an array type

@@ -25,7 +25,7 @@ func (g *Generator) Generate(spec *SpecDescriptor) error {
 		return err
 	}
 
-	generator := &ContractGenerator{
+	generator := &SchemaGenerator{
 		Path:       path,
 		Collection: spec.Types,
 	}
