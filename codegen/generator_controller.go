@@ -53,19 +53,18 @@ func (g *ControllerGenerator) schema(root *File) {
 		input := root.Struct(name + "Input")
 		input.Commentf("It is the input of %s operation", name)
 
-		for _, request := range operation.Requests {
-			// path input
-			g.param("Path", root, input, operation.Parameters)
-			// query input
-			g.param("Query", root, input, operation.Parameters)
-			// header input
-			g.param("Header", root, input, operation.Parameters)
-			// cookie input
-			g.param("Cookie", root, input, operation.Parameters)
+		// path input
+		g.param("Path", root, input, operation.Parameters)
+		// query input
+		g.param("Query", root, input, operation.Parameters)
+		// header input
+		g.param("Header", root, input, operation.Parameters)
+		// cookie input
+		g.param("Cookie", root, input, operation.Parameters)
 
+		for _, request := range operation.Requests {
 			// input body
 			input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
-
 			// NOTE: we handle the first request for now
 			break
 		}

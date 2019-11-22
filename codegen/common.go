@@ -17,13 +17,14 @@ func init() {
 func camelize(text string, tail ...string) string {
 	const star = "*"
 
+	text = strings.TrimPrefix(text, star)
+
 	items := []string{}
 	items = append(items, text)
 	items = append(items, tail...)
 
 	text = strings.Join(items, "-")
 
-	text = strings.TrimPrefix(text, star)
 	return inflect.Camelize(text)
 }
 

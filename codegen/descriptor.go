@@ -211,7 +211,7 @@ func (d *TypeDescriptor) Kind() string {
 		name = "schema.UUID"
 	default:
 		if !d.IsPrimitive {
-			name = camelize(name)
+			name = camelize(d.Name)
 		}
 	}
 
