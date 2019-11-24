@@ -1,42 +1,11 @@
 package api
 
-// stride:define:function multiply
+// stride:generate multiply
 func Multiply(x, y int) int {
 	var result int
 
-	// stride:define:block:start body
+	// stride:define body:start
 	result = x * y
-	// stride:define:block:end body
+	// stride:define body:end
 	return result
-}
-
-// stride:define:function exit
-func Exit() {
-	// stride:define:block:start body
-	fmt.Println("Exited")
-	// stride:define:block:end body
-
-	os.Exit(1)
-}
-
-// stride:define:function handle
-func Handle() {
-	var (
-		input  = &HandleInput{}
-		output = &HandleOutput{}
-	)
-
-	if err := bind(input); err != nil {
-		render(err)
-		return
-	}
-
-	// stride:define:block:start body
-	fmt.Println("Handled")
-	// stride:define:block:end body
-
-	if err := render(output); err != nil {
-		render(err)
-		return
-	}
 }

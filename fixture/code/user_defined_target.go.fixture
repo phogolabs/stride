@@ -1,6 +1,6 @@
 package model
 
-// stride:generate
+// stride:generate user
 type User struct {
 	// stride:generate
 	ID string

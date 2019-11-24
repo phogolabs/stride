@@ -1,18 +1,18 @@
 package model
 
-// stride:define
+// stride:define id
 type ID string
 
-// stride:define
+// stride:define users
 type Users []*User
 
-// stride:define
+// stride:define company
 type Company struct {
-	// stride:define:field name
+	// stride:define name
 	Name string
 }
 
-// stride:generate
+// stride:generate user
 type User struct {
 	// stride:generate
 	ID string
@@ -22,7 +22,7 @@ type User struct {
 	LastName string
 }
 
-// stride:define
+// stride:define user:full-name
 func (u *User) FullName() string {
 	return u.FirstName + " " + u.LastName
 }
