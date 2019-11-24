@@ -539,9 +539,9 @@ func (b *BlockType) Build() error {
 
 // WriteComment writes the body block comment
 func (b *BlockType) WriteComment() {
-	fmt.Fprintln(b.buffer, "// stride:define:block:start body")
+	fmt.Fprintln(b.buffer, "// stride:define body:start")
 	fmt.Fprintln(b.buffer, "// NOTE: You can your code within the comment block")
-	fmt.Fprintln(b.buffer, "// stride:define:block:end body")
+	fmt.Fprintln(b.buffer, "// stride:define body:end")
 }
 
 func kind(field *dst.Field) string {

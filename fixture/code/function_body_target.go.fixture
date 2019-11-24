@@ -5,7 +5,7 @@ func Multiply(x, y int) int {
 	var result int
 
 	// stride:define body:start
-	// TODO: write your code here
+	// NOTE: write your code here
 	// stride:define body:end
 	return result
 }

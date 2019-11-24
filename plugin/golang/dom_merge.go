@@ -14,6 +14,8 @@ const (
 	AnnotationGenerate Annotation = "stride:generate"
 	// AnnotationDefine represents the annotation for user-defined code
 	AnnotationDefine Annotation = "stride:define"
+	// AnnotationNote represents the annotation for note
+	AnnotationNote Annotation = "NOTE:"
 )
 
 // Annotation represents an annotation
@@ -41,7 +43,6 @@ func (n Annotation) Format(text ...string) string {
 // Has returns true if the annotation with given name exists
 func (n Annotation) Has(decorations dst.Decorations, name string) bool {
 	prefix := string(n)
-
 	for _, comment := range decorations.All() {
 		comment = strings.TrimPrefix(comment, "//")
 		comment = strings.TrimSpace(comment)
@@ -77,16 +78,10 @@ func (n Annotation) Find(decorations dst.Decorations) (string, bool) {
 	return "", false
 }
 
-// Index represents a position in the range
-type Index struct {
-	Position  int
-	Annotated bool
-}
-
 // Range represents the range
 type Range struct {
-	Start *Index
-	End   *Index
+	Start int
+	End   int
 }
 
 // Merger merges files
@@ -161,46 +156,33 @@ func (m *Merger) mergeFunc(target, source dst.Node) {
 	)
 
 	if leftRange == nil || rightRange == nil {
-		fmt.Println("NO RANGE")
 		return
 	}
 
 	var (
 		result = []dst.Stmt{}
-		items  = right.List[rightRange.Start.Position : rightRange.End.Position+1]
+		items  = right.List[rightRange.Start : rightRange.End+1]
 	)
 
 	// append top block
 	for index, item := range left.List {
-		if index < leftRange.Start.Position {
+		if index < leftRange.Start {
 			result = append(result, item)
 		}
 	}
 
-	if rightRange.Start.Annotated {
+	for _, item := range items {
+		result = append(result, item)
 	}
-
-	if leftRange.Start.Annotated {
-	}
-
-	if rightRange.End.Annotated {
-	}
-
-	if leftRange.End.Annotated {
-	}
-
-	// append the range block
-	result = append(result, items...)
 
 	// append bottom block
 	for index, item := range left.List {
-		if index > leftRange.End.Position {
+		if index > leftRange.End {
 			result = append(result, item)
 		}
 	}
 
-	// sanitize comments
-	// m.sanitize(result)
+	m.squash(result)
 
 	left.List = result
 }
@@ -212,27 +194,31 @@ func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
 	)
 
 	var (
-		start      *Index
-		end        *Index
+		start      *int
+		end        *int
 		annotation = AnnotationDefine
 	)
+
+	intPtr := func(v int) *int {
+		return &v
+	}
 
 	for index, node := range block.List {
 		decorations := node.Decorations()
 
 		if start == nil {
 			if annotation.Has(decorations.Start, keyStart) {
-				start = &Index{Position: index, Annotated: true}
+				start = intPtr(index)
 			} else if annotation.Has(decorations.End, keyStart) {
-				start = &Index{Position: index + 1, Annotated: false}
+				start = intPtr(index + 1)
 			}
 		}
 
 		if end == nil {
 			if annotation.Has(decorations.Start, keyEnd) {
-				end = &Index{Position: index - 1, Annotated: false}
+				end = intPtr(index - 1)
 			} else if annotation.Has(decorations.End, keyEnd) {
-				end = &Index{Position: index, Annotated: true}
+				end = intPtr(index)
 			}
 		}
 	}
@@ -242,43 +228,81 @@ func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
 	}
 
 	return &Range{
-		Start: start,
-		End:   end,
+		Start: *start,
+		End:   *end,
 	}
 }
 
-// func (m *Merger) sanitize(items []dst.Stmt) {
-// 	// const name = "body"
+func (m *Merger) squash(items []dst.Stmt) {
+	var (
+		kv    = map[string]bool{}
+		help  = AnnotationNote.Format("write your code here")
+		start = AnnotationDefine.Format("body:start")
+		end   = AnnotationDefine.Format("body:end")
+	)
 
-// 	// for index := 0; index < len(items)-1; index++ {
-// 	// 	node := items[index].Decorations()
-// 	// 	next := items[index+1].Decorations()
+	remove := func(kind string, node *dst.NodeDecs) {
+		var (
+			comments    = []string{}
+			decorations *dst.Decorations
+		)
 
-// 	// 	for _, upper := range node.Start.All() {
-// 	// 		for _, lower := range next.Start.All() {
-// 	// 			if upper == lower {
-// 	// 			}
-// 	// 		}
+		switch kind {
+		case "start":
+			decorations = &node.Start
+		case "end":
+			decorations = &node.End
+		}
 
-// 	// 		for _, lower := range next.End.All() {
-// 	// 			if upper == lower {
-// 	// 			}
-// 	// 		}
-// 	// 	}
+		for _, comment := range decorations.All() {
+			comment = strings.TrimSpace(comment)
 
-// 	// 	for _, upper := range node.End.All() {
-// 	// 		for _, lower := range next.Start.All() {
-// 	// 			if upper == lower {
-// 	// 			}
-// 	// 		}
+			if strings.EqualFold(comment, help) {
+				continue
+			}
 
-// 	// 		for _, lower := range next.End.All() {
-// 	// 			if upper == lower {
-// 	// 			}
-// 	// 		}
-// 	// 	}
-// 	// }
-// }
+			if _, ok := kv[comment]; ok {
+				continue
+			}
+
+			if strings.EqualFold(comment, start) {
+				switch kind {
+				case "start":
+					node.Before = dst.EmptyLine
+					node.After = dst.NewLine
+				case "end":
+					node.Before = dst.NewLine
+					node.After = dst.NewLine
+				}
+			}
+
+			if strings.EqualFold(comment, end) {
+				switch kind {
+				case "start":
+					node.Before = dst.NewLine
+					node.After = dst.NewLine
+				case "end":
+					node.Before = dst.NewLine
+					node.After = dst.EmptyLine
+				}
+			}
+
+			comments = append(comments, comment)
+
+			// mark as processed
+			kv[comment] = true
+		}
+
+		decorations.Replace(comments...)
+	}
+
+	for _, item := range items {
+		decorations := item.Decorations()
+
+		remove("start", decorations)
+		remove("end", decorations)
+	}
+}
 
 func (m *Merger) append(cursor *dstutil.Cursor) bool {
 	var (
