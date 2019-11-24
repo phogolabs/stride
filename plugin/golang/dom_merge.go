@@ -247,10 +247,11 @@ func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
 
 func (m *Merger) squash(items []dst.Stmt) {
 	var (
-		kv    = map[string]bool{}
-		help  = AnnotationNote.Format("write your code here")
-		start = AnnotationDefine.Format(bodyStart)
-		end   = AnnotationDefine.Format(bodyEnd)
+		kv      = map[string]bool{}
+		newline = "\n"
+		help    = AnnotationNote.Format("write your code here")
+		start   = AnnotationDefine.Format(bodyStart)
+		end     = AnnotationDefine.Format(bodyEnd)
 	)
 
 	remove := func(kind string, node *dst.NodeDecs) {
@@ -270,7 +271,7 @@ func (m *Merger) squash(items []dst.Stmt) {
 			comment = strings.TrimSpace(comment)
 
 			if len(comment) == 0 {
-				comment = "\n"
+				comment = newline
 			}
 
 			if strings.EqualFold(comment, help) {
@@ -281,20 +282,29 @@ func (m *Merger) squash(items []dst.Stmt) {
 				continue
 			}
 
-			if strings.EqualFold(comment, start) {
-				node.Before = dst.NewLine
-				node.After = dst.NewLine
-			}
-
-			if strings.EqualFold(comment, end) {
-				node.Before = dst.NewLine
-				node.After = dst.NewLine
+			switch {
+			case strings.EqualFold(comment, start):
+				switch kind {
+				case "start":
+					//TODO: handle this case
+				case "end":
+					//TODO: handle this case
+				}
+			case strings.EqualFold(comment, end):
+				switch kind {
+				case "start":
+					node.Before = dst.NewLine
+				case "end":
+					//TODO: handle this case
+				}
 			}
 
 			comments = append(comments, comment)
 
-			// mark as processed
-			kv[comment] = true
+			if !strings.EqualFold(comment, newline) {
+				// mark as processed
+				kv[comment] = true
+			}
 		}
 
 		decorations.Replace(comments...)
