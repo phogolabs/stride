@@ -33,7 +33,7 @@ var _ = Describe("File", func() {
 
 	Describe("WriteTo", func() {
 		It("writes the file to a writer", func() {
-			file, err := golang.OpenFile("../fixture/code/package.go.fixture")
+			file, err := golang.OpenFile("../../fixture/code/package.go.fixture")
 			Expect(err).To(BeNil())
 			Expect(file).NotTo(BeNil())
 
@@ -47,7 +47,7 @@ var _ = Describe("File", func() {
 
 		Context("when the writer fails", func() {
 			It("returns an error", func() {
-				file, err := golang.OpenFile("../fixture/code/package.go.fixture")
+				file, err := golang.OpenFile("../../fixture/code/package.go.fixture")
 				Expect(err).To(BeNil())
 				Expect(file).NotTo(BeNil())
 

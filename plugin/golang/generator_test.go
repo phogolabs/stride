@@ -18,9 +18,9 @@ var _ = Describe("Generator", func() {
 	})
 
 	It("generates the package successfully", func() {
-		descriptor := &golang.ControllerDescriptor{
+		descriptor := &codegen.ControllerDescriptor{
 			Name: "user",
-			Operations: golang.OperationDescriptorCollection{
+			Operations: codegen.OperationDescriptorCollection{
 				&codegen.OperationDescriptor{
 					Method: "GET",
 					Path:   "/accounts",

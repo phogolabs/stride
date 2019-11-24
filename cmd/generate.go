@@ -5,6 +5,7 @@ import (
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
 	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/plugin/golang"
 	"github.com/phogolabs/stride/service"
 )
 
@@ -38,7 +39,7 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 	generator := &service.Generator{
 		Path:     ctx.String("file-path"),
 		Resolver: codegen.NewResolver(),
-		Generator: &codegen.Generator{
+		Generator: &golang.Generator{
 			Path: "./test",
 		},
 	}

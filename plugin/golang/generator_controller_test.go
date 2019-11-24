@@ -11,10 +11,10 @@ import (
 )
 
 var _ = Describe("GeneratorController", func() {
-	var generator *codegen.ControllerGenerator
+	var generator *golang.ControllerGenerator
 
 	BeforeEach(func() {
-		generator = &codegen.ControllerGenerator{
+		generator = &golang.ControllerGenerator{
 			Path: tmpdir(),
 		}
 	})

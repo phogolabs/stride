@@ -11,7 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codegen"
-	"github.com/phogolabs/stride/golang"
+	"github.com/phogolabs/stride/plugin/golang"
 )
 
 var _ = Describe("SchemaGenerator", func() {
@@ -27,10 +27,10 @@ var _ = Describe("SchemaGenerator", func() {
 
 	Context("when the descriptor is alias", func() {
 		BeforeEach(func() {
-			descriptor := &golang.TypeDescriptor{
+			descriptor := &codegen.TypeDescriptor{
 				Name:    "ID",
 				IsAlias: true,
-				Element: &golang.TypeDescriptor{
+				Element: &codegen.TypeDescriptor{
 					Name:        "string",
 					IsPrimitive: true,
 				},
@@ -129,9 +129,9 @@ var _ = Describe("SchemaGenerator", func() {
 				Name:    "User",
 				IsClass: true,
 				Properties: codegen.PropertyDescriptorCollection{
-					&golang.PropertyDescriptor{
+					&codegen.PropertyDescriptor{
 						Name: "ID",
-						PropertyType: &golang.TypeDescriptor{
+						PropertyType: &codegen.TypeDescriptor{
 							Name:        "string",
 							IsPrimitive: true,
 						},
