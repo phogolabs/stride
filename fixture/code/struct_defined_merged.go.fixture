@@ -1,28 +1,28 @@
 package model
 
-// stride:generate:struct user
+// stride:generate
 type User struct {
-	// stride:generate:field id
+	// stride:generate
 	ID string
-	// stride:generate:field first-name
+	// stride:generate
 	FirstName string
-	// stride:generate:field last-name
+	// stride:generate
 	LastName string
 }
 
-// stride:define:literal id
+// stride:define
 type ID string
 
-// stride:define:array users
+// stride:define
 type Users []*User
 
-// stride:define:function user:full-name
-func (u *User) FullName() string {
-	return u.FirstName + " " + u.LastName
-}
-
-// stride:define:struct company
+// stride:define
 type Company struct {
 	// stride:define:field name
 	Name string
+}
+
+// stride:define
+func (u *User) FullName() string {
+	return u.FirstName + " " + u.LastName
 }

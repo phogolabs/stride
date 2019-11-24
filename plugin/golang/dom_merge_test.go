@@ -2,6 +2,7 @@ package golang_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -31,7 +32,7 @@ var _ = Describe("Merge", func() {
 				merger.Source = source
 			})
 
-			It("appends the user-defined fields", func() {
+			FIt("appends the user-defined fields", func() {
 				Expect(merger.Merge()).To(Succeed())
 
 				target := &bytes.Buffer{}
@@ -39,6 +40,10 @@ var _ = Describe("Merge", func() {
 
 				merged, err := ioutil.ReadFile("../../fixture/code/struct_generated_merged.go.fixture")
 				Expect(err).To(BeNil())
+
+				fmt.Println(target.String())
+				fmt.Println("----------")
+				fmt.Println(string(merged))
 
 				Expect(target.String()).To(Equal(string(merged)))
 			})
@@ -64,10 +69,6 @@ var _ = Describe("Merge", func() {
 
 				merged, err := ioutil.ReadFile("../../fixture/code/struct_defined_merged.go.fixture")
 				Expect(err).To(BeNil())
-
-				// fmt.Println(target.String())
-				// fmt.Println("----------")
-				// fmt.Println(string(merged))
 
 				Expect(target.String()).To(Equal(string(merged)))
 			})
