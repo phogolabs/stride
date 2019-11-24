@@ -12,7 +12,7 @@ var _ = Describe("Validator", func() {
 
 	BeforeEach(func() {
 		validator = &service.Validator{
-			Path: path("../fixture/schemas-array.yaml"),
+			Path: path("../fixture/spec/schemas-array.yaml"),
 		}
 	})
 
@@ -32,7 +32,7 @@ var _ = Describe("Validator", func() {
 
 	Context("when the validation fails", func() {
 		BeforeEach(func() {
-			validator.Path = "../fixture/schemas-object.yaml"
+			validator.Path = "../fixture/spec/schemas-object.yaml"
 		})
 
 		It("returns an error", func() {

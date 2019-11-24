@@ -19,7 +19,7 @@ var _ = Describe("Viewer", func() {
 	BeforeEach(func() {
 		config = &service.ViewerConfig{
 			Addr: ":8080",
-			Path: path("../fixture/schemas-array.yaml"),
+			Path: path("../fixture/spec/schemas-array.yaml"),
 		}
 
 		server = service.NewViewer(config)

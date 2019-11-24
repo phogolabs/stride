@@ -2,7 +2,6 @@ package golang_test
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
@@ -11,7 +10,7 @@ import (
 	"github.com/phogolabs/stride/plugin/golang"
 )
 
-var _ = FDescribe("Merge", func() {
+var _ = Describe("Merge", func() {
 	var merger *golang.Merger
 
 	BeforeEach(func() {
@@ -68,7 +67,7 @@ var _ = FDescribe("Merge", func() {
 		})
 	})
 
-	FContext("when the function has user-defined body", func() {
+	Context("when the function has user-defined body", func() {
 		BeforeEach(func() {
 			target, err := golang.OpenFile("../../fixture/code/function_body_target.go.fixture")
 			Expect(err).To(BeNil())
@@ -89,7 +88,7 @@ var _ = FDescribe("Merge", func() {
 			merged, err := ioutil.ReadFile("../../fixture/code/function_body_merged.go.fixture")
 			Expect(err).To(BeNil())
 
-			fmt.Println(target.String())
+			// fmt.Println(target.String())
 			// fmt.Println("----------")
 			// fmt.Println(string(merged))
 

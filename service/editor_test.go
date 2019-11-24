@@ -21,7 +21,7 @@ var _ = Describe("Editor", func() {
 	BeforeEach(func() {
 		config = &service.EditorConfig{
 			Addr: ":8080",
-			Path: path("../fixture/schemas-array.yaml"),
+			Path: path("../fixture/spec/schemas-array.yaml"),
 		}
 
 	})

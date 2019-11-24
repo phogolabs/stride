@@ -25,7 +25,7 @@ var _ = Describe("Generator", func() {
 		coder = &fake.CodeGenerator{}
 
 		generator = &service.Generator{
-			Path:      path("../fixture/schemas-array.yaml"),
+			Path:      path("../fixture/spec/schemas-array.yaml"),
 			Generator: coder,
 			Resolver:  resolver,
 		}

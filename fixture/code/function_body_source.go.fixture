@@ -9,3 +9,23 @@ func Multiply(x, y int) int {
 	// stride:define body:end
 	return result
 }
+
+// stride:generate handle
+func Handle() {
+	var (
+		input  = &HandleInput{}
+		output = &HandleOutput{}
+	)
+
+	if err := bind(input); err != nil {
+		render(err)
+	}
+
+	// stride:define body:start
+  fmt.Println("Handle!")
+	// stride:define body:end
+
+	if err := render(output); err != nil {
+		render(err)
+	}
+}

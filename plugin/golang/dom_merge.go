@@ -269,6 +269,10 @@ func (m *Merger) squash(items []dst.Stmt) {
 		for _, comment := range decorations.All() {
 			comment = strings.TrimSpace(comment)
 
+			if len(comment) == 0 {
+				comment = "\n"
+			}
+
 			if strings.EqualFold(comment, help) {
 				continue
 			}
@@ -278,25 +282,13 @@ func (m *Merger) squash(items []dst.Stmt) {
 			}
 
 			if strings.EqualFold(comment, start) {
-				switch kind {
-				case "start":
-					node.Before = dst.EmptyLine
-					node.After = dst.NewLine
-				case "end":
-					node.Before = dst.NewLine
-					node.After = dst.NewLine
-				}
+				node.Before = dst.NewLine
+				node.After = dst.NewLine
 			}
 
 			if strings.EqualFold(comment, end) {
-				switch kind {
-				case "start":
-					node.Before = dst.NewLine
-					node.After = dst.NewLine
-				case "end":
-					node.Before = dst.NewLine
-					node.After = dst.EmptyLine
-				}
+				node.Before = dst.NewLine
+				node.After = dst.NewLine
 			}
 
 			comments = append(comments, comment)
