@@ -18,6 +18,11 @@ const (
 	AnnotationNote Annotation = "NOTE:"
 )
 
+const (
+	bodyStart = "body:start"
+	bodyEnd   = "body:end"
+)
+
 // Annotation represents an annotation
 type Annotation string
 
@@ -40,18 +45,42 @@ func (n Annotation) Format(text ...string) string {
 	return fmt.Sprintf("// %s %s", n, buffer.String())
 }
 
-// Has returns true if the annotation with given name exists
-func (n Annotation) Has(decorations dst.Decorations, name string) bool {
-	prefix := string(n)
+// Find returns the name of the annotation of exists in the decorations
+func (n Annotation) Find(decorations dst.Decorations) (string, bool) {
+	var (
+		prefix = string(n)
+		name   string
+	)
+
 	for _, comment := range decorations.All() {
-		comment = strings.TrimPrefix(comment, "//")
-		comment = strings.TrimSpace(comment)
+		comment = n.uncomment(comment)
 
 		if strings.HasPrefix(comment, prefix) {
-			comment = strings.TrimPrefix(comment, prefix)
-			comment = strings.TrimSpace(comment)
+			name = strings.TrimPrefix(comment, prefix)
+			name = strings.TrimSpace(name)
 
-			if strings.EqualFold(name, comment) {
+			return name, true
+		}
+	}
+
+	return name, false
+}
+
+// In returns true if the annotation with given name exists in the decorations list
+func (n Annotation) In(decorations dst.Decorations, term string) bool {
+	var (
+		prefix = string(n)
+		name   string
+	)
+
+	for _, comment := range decorations.All() {
+		comment = n.uncomment(comment)
+
+		if strings.HasPrefix(comment, prefix) {
+			name = strings.TrimPrefix(comment, prefix)
+			name = strings.TrimSpace(name)
+
+			if strings.EqualFold(name, term) {
 				return true
 			}
 		}
@@ -60,22 +89,10 @@ func (n Annotation) Has(decorations dst.Decorations, name string) bool {
 	return false
 }
 
-// Find returns the name of the annotation of exists in the decorations
-func (n Annotation) Find(decorations dst.Decorations) (string, bool) {
-	prefix := string(n)
-
-	for _, comment := range decorations.All() {
-		comment = strings.TrimPrefix(comment, "//")
-		comment = strings.TrimSpace(comment)
-
-		if strings.HasPrefix(comment, prefix) {
-			comment = strings.TrimPrefix(comment, prefix)
-			comment = strings.TrimSpace(comment)
-			return comment, true
-		}
-	}
-
-	return "", false
+func (n Annotation) uncomment(comment string) string {
+	comment = strings.TrimPrefix(comment, "//")
+	comment = strings.TrimSpace(comment)
+	return comment
 }
 
 // Range represents the range
@@ -188,11 +205,6 @@ func (m *Merger) mergeFunc(target, source dst.Node) {
 }
 
 func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
-	const (
-		keyStart = "body:start"
-		keyEnd   = "body:end"
-	)
-
 	var (
 		start      *int
 		end        *int
@@ -207,17 +219,17 @@ func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
 		decorations := node.Decorations()
 
 		if start == nil {
-			if annotation.Has(decorations.Start, keyStart) {
+			if annotation.In(decorations.Start, bodyStart) {
 				start = intPtr(index)
-			} else if annotation.Has(decorations.End, keyStart) {
+			} else if annotation.In(decorations.End, bodyStart) {
 				start = intPtr(index + 1)
 			}
 		}
 
 		if end == nil {
-			if annotation.Has(decorations.Start, keyEnd) {
+			if annotation.In(decorations.Start, bodyEnd) {
 				end = intPtr(index - 1)
-			} else if annotation.Has(decorations.End, keyEnd) {
+			} else if annotation.In(decorations.End, bodyEnd) {
 				end = intPtr(index)
 			}
 		}
@@ -237,8 +249,8 @@ func (m *Merger) squash(items []dst.Stmt) {
 	var (
 		kv    = map[string]bool{}
 		help  = AnnotationNote.Format("write your code here")
-		start = AnnotationDefine.Format("body:start")
-		end   = AnnotationDefine.Format("body:end")
+		start = AnnotationDefine.Format(bodyStart)
+		end   = AnnotationDefine.Format(bodyEnd)
 	)
 
 	remove := func(kind string, node *dst.NodeDecs) {
