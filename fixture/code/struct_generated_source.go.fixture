@@ -1,0 +1,15 @@
+package model
+
+// stride:generate:struct user
+type User struct {
+	// stride:generate:field id
+	ID string
+	// stride:generate:field first-name
+	FirstName string
+	// stride:generate:field last-name
+	LastName string
+	// stride:define:field social-security-number
+	SocialSecurityNumber string
+	// Married is true if the user is married
+	Married bool
+}
