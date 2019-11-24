@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/fatih/structtag"
+	"github.com/phogolabs/stride/inflect"
 )
 
 // Metadata of the TypeDescriptor
@@ -211,12 +212,12 @@ func (d *TypeDescriptor) Kind() string {
 		name = "schema.UUID"
 	default:
 		if !d.IsPrimitive {
-			name = camelize(d.Name)
+			name = inflect.Camelize(d.Name)
 		}
 	}
 
 	if item := element(d); item.IsNullable {
-		name = pointer(name)
+		name = inflect.Pointer(name)
 	}
 
 	return name

@@ -1,14 +1,17 @@
-package codegen
+package golang
 
 import (
 	"fmt"
 	"path/filepath"
+
+	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/inflect"
 )
 
 // SchemaGenerator generates a contract
 type SchemaGenerator struct {
 	Path       string
-	Collection TypeDescriptorCollection
+	Collection codegen.TypeDescriptorCollection
 }
 
 // Generate generates the file
@@ -55,7 +58,7 @@ func (g *SchemaGenerator) Generate() *File {
 				for _, item := range values {
 					var (
 						value = fmt.Sprintf("%v", item)
-						name  = camelize(builder.Name(), value)
+						name  = inflect.Camelize(builder.Name(), value)
 					)
 
 					block.AddConst(name, builder.Name(), value)

@@ -1,4 +1,4 @@
-package codegen
+package golang
 
 import (
 	"fmt"
@@ -7,6 +7,7 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/dstutil"
+	"github.com/phogolabs/stride/inflect"
 )
 
 const (
@@ -70,7 +71,7 @@ func (m *Merger) merge(cursor *dstutil.Cursor) bool {
 			)
 
 			for _, field := range right.List {
-				name := dasherize(field.Names[0].Name)
+				name := inflect.Dasherize(field.Names[0].Name)
 
 				// handle stride:define:field annotation
 				if key := m.annotation(AnnotationDefineField, field.Decorations().Start); strings.EqualFold(name, key) {
@@ -223,7 +224,7 @@ func (m *Merger) arrayType(annotation string, node dst.Node) (string, *dst.GenDe
 			if specs := declaration.Specs; len(specs) == 1 {
 				if typeSpec, ok := specs[0].(*dst.TypeSpec); ok {
 					if _, ok := typeSpec.Type.(*dst.ArrayType); ok {
-						name := dasherize(typeSpec.Name.Name)
+						name := inflect.Dasherize(typeSpec.Name.Name)
 						if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {
 							return name, declaration
 						}
@@ -242,7 +243,7 @@ func (m *Merger) literalType(annotation string, node dst.Node) (string, *dst.Gen
 			if specs := declaration.Specs; len(specs) == 1 {
 				if typeSpec, ok := specs[0].(*dst.TypeSpec); ok {
 					if _, ok := typeSpec.Type.(*dst.Ident); ok {
-						name := dasherize(typeSpec.Name.Name)
+						name := inflect.Dasherize(typeSpec.Name.Name)
 						if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {
 							return name, declaration
 						}
@@ -261,7 +262,7 @@ func (m *Merger) structType(annotation string, node dst.Node) (string, *dst.GenD
 			if specs := declaration.Specs; len(specs) == 1 {
 				if typeSpec, ok := specs[0].(*dst.TypeSpec); ok {
 					if _, ok := typeSpec.Type.(*dst.StructType); ok {
-						name := dasherize(typeSpec.Name.Name)
+						name := inflect.Dasherize(typeSpec.Name.Name)
 						if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {
 							return name, declaration
 						}
@@ -290,10 +291,10 @@ func (m *Merger) structTypeProperties(node dst.Node) *dst.FieldList {
 
 func (m *Merger) functionType(annotation string, node dst.Node) (string, *dst.FuncDecl) {
 	if declaration, ok := node.(*dst.FuncDecl); ok {
-		name := dasherize(declaration.Name.Name)
+		name := inflect.Dasherize(declaration.Name.Name)
 
 		if recv := declaration.Recv.List; len(recv) > 0 {
-			name = fmt.Sprintf("%s:%s", dasherize(kind(recv[0])), name)
+			name = fmt.Sprintf("%s:%s", inflect.Dasherize(kind(recv[0])), name)
 		}
 
 		if key := m.annotation(annotation, node.Decorations().Start); strings.EqualFold(name, key) {

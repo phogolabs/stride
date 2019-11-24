@@ -1,4 +1,4 @@
-package codegen
+package golang
 
 import (
 	"bytes"
@@ -10,9 +10,11 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
+	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/inflect"
 )
 
-//go:generate counterfeiter -fake-name Writer -o ../fake/writer.go . Writer
+//go:generate counterfeiter -fake-name Writer -o ../../fake/writer.go . Writer
 
 // Writer represents a writer
 type Writer io.Writer
@@ -153,7 +155,7 @@ func NewStructType(name string) *StructType {
 		Specs: []dst.Spec{
 			&dst.TypeSpec{
 				Name: &dst.Ident{
-					Name: camelize(name),
+					Name: inflect.Camelize(name),
 				},
 				Type: &dst.StructType{
 					Fields: fields,
@@ -166,8 +168,8 @@ func NewStructType(name string) *StructType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:struct %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", inflect.Camelize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:struct %s", inflect.Dasherize(name)))
 
 	return &StructType{
 		node: node,
@@ -190,13 +192,13 @@ func (b *StructType) Commentf(pattern string, args ...interface{}) {
 }
 
 // AddField defines a field
-func (b *StructType) AddField(name, kind string, tags ...*TagDescriptor) {
-	field := property(camelize(name), kind)
+func (b *StructType) AddField(name, kind string, tags ...*codegen.TagDescriptor) {
+	field := property(inflect.Camelize(name), kind)
 	field.Decs.Before = dst.NewLine
 	field.Decs.After = dst.NewLine
-	field.Decs.Start.Append("// stride:generate:field " + dasherize(name))
+	field.Decs.Start.Append("// stride:generate:field " + inflect.Dasherize(name))
 
-	if tag := TagDescriptorCollection(tags).String(); tag != "" {
+	if tag := codegen.TagDescriptorCollection(tags).String(); tag != "" {
 		field.Tag = &dst.BasicLit{
 			Kind:  token.STRING,
 			Value: tag,
@@ -209,7 +211,7 @@ func (b *StructType) AddField(name, kind string, tags ...*TagDescriptor) {
 
 // Function returns a struct method
 func (b *StructType) Function(name string) *FunctionType {
-	builder := NewFunctionType(name).AddReceiver("x", pointer(b.Name()))
+	builder := NewFunctionType(name).AddReceiver("x", inflect.Pointer(b.Name()))
 
 	if b.file != nil {
 		b.file.Decls = append(b.file.Decls, builder.node)
@@ -230,7 +232,7 @@ func NewLiteralType(name string) *LiteralType {
 		Specs: []dst.Spec{
 			&dst.TypeSpec{
 				Name: &dst.Ident{
-					Name: camelize(name),
+					Name: inflect.Camelize(name),
 				},
 			},
 		},
@@ -240,8 +242,8 @@ func NewLiteralType(name string) *LiteralType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:literal %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", inflect.Camelize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:literal %s", inflect.Dasherize(name)))
 
 	return &LiteralType{
 		node: node,
@@ -314,8 +316,8 @@ func (b *ConstBlockType) AddConst(name, kind, value string) {
 
 	spec.Decs.Before = dst.NewLine
 	spec.Decs.After = dst.EmptyLine
-	spec.Decs.Start.Append(fmt.Sprintf("// %s is a %q enum value auto-generated from OpenAPI spec", camelize(name), value))
-	spec.Decs.Start.Append(fmt.Sprintf("// stride:generate:const %s", dasherize(name)))
+	spec.Decs.Start.Append(fmt.Sprintf("// %s is a %q enum value auto-generated from OpenAPI spec", inflect.Camelize(name), value))
+	spec.Decs.Start.Append(fmt.Sprintf("// stride:generate:const %s", inflect.Dasherize(name)))
 
 	if value != "" {
 		spec.Values = []dst.Expr{
@@ -341,7 +343,7 @@ func NewArrayType(name string) *ArrayType {
 		Specs: []dst.Spec{
 			&dst.TypeSpec{
 				Name: &dst.Ident{
-					Name: camelize(name),
+					Name: inflect.Camelize(name),
 				},
 				Type: &dst.ArrayType{},
 			},
@@ -352,8 +354,8 @@ func NewArrayType(name string) *ArrayType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:array %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", inflect.Camelize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:array %s", inflect.Dasherize(name)))
 
 	return &ArrayType{
 		node: node,
@@ -400,7 +402,7 @@ func NewFunctionType(name string) *FunctionType {
 		},
 		// function name
 		Name: &dst.Ident{
-			Name: camelize(name),
+			Name: inflect.Camelize(name),
 		},
 		// function param
 		Type: &dst.FuncType{
@@ -420,7 +422,7 @@ func NewFunctionType(name string) *FunctionType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:function %s", dasherize(name)))
+	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:function %s", inflect.Dasherize(name)))
 
 	return &FunctionType{
 		node: node,
@@ -447,7 +449,7 @@ func (b *FunctionType) AddReceiver(name, kind string) *FunctionType {
 	field := property(name, kind)
 	b.node.Recv.List = append(b.node.Recv.List, field)
 
-	key := fmt.Sprintf("%s:%s", dasherize(kind), dasherize(b.Name()))
+	key := fmt.Sprintf("%s:%s", inflect.Dasherize(kind), inflect.Dasherize(b.Name()))
 
 	var (
 		comments = b.node.Decs.Start.All()
@@ -606,4 +608,23 @@ func property(name, kind string) *dst.Field {
 	field.Type = getType()
 
 	return field
+}
+
+func commentf(decorator *dst.Decorations, text string, args ...interface{}) {
+	if text == "" {
+		return
+	}
+
+	var (
+		comments = decorator.All()
+		index    = len(comments) - 1
+	)
+
+	text = fmt.Sprintf(text, args...)
+	text = fmt.Sprintf("// %s", text)
+
+	decorator.Clear()
+	decorator.Append(comments[:index]...)
+	decorator.Append(text)
+	decorator.Append(comments[index:]...)
 }

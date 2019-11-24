@@ -1,8 +1,10 @@
-package codegen
+package golang
 
 import (
 	"os"
 	"path/filepath"
+
+	"github.com/phogolabs/stride/codegen"
 )
 
 // FileGenerator is a file generator
@@ -17,7 +19,7 @@ type Generator struct {
 }
 
 // Generate generates the source code
-func (g *Generator) Generate(spec *SpecDescriptor) error {
+func (g *Generator) Generate(spec *codegen.SpecDescriptor) error {
 	path := filepath.Join(g.Path, "service")
 
 	// prepare the service package directory

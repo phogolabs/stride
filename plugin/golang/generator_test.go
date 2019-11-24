@@ -1,25 +1,26 @@
-package codegen_test
+package golang_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/plugin/golang"
 )
 
 var _ = Describe("Generator", func() {
-	var generator *codegen.Generator
+	var generator *golang.Generator
 
 	BeforeEach(func() {
-		generator = &codegen.Generator{
+		generator = &golang.Generator{
 			Path: tmpdir(),
 		}
 	})
 
 	It("generates the package successfully", func() {
-		descriptor := &codegen.ControllerDescriptor{
+		descriptor := &golang.ControllerDescriptor{
 			Name: "user",
-			Operations: codegen.OperationDescriptorCollection{
+			Operations: golang.OperationDescriptorCollection{
 				&codegen.OperationDescriptor{
 					Method: "GET",
 					Path:   "/accounts",

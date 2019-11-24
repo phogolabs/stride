@@ -4,7 +4,7 @@ package fake
 import (
 	"sync"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/plugin/golang"
 )
 
 type Writer struct {
@@ -117,4 +117,4 @@ func (fake *Writer) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ codegen.Writer = new(Writer)
+var _ golang.Writer = new(Writer)

@@ -2,8 +2,6 @@ package codegen_test
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"testing"
 
 	. "github.com/onsi/ginkgo"
@@ -32,21 +30,4 @@ func resolve(name string) *codegen.SpecDescriptor {
 	Expect(spec).NotTo(BeNil())
 
 	return resolver.Resolve(spec)
-}
-
-func tmpfile() string {
-	tmp, err := ioutil.TempFile("", "stride")
-	Expect(err).To(BeNil())
-
-	name := tmp.Name()
-	Expect(tmp.Close()).To(Succeed())
-	Expect(os.Remove(name)).To(Succeed())
-	return name
-}
-
-func tmpdir() string {
-	dir, err := ioutil.TempDir("", "example")
-	Expect(err).To(BeNil())
-	Expect(os.Remove(dir)).To(Succeed())
-	return dir
 }

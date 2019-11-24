@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/go-openapi/inflect"
+	"github.com/phogolabs/stride/inflect"
 )
 
 var emptyCtx = &ResolverContext{}
@@ -38,7 +38,7 @@ func (r *ResolverContext) Dereference() *ResolverContext {
 	nick := filepath.Base(r.Schema.Ref)
 
 	ctx := &ResolverContext{
-		Name:   dasherize(nick),
+		Name:   inflect.Dasherize(nick),
 		Schema: &openapi3.SchemaRef{Value: r.Schema.Value},
 		Parent: emptyCtx,
 	}
@@ -69,7 +69,7 @@ func (r *ResolverContext) name(text string) string {
 	}
 
 	text = strings.Join(items, "-")
-	text = dasherize(text)
+	text = inflect.Dasherize(text)
 
 	return text
 }

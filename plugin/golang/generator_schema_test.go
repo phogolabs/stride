@@ -1,4 +1,4 @@
-package codegen_test
+package golang_test
 
 import (
 	"bufio"
@@ -11,13 +11,14 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/golang"
 )
 
 var _ = Describe("SchemaGenerator", func() {
-	var generator *codegen.SchemaGenerator
+	var generator *golang.SchemaGenerator
 
 	BeforeEach(func() {
-		generator = &codegen.SchemaGenerator{
+		generator = &golang.SchemaGenerator{
 			Path: tmpdir(),
 		}
 
@@ -26,10 +27,10 @@ var _ = Describe("SchemaGenerator", func() {
 
 	Context("when the descriptor is alias", func() {
 		BeforeEach(func() {
-			descriptor := &codegen.TypeDescriptor{
+			descriptor := &golang.TypeDescriptor{
 				Name:    "ID",
 				IsAlias: true,
-				Element: &codegen.TypeDescriptor{
+				Element: &golang.TypeDescriptor{
 					Name:        "string",
 					IsPrimitive: true,
 				},
@@ -128,9 +129,9 @@ var _ = Describe("SchemaGenerator", func() {
 				Name:    "User",
 				IsClass: true,
 				Properties: codegen.PropertyDescriptorCollection{
-					&codegen.PropertyDescriptor{
+					&golang.PropertyDescriptor{
 						Name: "ID",
-						PropertyType: &codegen.TypeDescriptor{
+						PropertyType: &golang.TypeDescriptor{
 							Name:        "string",
 							IsPrimitive: true,
 						},

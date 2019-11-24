@@ -1,4 +1,4 @@
-package codegen_test
+package golang_test
 
 import (
 	"os"
@@ -6,22 +6,22 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/plugin/golang"
 )
 
 var _ = PDescribe("Merge", func() {
-	var merger *codegen.Merger
+	var merger *golang.Merger
 
 	BeforeEach(func() {
-		merger = &codegen.Merger{}
+		merger = &golang.Merger{}
 	})
 
 	Context("when the range is in the beginning", func() {
 		BeforeEach(func() {
-			target, err := codegen.OpenFile("../fixture/merge_top_target.go.fixture")
+			target, err := golang.OpenFile("../fixture/merge_top_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := codegen.OpenFile("../fixture/merge_top_source.go.fixture")
+			source, err := golang.OpenFile("../fixture/merge_top_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
@@ -36,10 +36,10 @@ var _ = PDescribe("Merge", func() {
 
 	Context("when the range is in the end", func() {
 		BeforeEach(func() {
-			target, err := codegen.OpenFile("../fixture/merge_bottom_target.go.fixture")
+			target, err := golang.OpenFile("../fixture/merge_bottom_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := codegen.OpenFile("../fixture/merge_bottom_source.go.fixture")
+			source, err := golang.OpenFile("../fixture/merge_bottom_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
@@ -54,10 +54,10 @@ var _ = PDescribe("Merge", func() {
 
 	FContext("when the range is in the middle", func() {
 		BeforeEach(func() {
-			target, err := codegen.OpenFile("../fixture/merge_middle_target.go.fixture")
+			target, err := golang.OpenFile("../fixture/merge_middle_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := codegen.OpenFile("../fixture/merge_middle_source.go.fixture")
+			source, err := golang.OpenFile("../fixture/merge_middle_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target

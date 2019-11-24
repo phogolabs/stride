@@ -1,10 +1,11 @@
-package codegen
+package golang
 
 import (
 	"path/filepath"
 	"strings"
 
-	"github.com/go-openapi/inflect"
+	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/inflect"
 )
 
 // ControllerGeneratorMode determines the mode of this generator
@@ -23,7 +24,7 @@ const (
 type ControllerGenerator struct {
 	Path       string
 	Mode       ControllerGeneratorMode
-	Controller *ControllerDescriptor
+	Controller *codegen.ControllerDescriptor
 }
 
 // Generate generates a file
@@ -47,7 +48,7 @@ func (g *ControllerGenerator) Generate() *File {
 
 func (g *ControllerGenerator) schema(root *File) {
 	for _, operation := range g.Controller.Operations {
-		name := camelize(operation.Name)
+		name := inflect.Camelize(operation.Name)
 
 		// input
 		input := root.Struct(name + "Input")
@@ -101,7 +102,7 @@ func (g *ControllerGenerator) schema(root *File) {
 	}
 }
 
-func (g *ControllerGenerator) param(kind string, root *File, parent *StructType, parameters ParameterDescriptorCollection) {
+func (g *ControllerGenerator) param(kind string, root *File, parent *StructType, parameters codegen.ParameterDescriptorCollection) {
 	builder := root.Struct(parent.Name() + kind)
 	builder.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
 
@@ -111,7 +112,7 @@ func (g *ControllerGenerator) param(kind string, root *File, parent *StructType,
 		}
 	}
 
-	parent.AddField(kind, pointer(builder.Name()), g.tagOfArg(kind))
+	parent.AddField(kind, inflect.Pointer(builder.Name()), g.tagOfArg(kind))
 }
 
 func (g *ControllerGenerator) controller(root *File) {
@@ -128,7 +129,7 @@ func (g *ControllerGenerator) controller(root *File) {
 
 	// operations
 	for _, operation := range g.Controller.Operations {
-		name := camelize(operation.Name)
+		name := inflect.Camelize(operation.Name)
 
 		method = builder.Function(operation.Name).
 			AddParam("w", "http.ResponseWriter").
@@ -153,8 +154,8 @@ func (g *ControllerGenerator) mount(builder *FunctionType) {
 	for _, operation := range g.Controller.Operations {
 		var (
 			path    = operation.Path
-			method  = camelize(strings.ToLower(operation.Method))
-			handler = camelize(operation.Name)
+			method  = inflect.Camelize(strings.ToLower(operation.Method))
+			handler = inflect.Camelize(operation.Name)
 		)
 
 		body.Write("r.%s(%q, x.%s)", method, path, handler)
@@ -167,7 +168,7 @@ func (g *ControllerGenerator) mount(builder *FunctionType) {
 
 func (g *ControllerGenerator) operation(builder *FunctionType) {
 	var (
-		name = camelize(builder.Name())
+		name = inflect.Camelize(builder.Name())
 		body = builder.Body()
 	)
 
@@ -214,12 +215,12 @@ func (g *ControllerGenerator) filename() string {
 }
 
 func (g *ControllerGenerator) name() string {
-	name := camelize(g.Controller.Name) + "API"
+	name := inflect.Camelize(g.Controller.Name) + "API"
 	return name
 }
 
-func (g *ControllerGenerator) tagOfArg(kind string) *TagDescriptor {
-	return &TagDescriptor{
+func (g *ControllerGenerator) tagOfArg(kind string) *codegen.TagDescriptor {
+	return &codegen.TagDescriptor{
 		Key:  strings.ToLower(kind),
 		Name: "~",
 	}

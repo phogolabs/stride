@@ -90,7 +90,7 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 			operation := &OperationDescriptor{
 				Path:        path,
 				Method:      method,
-				Name:        dasherize(spec.OperationID),
+				Name:        inflect.Dasherize(spec.OperationID),
 				Description: spec.Description,
 				Summary:     spec.Summary,
 				Deprecated:  spec.Deprecated,
