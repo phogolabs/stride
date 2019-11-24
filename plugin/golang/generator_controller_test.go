@@ -6,8 +6,8 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/codegen"
-	"github.com/phogolabs/plugin/stride/golang"
+	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/plugin/golang"
 )
 
 var _ = Describe("GeneratorController", func() {
