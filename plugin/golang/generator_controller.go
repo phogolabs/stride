@@ -108,6 +108,10 @@ func (g *ControllerGenerator) param(kind string, root *File, parent *StructType,
 
 	for _, param := range parameters {
 		if strings.EqualFold(param.In, kind) {
+			// add a import if needed
+			root.AddImport(param.ParameterType.Namespace())
+
+			// add a field
 			builder.AddField(param.Name, param.ParameterType.Kind(), param.Tags()...)
 		}
 	}
@@ -116,6 +120,11 @@ func (g *ControllerGenerator) param(kind string, root *File, parent *StructType,
 }
 
 func (g *ControllerGenerator) controller(root *File) {
+	// add a import if needed
+	root.AddImport("github.com/go-chi/chi")
+	root.AddImport("github.com/phogolabs/restify")
+	root.AddImport("net/http")
+
 	// struct
 	builder := root.Struct(g.name())
 	builder.Commentf(g.Controller.Description)

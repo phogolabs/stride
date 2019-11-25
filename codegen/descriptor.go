@@ -199,6 +199,18 @@ func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 	return tags
 }
 
+// Namespace returns the namespace
+func (d *TypeDescriptor) Namespace() string {
+	switch d.Kind() {
+	case "time.Time":
+		return "time"
+	case "schema.UUID":
+		return "github.com/phogolabs/schema"
+	default:
+		return ""
+	}
+}
+
 // Kind returns the golang kind
 func (d *TypeDescriptor) Kind() string {
 	name := strings.ToLower(d.Name)

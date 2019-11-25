@@ -2,6 +2,7 @@ package golang_test
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 
 	. "github.com/onsi/ginkgo"
@@ -87,6 +88,8 @@ var _ = Describe("Merge", func() {
 
 			merged, err := ioutil.ReadFile("../../fixture/code/function_body_merged.go.fixture")
 			Expect(err).To(BeNil())
+
+			fmt.Println(target.String())
 
 			Expect(target.String()).To(Equal(string(merged)))
 		})

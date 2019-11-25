@@ -64,7 +64,7 @@ var _ = Describe("SchemaGenerator", func() {
 				case 2:
 					Expect(text).To(Equal("// ID is a literal type auto-generated from OpenAPI spec"))
 				case 3:
-					Expect(text).To(Equal("// stride:generate:literal id"))
+					Expect(text).To(Equal("// stride:generate id"))
 				case 4:
 					Expect(text).To(Equal("type ID string"))
 				}
@@ -113,7 +113,7 @@ var _ = Describe("SchemaGenerator", func() {
 				case 2:
 					Expect(text).To(Equal("// Names is a array type auto-generated from OpenAPI spec"))
 				case 3:
-					Expect(text).To(Equal("// stride:generate:array names"))
+					Expect(text).To(Equal("// stride:generate names"))
 				case 4:
 					Expect(text).To(Equal("type Names []string"))
 				}
@@ -167,11 +167,11 @@ var _ = Describe("SchemaGenerator", func() {
 				case 2:
 					Expect(text).To(Equal("// User is a struct type auto-generated from OpenAPI spec"))
 				case 3:
-					Expect(text).To(Equal("// stride:generate:struct user"))
+					Expect(text).To(Equal("// stride:generate user"))
 				case 4:
 					Expect(text).To(Equal("type User struct {"))
 				case 5:
-					Expect(text).To(Equal("\t// stride:generate:field id"))
+					Expect(text).To(Equal("\t// stride:generate id"))
 				case 6:
 					Expect(text).To(Equal("\tID string `json:\"ID,omitempty\" validate:\"-\"`"))
 				case 7:
@@ -221,13 +221,13 @@ var _ = Describe("SchemaGenerator", func() {
 				case 2:
 					Expect(text).To(Equal("// Status is a literal type auto-generated from OpenAPI spec"))
 				case 3:
-					Expect(text).To(Equal("// stride:generate:literal status"))
+					Expect(text).To(Equal("// stride:generate status"))
 				case 4:
 					Expect(text).To(Equal("type Status string"))
 				case 7:
 					Expect(text).To(Equal("// StatusPending is a \"pending\" enum value auto-generated from OpenAPI spec"))
 				case 8:
-					Expect(text).To(Equal("// stride:generate:const status-pending"))
+					Expect(text).To(Equal("// stride:generate status-pending"))
 				case 9:
 					Expect(text).To(Equal("StatusPending Status = \"pending\""))
 				}

@@ -1,5 +1,7 @@
 package api
 
+import "fmt"
+
 // stride:generate multiply
 func Multiply(x, y int) int {
 	var result int

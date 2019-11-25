@@ -12,6 +12,7 @@ import (
 	"github.com/dave/dst/decorator"
 	"github.com/phogolabs/stride/codegen"
 	"github.com/phogolabs/stride/inflect"
+	"golang.org/x/tools/imports"
 )
 
 //go:generate counterfeiter -fake-name Writer -o ../../fake/writer.go . Writer
@@ -39,6 +40,7 @@ func NewFile(name string) *File {
 			Name: &dst.Ident{
 				Name: "service",
 			},
+			Decls: []dst.Decl{},
 		},
 	}
 }
@@ -72,6 +74,33 @@ func (f *File) Node() *dst.File {
 	return f.node
 }
 
+// AddImport adds an import
+func (f *File) AddImport(name string) {
+	if name == "" {
+		return
+	}
+
+	name = fmt.Sprintf("%q", name)
+	container := f.container()
+
+	for _, spec := range container.Specs {
+		if pkg, ok := spec.(*dst.ImportSpec); ok {
+			if strings.EqualFold(pkg.Path.Value, name) {
+				return
+			}
+		}
+	}
+
+	spec := &dst.ImportSpec{
+		Path: &dst.BasicLit{
+			Kind:  token.STRING,
+			Value: name,
+		},
+	}
+
+	container.Specs = append(container.Specs, spec)
+}
+
 // Merge merges the files
 func (f *File) Merge(source *File) error {
 	merger := &Merger{
@@ -96,11 +125,19 @@ func (f *File) Sync() error {
 
 // WriteTo writes to a file
 func (f *File) WriteTo(w io.Writer) (int64, error) {
-	if err := decorator.Fprint(w, f.node); err != nil {
+	buffer := &bytes.Buffer{}
+
+	if err := decorator.Fprint(buffer, f.node); err != nil {
 		return 0, err
 	}
 
-	return 0, nil
+	data, err := imports.Process(f.name, buffer.Bytes(), nil)
+	if err != nil {
+		return 0, err
+	}
+
+	n, err := w.Write(data)
+	return int64(n), err
 }
 
 // Struct returns a struct type
@@ -136,6 +173,24 @@ func (f *File) Const() *ConstBlockType {
 	return builder
 }
 
+func (f *File) container() *dst.GenDecl {
+	if count := len(f.node.Decls); count > 0 {
+		if declaration, ok := f.node.Decls[0].(*dst.GenDecl); ok {
+			if declaration.Tok == token.IMPORT {
+				return declaration
+			}
+		}
+	}
+
+	container := &dst.GenDecl{
+		Tok:   token.IMPORT,
+		Specs: []dst.Spec{},
+	}
+
+	f.node.Decls = append([]dst.Decl{container}, f.node.Decls...)
+	return container
+}
+
 // StructType builds a struct
 type StructType struct {
 	node *dst.GenDecl
@@ -169,7 +224,7 @@ func NewStructType(name string) *StructType {
 	node.Decs.After = dst.EmptyLine
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", inflect.Camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:struct %s", inflect.Dasherize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Format(name))
 
 	return &StructType{
 		node: node,
@@ -196,7 +251,7 @@ func (b *StructType) AddField(name, kind string, tags ...*codegen.TagDescriptor)
 	field := property(inflect.Camelize(name), kind)
 	field.Decs.Before = dst.NewLine
 	field.Decs.After = dst.NewLine
-	field.Decs.Start.Append("// stride:generate:field " + inflect.Dasherize(name))
+	field.Decs.Start.Append(AnnotationGenerate.Format(name))
 
 	if tag := codegen.TagDescriptorCollection(tags).String(); tag != "" {
 		field.Tag = &dst.BasicLit{
@@ -243,7 +298,7 @@ func NewLiteralType(name string) *LiteralType {
 	node.Decs.After = dst.EmptyLine
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", inflect.Camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:literal %s", inflect.Dasherize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Format(name))
 
 	return &LiteralType{
 		node: node,
@@ -317,7 +372,7 @@ func (b *ConstBlockType) AddConst(name, kind, value string) {
 	spec.Decs.Before = dst.NewLine
 	spec.Decs.After = dst.EmptyLine
 	spec.Decs.Start.Append(fmt.Sprintf("// %s is a %q enum value auto-generated from OpenAPI spec", inflect.Camelize(name), value))
-	spec.Decs.Start.Append(fmt.Sprintf("// stride:generate:const %s", inflect.Dasherize(name)))
+	spec.Decs.Start.Append(AnnotationGenerate.Format(name))
 
 	if value != "" {
 		spec.Values = []dst.Expr{
@@ -355,7 +410,7 @@ func NewArrayType(name string) *ArrayType {
 	node.Decs.After = dst.EmptyLine
 	// comments
 	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", inflect.Camelize(name)))
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:array %s", inflect.Dasherize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Format(name))
 
 	return &ArrayType{
 		node: node,
@@ -422,7 +477,7 @@ func NewFunctionType(name string) *FunctionType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// stride:generate:function %s", inflect.Dasherize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Format(name))
 
 	return &FunctionType{
 		node: node,
@@ -449,14 +504,12 @@ func (b *FunctionType) AddReceiver(name, kind string) *FunctionType {
 	field := property(name, kind)
 	b.node.Recv.List = append(b.node.Recv.List, field)
 
-	key := fmt.Sprintf("%s:%s", inflect.Dasherize(kind), inflect.Dasherize(b.Name()))
-
 	var (
 		comments = b.node.Decs.Start.All()
 		index    = len(comments) - 1
 	)
 
-	comments[index] = fmt.Sprintf("// stride:generate:function %s", key)
+	comments[index] = AnnotationGenerate.Format(kind, b.Name())
 	b.node.Decs.Start.Replace(comments...)
 
 	return b
@@ -539,9 +592,9 @@ func (b *BlockType) Build() error {
 
 // WriteComment writes the body block comment
 func (b *BlockType) WriteComment() {
-	fmt.Fprintln(b.buffer, "// stride:define body:start")
-	fmt.Fprintln(b.buffer, "// NOTE: You can your code within the comment block")
-	fmt.Fprintln(b.buffer, "// stride:define body:end")
+	fmt.Fprintln(b.buffer, AnnotationDefine.Format(bodyStart))
+	fmt.Fprintln(b.buffer, AnnotationNote.Format(bodyMessage))
+	fmt.Fprintln(b.buffer, AnnotationDefine.Format(bodyEnd))
 }
 
 func kind(field *dst.Field) string {

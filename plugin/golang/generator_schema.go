@@ -43,6 +43,10 @@ func (g *SchemaGenerator) Generate() *File {
 					tags = property.Tags()
 					kind = property.PropertyType.Kind()
 				)
+
+				// add a import if needed
+				root.AddImport(property.PropertyType.Namespace())
+				// add the field
 				builder.AddField(property.Name, kind, tags...)
 			}
 		case descriptor.IsEnum:
