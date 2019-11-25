@@ -131,17 +131,17 @@ func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
 		decorations := node.Decorations()
 
 		if start == nil {
-			if annotation.In(decorations.Start, bodyStart) {
+			if annotation.In(decorations.Start, bodyStartKey) {
 				start = intPtr(index)
-			} else if annotation.In(decorations.End, bodyStart) {
+			} else if annotation.In(decorations.End, bodyStartKey) {
 				start = intPtr(index + 1)
 			}
 		}
 
 		if end == nil {
-			if annotation.In(decorations.Start, bodyEnd) {
+			if annotation.In(decorations.Start, bodyEndKey) {
 				end = intPtr(index - 1)
-			} else if annotation.In(decorations.End, bodyEnd) {
+			} else if annotation.In(decorations.End, bodyEndKey) {
 				end = intPtr(index)
 			}
 		}

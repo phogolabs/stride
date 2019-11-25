@@ -25,7 +25,9 @@ var (
 )
 
 const (
-	newline = "\n"
+	bodyStartKey = "body:start"
+	bodyEndKey   = "body:end"
+	newline      = "\n"
 )
 
 // Annotation represents an annotation

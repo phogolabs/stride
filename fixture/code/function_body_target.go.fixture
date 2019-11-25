@@ -7,7 +7,7 @@ func Multiply(x, y int) int {
 	var result int
 
 	// stride:define body:start
-	// NOTE: not-implemented
+	// NOTE: not implemented
 	// stride:define body:end
 	return result
 }
@@ -24,7 +24,7 @@ func Handle() {
 	}
 
 	// stride:define body:start
-	// NOTE: not-implemented
+	// NOTE: not implemented
 	// stride:define body:end
 
 	if err := render(output); err != nil {

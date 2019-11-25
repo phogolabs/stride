@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	docConst = "// %s is a %q constant value auto-generated from OpenAPI spec"
+	docConst = "// %s is a %q constant auto-generated from OpenAPI spec"
 	docType  = "// %s is a type auto-generated from OpenAPI spec"
 )
 

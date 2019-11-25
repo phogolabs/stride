@@ -62,7 +62,7 @@ var _ = Describe("SchemaGenerator", func() {
 				case 0:
 					Expect(text).To(Equal("package service"))
 				case 2:
-					Expect(text).To(Equal("// ID is a literal type auto-generated from OpenAPI spec"))
+					Expect(text).To(Equal("// ID is a type auto-generated from OpenAPI spec"))
 				case 3:
 					Expect(text).To(Equal("// stride:generate id"))
 				case 4:
@@ -111,7 +111,7 @@ var _ = Describe("SchemaGenerator", func() {
 				case 0:
 					Expect(text).To(Equal("package service"))
 				case 2:
-					Expect(text).To(Equal("// Names is a array type auto-generated from OpenAPI spec"))
+					Expect(text).To(Equal("// Names is a type auto-generated from OpenAPI spec"))
 				case 3:
 					Expect(text).To(Equal("// stride:generate names"))
 				case 4:
@@ -165,7 +165,7 @@ var _ = Describe("SchemaGenerator", func() {
 				case 0:
 					Expect(text).To(Equal("package service"))
 				case 2:
-					Expect(text).To(Equal("// User is a struct type auto-generated from OpenAPI spec"))
+					Expect(text).To(Equal("// User is a type auto-generated from OpenAPI spec"))
 				case 3:
 					Expect(text).To(Equal("// stride:generate user"))
 				case 4:
@@ -219,13 +219,13 @@ var _ = Describe("SchemaGenerator", func() {
 				case 0:
 					Expect(text).To(Equal("package service"))
 				case 2:
-					Expect(text).To(Equal("// Status is a literal type auto-generated from OpenAPI spec"))
+					Expect(text).To(Equal("// Status is a type auto-generated from OpenAPI spec"))
 				case 3:
 					Expect(text).To(Equal("// stride:generate status"))
 				case 4:
 					Expect(text).To(Equal("type Status string"))
 				case 7:
-					Expect(text).To(Equal("// StatusPending is a \"pending\" enum value auto-generated from OpenAPI spec"))
+					Expect(text).To(Equal("// StatusPending is a \"pending\" constant auto-generated from OpenAPI spec"))
 				case 8:
 					Expect(text).To(Equal("// stride:generate status-pending"))
 				case 9:
