@@ -83,21 +83,22 @@ func (g *ControllerGenerator) schema(root *File) {
 			// output body
 			output.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
 
-			// output status method
-			method := output.
-				Function("Status").
-				AddReturn("int")
-
-			if body := method.Body(); body != nil {
-				body.AppendComment()
-				body.Append("return %d", response.Code)
-
-				if err := body.Build(); err != nil {
-					panic(err)
-				}
+			writer := &TemplateWriter{
+				Path: "syntax/golang/status.go.tpl",
+				Context: map[string]interface{}{
+					"code":   response.Code,
+					"schema": output.Name(),
+				},
 			}
 
-			method.Commentf("Status returns the response status code")
+			buffer := &bytes.Buffer{}
+			if _, err := writer.WriteTo(buffer); err != nil {
+				panic(err)
+			}
+
+			fmt.Println("===========")
+			fmt.Println(buffer.String())
+
 			// NOTE: we handle the first response for now
 			break
 		}
@@ -131,16 +132,25 @@ func (g *ControllerGenerator) controller(root *File) {
 	builder := root.Struct(g.name())
 	builder.Commentf(g.Controller.Description)
 
-	// // method mount
-	// method := builder.Function("Mount").AddParam("r", "chi.Router")
-	// method.Commentf("Mount mounts all operations to the corresponding paths")
+	// mount method
+	writer := &TemplateWriter{
+		Path: "syntax/golang/mount.go.tpl",
+		Context: map[string]interface{}{
+			"controller": builder.Name(),
+			"operations": g.Controller.Operations,
+		},
+	}
 
-	// // mount method block
-	// g.mount(method)
+	buffer := &bytes.Buffer{}
+	if _, err := writer.WriteTo(buffer); err != nil {
+		panic(err)
+	}
+
+	fmt.Println("===========")
+	fmt.Println(buffer.String())
 
 	// operations
 	for _, operation := range g.Controller.Operations {
-
 		writer := &TemplateWriter{
 			Path: "syntax/golang/operation.go.tpl",
 			Context: map[string]interface{}{
@@ -155,14 +165,13 @@ func (g *ControllerGenerator) controller(root *File) {
 		}
 
 		buffer := &bytes.Buffer{}
-
 		if _, err := writer.WriteTo(buffer); err != nil {
 			panic(err)
 		}
 
-		fmt.Println(operation.Name)
-		fmt.Println("===========")
-		fmt.Println(buffer.String())
+		// fmt.Println(operation.Name)
+		// fmt.Println("===========")
+		// fmt.Println(buffer.String())
 	}
 }
 

@@ -34,6 +34,7 @@ func (g *TemplateWriter) WriteTo(w io.Writer) (int64, error) {
 		"camelize":  inflect.Camelize,
 		"dasherize": inflect.Dasherize,
 		"uppercase": inflect.UpperCase,
+		"titleize":  inflect.Titleize,
 		"comment":   g.comment,
 		"key":       g.key,
 	}

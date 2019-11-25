@@ -53,6 +53,12 @@ func UpperCase(text string) string {
 	return strings.ToUpper(text)
 }
 
+// Titleize makes the text title
+func Titleize(text string) string {
+	text = strings.ToLower(text)
+	return inflect.Titleize(text)
+}
+
 // Singularize makes a word singularized
 func Singularize(word string) string {
 	return inflect.Singularize(word)
