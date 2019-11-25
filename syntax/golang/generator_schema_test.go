@@ -10,7 +10,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/syntax/golang"
 )
 
@@ -27,10 +27,10 @@ var _ = Describe("SchemaGenerator", func() {
 
 	Context("when the descriptor is alias", func() {
 		BeforeEach(func() {
-			descriptor := &codegen.TypeDescriptor{
+			descriptor := &codedom.TypeDescriptor{
 				Name:    "ID",
 				IsAlias: true,
-				Element: &codegen.TypeDescriptor{
+				Element: &codedom.TypeDescriptor{
 					Name:        "string",
 					IsPrimitive: true,
 				},
@@ -76,10 +76,10 @@ var _ = Describe("SchemaGenerator", func() {
 
 	Context("when the descriptor is array", func() {
 		BeforeEach(func() {
-			descriptor := &codegen.TypeDescriptor{
+			descriptor := &codedom.TypeDescriptor{
 				Name:    "Names",
 				IsArray: true,
-				Element: &codegen.TypeDescriptor{
+				Element: &codedom.TypeDescriptor{
 					Name:        "string",
 					IsPrimitive: true,
 				},
@@ -125,13 +125,13 @@ var _ = Describe("SchemaGenerator", func() {
 
 	Context("when the descriptor is class", func() {
 		BeforeEach(func() {
-			descriptor := &codegen.TypeDescriptor{
+			descriptor := &codedom.TypeDescriptor{
 				Name:    "User",
 				IsClass: true,
-				Properties: codegen.PropertyDescriptorCollection{
-					&codegen.PropertyDescriptor{
+				Properties: codedom.PropertyDescriptorCollection{
+					&codedom.PropertyDescriptor{
 						Name: "ID",
-						PropertyType: &codegen.TypeDescriptor{
+						PropertyType: &codedom.TypeDescriptor{
 							Name:        "string",
 							IsPrimitive: true,
 						},
@@ -185,10 +185,10 @@ var _ = Describe("SchemaGenerator", func() {
 
 	Context("when the descriptor is enum", func() {
 		BeforeEach(func() {
-			descriptor := &codegen.TypeDescriptor{
+			descriptor := &codedom.TypeDescriptor{
 				Name:   "Status",
 				IsEnum: true,
-				Metadata: codegen.Metadata{
+				Metadata: codedom.Metadata{
 					"values": []interface{}{"pending", "running", "completed"},
 				},
 			}

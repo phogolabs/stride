@@ -1,4 +1,4 @@
-package codegen
+package codedom
 
 import (
 	"net/http"

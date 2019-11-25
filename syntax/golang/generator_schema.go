@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"path/filepath"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/inflect"
 )
 
 // SchemaGenerator generates a contract
 type SchemaGenerator struct {
 	Path       string
-	Collection codegen.TypeDescriptorCollection
+	Collection codedom.TypeDescriptorCollection
 }
 
 // Generate generates the file

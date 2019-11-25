@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"path/filepath"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 )
 
 // ServerGenerator builds a server
 type ServerGenerator struct {
 	Path        string
-	Controllers codegen.ControllerDescriptorCollection
+	Controllers codedom.ControllerDescriptorCollection
 }
 
 // Generate generates a file

@@ -53,6 +53,11 @@ func UpperCase(text string) string {
 	return strings.ToUpper(text)
 }
 
+// LowerCase makes the text lower case
+func LowerCase(text string) string {
+	return strings.ToLower(text)
+}
+
 // Titleize makes the text title
 func Titleize(text string) string {
 	text = strings.ToLower(text)

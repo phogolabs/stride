@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/syntax/golang"
 )
 
@@ -26,18 +26,18 @@ var _ = Describe("GeneratorController", func() {
 
 		Describe("input", func() {
 			It("generates the path parameters", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "GET",
 							Path:   "/users/{user-id}",
 							Name:   "get-user",
-							Parameters: codegen.ParameterDescriptorCollection{
-								&codegen.ParameterDescriptor{
+							Parameters: codedom.ParameterDescriptorCollection{
+								&codedom.ParameterDescriptor{
 									Name: "user-id",
 									In:   "path",
-									ParameterType: &codegen.TypeDescriptor{
+									ParameterType: &codedom.TypeDescriptor{
 										Name:        "string",
 										IsPrimitive: true,
 									},
@@ -62,18 +62,18 @@ var _ = Describe("GeneratorController", func() {
 			})
 
 			It("generates the query parameters", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "GET",
 							Path:   "/users",
 							Name:   "get-user",
-							Parameters: codegen.ParameterDescriptorCollection{
-								&codegen.ParameterDescriptor{
+							Parameters: codedom.ParameterDescriptorCollection{
+								&codedom.ParameterDescriptor{
 									Name: "name",
 									In:   "query",
-									ParameterType: &codegen.TypeDescriptor{
+									ParameterType: &codedom.TypeDescriptor{
 										Name:        "string",
 										IsPrimitive: true,
 									},
@@ -98,18 +98,18 @@ var _ = Describe("GeneratorController", func() {
 			})
 
 			It("generates the header parameters", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "GET",
 							Path:   "/users",
 							Name:   "get-user",
-							Parameters: codegen.ParameterDescriptorCollection{
-								&codegen.ParameterDescriptor{
+							Parameters: codedom.ParameterDescriptorCollection{
+								&codedom.ParameterDescriptor{
 									Name: "X-Partner-ID",
 									In:   "header",
-									ParameterType: &codegen.TypeDescriptor{
+									ParameterType: &codedom.TypeDescriptor{
 										Name:        "string",
 										IsPrimitive: true,
 									},
@@ -134,18 +134,18 @@ var _ = Describe("GeneratorController", func() {
 			})
 
 			It("generates the cookie parameters", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "GET",
 							Path:   "/users",
 							Name:   "get-user",
-							Parameters: codegen.ParameterDescriptorCollection{
-								&codegen.ParameterDescriptor{
+							Parameters: codedom.ParameterDescriptorCollection{
+								&codedom.ParameterDescriptor{
 									Name: "token",
 									In:   "cookie",
-									ParameterType: &codegen.TypeDescriptor{
+									ParameterType: &codedom.TypeDescriptor{
 										Name:        "string",
 										IsPrimitive: true,
 									},
@@ -170,16 +170,16 @@ var _ = Describe("GeneratorController", func() {
 			})
 
 			It("generates the body", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "POST",
 							Path:   "/users/search",
 							Name:   "search-user",
-							Requests: codegen.RequestDescriptorCollection{
-								&codegen.RequestDescriptor{
-									RequestType: &codegen.TypeDescriptor{
+							Requests: codedom.RequestDescriptorCollection{
+								&codedom.RequestDescriptor{
+									RequestType: &codedom.TypeDescriptor{
 										Name:       "SearchQuery",
 										IsClass:    true,
 										IsNullable: true,
@@ -204,26 +204,26 @@ var _ = Describe("GeneratorController", func() {
 
 		Describe("output", func() {
 			It("generates the header parameters", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "GET",
 							Path:   "/users/{user-id}",
 							Name:   "get-user-by-id",
-							Responses: codegen.ResponseDescriptorCollection{
-								&codegen.ResponseDescriptor{
-									Parameters: codegen.ParameterDescriptorCollection{
-										&codegen.ParameterDescriptor{
+							Responses: codedom.ResponseDescriptorCollection{
+								&codedom.ResponseDescriptor{
+									Parameters: codedom.ParameterDescriptorCollection{
+										&codedom.ParameterDescriptor{
 											Name: "X-Partner-ID",
 											In:   "header",
-											ParameterType: &codegen.TypeDescriptor{
+											ParameterType: &codedom.TypeDescriptor{
 												Name:        "string",
 												IsPrimitive: true,
 											},
 										},
 									},
-									ResponseType: &codegen.TypeDescriptor{
+									ResponseType: &codedom.TypeDescriptor{
 										Name:       "User",
 										IsClass:    true,
 										IsNullable: true,
@@ -249,26 +249,26 @@ var _ = Describe("GeneratorController", func() {
 			})
 
 			It("generates the body", func() {
-				generator.Controller = &codegen.ControllerDescriptor{
+				generator.Controller = &codedom.ControllerDescriptor{
 					Name: "User",
-					Operations: codegen.OperationDescriptorCollection{
-						&codegen.OperationDescriptor{
+					Operations: codedom.OperationDescriptorCollection{
+						&codedom.OperationDescriptor{
 							Method: "GET",
 							Path:   "/users/{user-id}",
 							Name:   "get-user-by-id",
-							Responses: codegen.ResponseDescriptorCollection{
-								&codegen.ResponseDescriptor{
-									Parameters: codegen.ParameterDescriptorCollection{
-										&codegen.ParameterDescriptor{
+							Responses: codedom.ResponseDescriptorCollection{
+								&codedom.ResponseDescriptor{
+									Parameters: codedom.ParameterDescriptorCollection{
+										&codedom.ParameterDescriptor{
 											Name: "X-Partner-ID",
 											In:   "header",
-											ParameterType: &codegen.TypeDescriptor{
+											ParameterType: &codedom.TypeDescriptor{
 												Name:        "string",
 												IsPrimitive: true,
 											},
 										},
 									},
-									ResponseType: &codegen.TypeDescriptor{
+									ResponseType: &codedom.TypeDescriptor{
 										Name:       "User",
 										IsClass:    true,
 										IsNullable: true,

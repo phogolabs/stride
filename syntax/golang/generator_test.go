@@ -4,7 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/syntax/golang"
 )
 
@@ -18,10 +18,10 @@ var _ = Describe("Generator", func() {
 	})
 
 	It("generates the package successfully", func() {
-		descriptor := &codegen.ControllerDescriptor{
+		descriptor := &codedom.ControllerDescriptor{
 			Name: "user",
-			Operations: codegen.OperationDescriptorCollection{
-				&codegen.OperationDescriptor{
+			Operations: codedom.OperationDescriptorCollection{
+				&codedom.OperationDescriptor{
 					Method: "GET",
 					Path:   "/accounts",
 					Name:   "get-accounts",
@@ -29,7 +29,7 @@ var _ = Describe("Generator", func() {
 			},
 		}
 
-		spec := &codegen.SpecDescriptor{}
+		spec := &codedom.SpecDescriptor{}
 		spec.Controllers = append(spec.Controllers, descriptor)
 
 		Expect(generator.Generate(spec)).To(Succeed())
@@ -43,7 +43,7 @@ var _ = Describe("Generator", func() {
 		})
 
 		It("returns the error", func() {
-			spec := &codegen.SpecDescriptor{}
+			spec := &codedom.SpecDescriptor{}
 			Expect(generator.Generate(spec)).To(MatchError("mkdir /my-dir: read-only file system"))
 			Expect(generator.Path).NotTo(BeADirectory())
 		})

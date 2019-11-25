@@ -5,27 +5,27 @@ import (
 	"sync"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/service"
 )
 
 type SpecResolver struct {
-	ResolveStub        func(*openapi3.Swagger) *codegen.SpecDescriptor
+	ResolveStub        func(*openapi3.Swagger) *codedom.SpecDescriptor
 	resolveMutex       sync.RWMutex
 	resolveArgsForCall []struct {
 		arg1 *openapi3.Swagger
 	}
 	resolveReturns struct {
-		result1 *codegen.SpecDescriptor
+		result1 *codedom.SpecDescriptor
 	}
 	resolveReturnsOnCall map[int]struct {
-		result1 *codegen.SpecDescriptor
+		result1 *codedom.SpecDescriptor
 	}
 	invocations      map[string][][]interface{}
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *SpecResolver) Resolve(arg1 *openapi3.Swagger) *codegen.SpecDescriptor {
+func (fake *SpecResolver) Resolve(arg1 *openapi3.Swagger) *codedom.SpecDescriptor {
 	fake.resolveMutex.Lock()
 	ret, specificReturn := fake.resolveReturnsOnCall[len(fake.resolveArgsForCall)]
 	fake.resolveArgsForCall = append(fake.resolveArgsForCall, struct {
@@ -49,7 +49,7 @@ func (fake *SpecResolver) ResolveCallCount() int {
 	return len(fake.resolveArgsForCall)
 }
 
-func (fake *SpecResolver) ResolveCalls(stub func(*openapi3.Swagger) *codegen.SpecDescriptor) {
+func (fake *SpecResolver) ResolveCalls(stub func(*openapi3.Swagger) *codedom.SpecDescriptor) {
 	fake.resolveMutex.Lock()
 	defer fake.resolveMutex.Unlock()
 	fake.ResolveStub = stub
@@ -62,26 +62,26 @@ func (fake *SpecResolver) ResolveArgsForCall(i int) *openapi3.Swagger {
 	return argsForCall.arg1
 }
 
-func (fake *SpecResolver) ResolveReturns(result1 *codegen.SpecDescriptor) {
+func (fake *SpecResolver) ResolveReturns(result1 *codedom.SpecDescriptor) {
 	fake.resolveMutex.Lock()
 	defer fake.resolveMutex.Unlock()
 	fake.ResolveStub = nil
 	fake.resolveReturns = struct {
-		result1 *codegen.SpecDescriptor
+		result1 *codedom.SpecDescriptor
 	}{result1}
 }
 
-func (fake *SpecResolver) ResolveReturnsOnCall(i int, result1 *codegen.SpecDescriptor) {
+func (fake *SpecResolver) ResolveReturnsOnCall(i int, result1 *codedom.SpecDescriptor) {
 	fake.resolveMutex.Lock()
 	defer fake.resolveMutex.Unlock()
 	fake.ResolveStub = nil
 	if fake.resolveReturnsOnCall == nil {
 		fake.resolveReturnsOnCall = make(map[int]struct {
-			result1 *codegen.SpecDescriptor
+			result1 *codedom.SpecDescriptor
 		})
 	}
 	fake.resolveReturnsOnCall[i] = struct {
-		result1 *codegen.SpecDescriptor
+		result1 *codedom.SpecDescriptor
 	}{result1}
 }
 

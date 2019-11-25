@@ -16,10 +16,10 @@ var Version = "unknown"
 
 func main() {
 	app := &cli.App{
-	  Name:      "{{ .command }}",
-		HelpName:  "{{ .command }}",
-		Usage:     "{{ .command }} HTTP Server",
-		UsageText: "{{ .command }} [global options]",
+	  Name:      "{{ .command | dasherize | lowercase }}",
+		HelpName:  "{{ .command | dasherize | lowercase }}",
+		Usage:     "{{ .command | dasherize | lowercase }} http server",
+		UsageText: "{{ .command | dasherize | lowercase }} [global options]",
 		Version:   Version,
 		Writer:    os.Stdout,
 		ErrWriter: os.Stderr,

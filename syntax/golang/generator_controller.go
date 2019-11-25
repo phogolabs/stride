@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/inflect"
 )
 
@@ -25,7 +25,7 @@ const (
 type ControllerGenerator struct {
 	Path       string
 	Mode       ControllerGeneratorMode
-	Controller *codegen.ControllerDescriptor
+	Controller *codedom.ControllerDescriptor
 }
 
 // Generate generates a file
@@ -105,7 +105,7 @@ func (g *ControllerGenerator) schema(root *File) {
 	}
 }
 
-func (g *ControllerGenerator) param(kind string, root *File, parent *StructType, parameters codegen.ParameterDescriptorCollection) {
+func (g *ControllerGenerator) param(kind string, root *File, parent *StructType, parameters codedom.ParameterDescriptorCollection) {
 	builder := root.Struct(parent.Name() + kind)
 	builder.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
 
@@ -200,8 +200,8 @@ func (g *ControllerGenerator) name() string {
 	return name
 }
 
-func (g *ControllerGenerator) tagOfArg(kind string) *codegen.TagDescriptor {
-	return &codegen.TagDescriptor{
+func (g *ControllerGenerator) tagOfArg(kind string) *codedom.TagDescriptor {
+	return &codedom.TagDescriptor{
 		Key:  strings.ToLower(kind),
 		Name: "~",
 	}

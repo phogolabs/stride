@@ -4,15 +4,15 @@ package fake
 import (
 	"sync"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/service"
 )
 
 type CodeGenerator struct {
-	GenerateStub        func(*codegen.SpecDescriptor) error
+	GenerateStub        func(*codedom.SpecDescriptor) error
 	generateMutex       sync.RWMutex
 	generateArgsForCall []struct {
-		arg1 *codegen.SpecDescriptor
+		arg1 *codedom.SpecDescriptor
 	}
 	generateReturns struct {
 		result1 error
@@ -24,11 +24,11 @@ type CodeGenerator struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *CodeGenerator) Generate(arg1 *codegen.SpecDescriptor) error {
+func (fake *CodeGenerator) Generate(arg1 *codedom.SpecDescriptor) error {
 	fake.generateMutex.Lock()
 	ret, specificReturn := fake.generateReturnsOnCall[len(fake.generateArgsForCall)]
 	fake.generateArgsForCall = append(fake.generateArgsForCall, struct {
-		arg1 *codegen.SpecDescriptor
+		arg1 *codedom.SpecDescriptor
 	}{arg1})
 	fake.recordInvocation("Generate", []interface{}{arg1})
 	fake.generateMutex.Unlock()
@@ -48,13 +48,13 @@ func (fake *CodeGenerator) GenerateCallCount() int {
 	return len(fake.generateArgsForCall)
 }
 
-func (fake *CodeGenerator) GenerateCalls(stub func(*codegen.SpecDescriptor) error) {
+func (fake *CodeGenerator) GenerateCalls(stub func(*codedom.SpecDescriptor) error) {
 	fake.generateMutex.Lock()
 	defer fake.generateMutex.Unlock()
 	fake.GenerateStub = stub
 }
 
-func (fake *CodeGenerator) GenerateArgsForCall(i int) *codegen.SpecDescriptor {
+func (fake *CodeGenerator) GenerateArgsForCall(i int) *codedom.SpecDescriptor {
 	fake.generateMutex.RLock()
 	defer fake.generateMutex.RUnlock()
 	argsForCall := fake.generateArgsForCall[i]

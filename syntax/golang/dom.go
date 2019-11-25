@@ -10,7 +10,7 @@ import (
 
 	"github.com/dave/dst"
 	"github.com/dave/dst/decorator"
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/inflect"
 	"golang.org/x/tools/imports"
 )
@@ -275,13 +275,13 @@ func (b *StructType) Commentf(pattern string, args ...interface{}) {
 }
 
 // AddField defines a field
-func (b *StructType) AddField(name, kind string, tags ...*codegen.TagDescriptor) {
+func (b *StructType) AddField(name, kind string, tags ...*codedom.TagDescriptor) {
 	field := property(inflect.Camelize(name), kind)
 	field.Decs.Before = dst.NewLine
 	field.Decs.After = dst.NewLine
 	field.Decs.Start.Append(AnnotationGenerate.Key(name))
 
-	if tag := codegen.TagDescriptorCollection(tags).String(); tag != "" {
+	if tag := codedom.TagDescriptorCollection(tags).String(); tag != "" {
 		field.Tag = &dst.BasicLit{
 			Kind:  token.STRING,
 			Value: tag,

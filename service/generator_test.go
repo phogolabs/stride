@@ -6,7 +6,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/fake"
 	"github.com/phogolabs/stride/service"
 )
@@ -20,7 +20,7 @@ var _ = Describe("Generator", func() {
 
 	BeforeEach(func() {
 		resolver = &fake.SpecResolver{}
-		resolver.ResolveReturns(&codegen.SpecDescriptor{})
+		resolver.ResolveReturns(&codedom.SpecDescriptor{})
 
 		coder = &fake.CodeGenerator{}
 

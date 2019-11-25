@@ -1,4 +1,4 @@
-package codegen_test
+package codedom_test
 
 import (
 	"fmt"
@@ -6,14 +6,14 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 )
 
 var _ = Describe("Resolver", func() {
-	var spec *codegen.SpecDescriptor
+	var spec *codedom.SpecDescriptor
 
-	SchemaAt := func(index int) func() *codegen.TypeDescriptor {
-		return func() *codegen.TypeDescriptor {
+	SchemaAt := func(index int) func() *codedom.TypeDescriptor {
+		return func() *codedom.TypeDescriptor {
 			By(fmt.Sprintf("getting type descriptor at index %d", index))
 			item := spec.Types[index]
 
@@ -22,8 +22,8 @@ var _ = Describe("Resolver", func() {
 		}
 	}
 
-	SchemaElementAt := func(index int) func() *codegen.TypeDescriptor {
-		return func() *codegen.TypeDescriptor {
+	SchemaElementAt := func(index int) func() *codedom.TypeDescriptor {
+		return func() *codedom.TypeDescriptor {
 			var (
 				get  = SchemaAt(index)
 				item = get().Element
@@ -285,7 +285,7 @@ var _ = Describe("Resolver", func() {
 				})
 
 				It("has a nested property types", func() {
-					var property *codegen.PropertyDescriptor
+					var property *codedom.PropertyDescriptor
 
 					property = spec.Types[0].Properties[0]
 					Expect(property.Name).To(Equal("id"))
@@ -482,7 +482,7 @@ var _ = Describe("Resolver", func() {
 				ItResolvesEnumType("account-status", SchemaAt(4), values)
 
 				It("has a nested property types", func() {
-					var property *codegen.PropertyDescriptor
+					var property *codedom.PropertyDescriptor
 
 					property = spec.Types[0].Properties[0]
 					Expect(property.Name).To(Equal("id"))
@@ -679,7 +679,7 @@ var _ = Describe("Resolver", func() {
 				ItResolvesEnumType("account-status", SchemaAt(4), values)
 
 				It("has a nested property types", func() {
-					var property *codegen.PropertyDescriptor
+					var property *codedom.PropertyDescriptor
 
 					property = spec.Types[0].Properties[0]
 					Expect(property.Name).To(Equal("id"))
@@ -876,7 +876,7 @@ var _ = Describe("Resolver", func() {
 				ItResolvesEnumType("account-status", SchemaAt(4), values)
 
 				It("has a nested property types", func() {
-					var property *codegen.PropertyDescriptor
+					var property *codedom.PropertyDescriptor
 
 					property = spec.Types[0].Properties[0]
 					Expect(property.Name).To(Equal("id"))
@@ -1073,7 +1073,7 @@ var _ = Describe("Resolver", func() {
 				ItResolvesEnumType("account-status", SchemaAt(4), values)
 
 				It("has a nested property types", func() {
-					var property *codegen.PropertyDescriptor
+					var property *codedom.PropertyDescriptor
 
 					property = spec.Types[0].Properties[0]
 					Expect(property.Name).To(Equal("id"))
@@ -1129,7 +1129,7 @@ var _ = Describe("Resolver", func() {
 			Expect(descriptor.Name).To(Equal("account"))
 			Expect(descriptor.Operations).To(HaveLen(2))
 
-			var op *codegen.OperationDescriptor
+			var op *codedom.OperationDescriptor
 
 			op = descriptor.Operations[0]
 			Expect(op.Name).To(Equal("get-account-by-id"))

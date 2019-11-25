@@ -1,4 +1,4 @@
-package codegen_test
+package codedom_test
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 )
 
 var _ = Describe("TypeDescriptor", func() {
 	Describe("Kind", func() {
 		ItReturnTheKind := func(name, expected string, primitive, nullable bool) {
 			It(fmt.Sprintf("returns %s successfully", expected), func() {
-				descriptor := &codegen.TypeDescriptor{
+				descriptor := &codedom.TypeDescriptor{
 					Name:        name,
 					IsPrimitive: primitive,
 					IsNullable:  nullable,
@@ -37,9 +37,9 @@ var _ = Describe("TypeDescriptor", func() {
 				return &v
 			}
 
-			kind := &codegen.TypeDescriptor{
+			kind := &codedom.TypeDescriptor{
 				Default: "99.9",
-				Metadata: codegen.Metadata{
+				Metadata: codedom.Metadata{
 					"unique":        true,
 					"min":           float64Ptr(10.0),
 					"min_exclusive": true,
@@ -70,9 +70,9 @@ var _ = Describe("TypeDescriptor", func() {
 					return &v
 				}
 
-				kind := &codegen.TypeDescriptor{
+				kind := &codedom.TypeDescriptor{
 					Default: "99.9",
-					Metadata: codegen.Metadata{
+					Metadata: codedom.Metadata{
 						"unique":        true,
 						"min":           float64Ptr(10.0),
 						"min_exclusive": false,
@@ -103,17 +103,17 @@ var _ = Describe("TypeDescriptor", func() {
 })
 
 var _ = Describe("TypeDescriptorMap", func() {
-	var descriptor *codegen.TypeDescriptor
+	var descriptor *codedom.TypeDescriptor
 
 	BeforeEach(func() {
-		descriptor = &codegen.TypeDescriptor{
+		descriptor = &codedom.TypeDescriptor{
 			Name: "my-type",
 		}
 	})
 
 	Describe("Add", func() {
 		It("adds a descriptor successfully", func() {
-			kv := codegen.TypeDescriptorMap{}
+			kv := codedom.TypeDescriptorMap{}
 			kv.Add(descriptor)
 			Expect(kv).To(HaveKeyWithValue("my-type", descriptor))
 		})
@@ -121,7 +121,7 @@ var _ = Describe("TypeDescriptorMap", func() {
 
 	Describe("Get", func() {
 		It("gets a descriptor successfully", func() {
-			kv := codegen.TypeDescriptorMap{}
+			kv := codedom.TypeDescriptorMap{}
 			kv.Add(descriptor)
 			Expect(kv).To(HaveLen(1))
 			Expect(kv.Get("my-type")).To(Equal(descriptor))
@@ -130,7 +130,7 @@ var _ = Describe("TypeDescriptorMap", func() {
 
 	Describe("Clear", func() {
 		It("clears a descriptor map successfully", func() {
-			kv := codegen.TypeDescriptorMap{}
+			kv := codedom.TypeDescriptorMap{}
 			kv.Add(descriptor)
 
 			Expect(kv).To(HaveLen(1))
@@ -141,7 +141,7 @@ var _ = Describe("TypeDescriptorMap", func() {
 
 	Describe("Collection", func() {
 		It("returns a descriptor collection successfully", func() {
-			kv := codegen.TypeDescriptorMap{}
+			kv := codedom.TypeDescriptorMap{}
 			kv.Add(descriptor)
 			Expect(kv.Collection()).To(ContainElement(descriptor))
 		})
@@ -151,10 +151,10 @@ var _ = Describe("TypeDescriptorMap", func() {
 var _ = Describe("TypeDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.TypeDescriptorCollection{}
-			items = append(items, &codegen.TypeDescriptor{Name: "BankID"})
-			items = append(items, &codegen.TypeDescriptor{Name: "ID"})
-			items = append(items, &codegen.TypeDescriptor{Name: "Address"})
+			items := codedom.TypeDescriptorCollection{}
+			items = append(items, &codedom.TypeDescriptor{Name: "BankID"})
+			items = append(items, &codedom.TypeDescriptor{Name: "ID"})
+			items = append(items, &codedom.TypeDescriptor{Name: "Address"})
 
 			sort.Sort(items)
 
@@ -168,10 +168,10 @@ var _ = Describe("TypeDescriptorCollection", func() {
 var _ = Describe("PropertyDescriptor", func() {
 	Describe("Tags", func() {
 		It("returns a tag collection successfully", func() {
-			property := &codegen.PropertyDescriptor{
+			property := &codedom.PropertyDescriptor{
 				Name:     "bank-id",
 				Required: false,
-				PropertyType: &codegen.TypeDescriptor{
+				PropertyType: &codedom.TypeDescriptor{
 					Name: "string",
 				},
 			}
@@ -192,9 +192,9 @@ var _ = Describe("PropertyDescriptor", func() {
 var _ = Describe("PropertyDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.PropertyDescriptorCollection{}
-			items = append(items, &codegen.PropertyDescriptor{Name: "bank-id"})
-			items = append(items, &codegen.PropertyDescriptor{Name: "address"})
+			items := codedom.PropertyDescriptorCollection{}
+			items = append(items, &codedom.PropertyDescriptor{Name: "bank-id"})
+			items = append(items, &codedom.PropertyDescriptor{Name: "address"})
 
 			sort.Sort(items)
 
@@ -207,13 +207,13 @@ var _ = Describe("PropertyDescriptorCollection", func() {
 var _ = Describe("ParameterDescriptor", func() {
 	Describe("Tags", func() {
 		It("returns a tag collection successfully", func() {
-			param := &codegen.ParameterDescriptor{
+			param := &codedom.ParameterDescriptor{
 				Name:     "bank-id",
 				Style:    "matrix",
 				In:       "header",
 				Explode:  true,
 				Required: true,
-				ParameterType: &codegen.TypeDescriptor{
+				ParameterType: &codedom.TypeDescriptor{
 					Name: "string",
 				},
 			}
@@ -235,9 +235,9 @@ var _ = Describe("ParameterDescriptor", func() {
 var _ = Describe("ParameterDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.ParameterDescriptorCollection{}
-			items = append(items, &codegen.ParameterDescriptor{Name: "bank-id"})
-			items = append(items, &codegen.ParameterDescriptor{Name: "address"})
+			items := codedom.ParameterDescriptorCollection{}
+			items = append(items, &codedom.ParameterDescriptor{Name: "bank-id"})
+			items = append(items, &codedom.ParameterDescriptor{Name: "address"})
 
 			sort.Sort(items)
 
@@ -254,9 +254,9 @@ var _ = Describe("RequestDescriptor", func() {
 var _ = Describe("RequestDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.RequestDescriptorCollection{}
-			items = append(items, &codegen.RequestDescriptor{ContentType: "application/xml"})
-			items = append(items, &codegen.RequestDescriptor{ContentType: "application/json"})
+			items := codedom.RequestDescriptorCollection{}
+			items = append(items, &codedom.RequestDescriptor{ContentType: "application/xml"})
+			items = append(items, &codedom.RequestDescriptor{ContentType: "application/json"})
 
 			sort.Sort(items)
 
@@ -273,11 +273,11 @@ var _ = Describe("ResponseDescriptor", func() {
 var _ = Describe("ResponseDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.ResponseDescriptorCollection{}
-			items = append(items, &codegen.ResponseDescriptor{ContentType: "application/xml", Code: 200})
-			items = append(items, &codegen.ResponseDescriptor{ContentType: "application/json", Code: 200})
-			items = append(items, &codegen.ResponseDescriptor{ContentType: "application/xml", Code: 201})
-			items = append(items, &codegen.ResponseDescriptor{ContentType: "application/json", Code: 201})
+			items := codedom.ResponseDescriptorCollection{}
+			items = append(items, &codedom.ResponseDescriptor{ContentType: "application/xml", Code: 200})
+			items = append(items, &codedom.ResponseDescriptor{ContentType: "application/json", Code: 200})
+			items = append(items, &codedom.ResponseDescriptor{ContentType: "application/xml", Code: 201})
+			items = append(items, &codedom.ResponseDescriptor{ContentType: "application/json", Code: 201})
 
 			sort.Sort(items)
 
@@ -300,10 +300,10 @@ var _ = Describe("ControllerDescriptor", func() {
 var _ = Describe("ControllerDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.ControllerDescriptorCollection{}
-			items = append(items, &codegen.ControllerDescriptor{Name: "account-api"})
-			items = append(items, &codegen.ControllerDescriptor{Name: "user-api"})
-			items = append(items, &codegen.ControllerDescriptor{Name: "card-api"})
+			items := codedom.ControllerDescriptorCollection{}
+			items = append(items, &codedom.ControllerDescriptor{Name: "account-api"})
+			items = append(items, &codedom.ControllerDescriptor{Name: "user-api"})
+			items = append(items, &codedom.ControllerDescriptor{Name: "card-api"})
 
 			sort.Sort(items)
 
@@ -315,17 +315,17 @@ var _ = Describe("ControllerDescriptorCollection", func() {
 })
 
 var _ = Describe("ControllerDescriptorMap", func() {
-	var descriptor *codegen.ControllerDescriptor
+	var descriptor *codedom.ControllerDescriptor
 
 	BeforeEach(func() {
-		descriptor = &codegen.ControllerDescriptor{
+		descriptor = &codedom.ControllerDescriptor{
 			Name: "user-api",
 		}
 	})
 
 	Describe("Add", func() {
 		It("adds a descriptor successfully", func() {
-			kv := codegen.ControllerDescriptorMap{}
+			kv := codedom.ControllerDescriptorMap{}
 			kv.Add(descriptor)
 			kv.Add(descriptor)
 			Expect(kv).To(HaveKeyWithValue("user-api", descriptor))
@@ -334,7 +334,7 @@ var _ = Describe("ControllerDescriptorMap", func() {
 
 	Describe("Get", func() {
 		It("gets a descriptor successfully", func() {
-			kv := codegen.ControllerDescriptorMap{}
+			kv := codedom.ControllerDescriptorMap{}
 			kv.Add(descriptor)
 			Expect(kv).To(HaveLen(1))
 			Expect(kv.Get("user-api")).To(Equal(descriptor))
@@ -342,7 +342,7 @@ var _ = Describe("ControllerDescriptorMap", func() {
 
 		Context("when the descriptor does not exist", func() {
 			It("gets a descriptor successfully", func() {
-				kv := codegen.ControllerDescriptorMap{}
+				kv := codedom.ControllerDescriptorMap{}
 				descriptor = kv.Get("user-api")
 				Expect(descriptor).NotTo(BeNil())
 				Expect(descriptor.Name).To(Equal("user-api"))
@@ -352,7 +352,7 @@ var _ = Describe("ControllerDescriptorMap", func() {
 
 	Describe("Clear", func() {
 		It("clears a descriptor map successfully", func() {
-			kv := codegen.ControllerDescriptorMap{}
+			kv := codedom.ControllerDescriptorMap{}
 			kv.Add(descriptor)
 
 			Expect(kv).To(HaveLen(1))
@@ -363,7 +363,7 @@ var _ = Describe("ControllerDescriptorMap", func() {
 
 	Describe("Collection", func() {
 		It("returns a descriptor collection successfully", func() {
-			kv := codegen.ControllerDescriptorMap{}
+			kv := codedom.ControllerDescriptorMap{}
 			kv.Add(descriptor)
 			Expect(kv.Collection()).To(ContainElement(descriptor))
 		})
@@ -377,10 +377,10 @@ var _ = Describe("OperationDescriptor", func() {
 var _ = Describe("OperationDescriptorCollection", func() {
 	Describe("Sort", func() {
 		It("sorts the items successfully", func() {
-			items := codegen.OperationDescriptorCollection{}
-			items = append(items, &codegen.OperationDescriptor{Name: "create"})
-			items = append(items, &codegen.OperationDescriptor{Name: "update"})
-			items = append(items, &codegen.OperationDescriptor{Name: "delete"})
+			items := codedom.OperationDescriptorCollection{}
+			items = append(items, &codedom.OperationDescriptor{Name: "create"})
+			items = append(items, &codedom.OperationDescriptor{Name: "update"})
+			items = append(items, &codedom.OperationDescriptor{Name: "delete"})
 
 			sort.Sort(items)
 
@@ -398,16 +398,16 @@ var _ = Describe("TagDescriptor", func() {
 var _ = Describe("TagDescriptorCollection", func() {
 	Describe("String", func() {
 		It("returns the tag string successfully", func() {
-			items := codegen.TagDescriptorCollection{}
-			items = append(items, &codegen.TagDescriptor{Key: "json", Name: "name"})
-			items = append(items, &codegen.TagDescriptor{Key: "xml", Name: "name"})
+			items := codedom.TagDescriptorCollection{}
+			items = append(items, &codedom.TagDescriptor{Key: "json", Name: "name"})
+			items = append(items, &codedom.TagDescriptor{Key: "xml", Name: "name"})
 
 			Expect(items.String()).To(Equal("`json:\"name\" xml:\"name\"`"))
 		})
 
 		Context("when the collection is empty", func() {
 			It("returns the tag string successfully", func() {
-				items := codegen.TagDescriptorCollection{}
+				items := codedom.TagDescriptorCollection{}
 				Expect(items.String()).To(BeEmpty())
 			})
 		})

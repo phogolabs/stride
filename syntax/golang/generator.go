@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 )
 
 // FileGenerator is a file generator
@@ -19,7 +19,7 @@ type Generator struct {
 }
 
 // Generate generates the source code
-func (g *Generator) Generate(spec *codegen.SpecDescriptor) error {
+func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 	var (
 		dirPkg    = filepath.Join(g.Path, "service")
 		dirCmd    = filepath.Join(g.Path, "cmd", filepath.Base(g.Path))

@@ -1,4 +1,4 @@
-package codegen_test
+package codedom_test
 
 import (
 	"fmt"
@@ -8,21 +8,21 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/getkin/kin-openapi/openapi3"
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 )
 
-type GetTypeDescriptorFunc func() *codegen.TypeDescriptor
+type GetTypeDescriptorFunc func() *codedom.TypeDescriptor
 
 func TestCodegen(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "Codegen Suite")
+	RunSpecs(t, "Codedom Suite")
 }
 
-func resolve(name string) *codegen.SpecDescriptor {
+func resolve(name string) *codedom.SpecDescriptor {
 	var (
 		path     = fmt.Sprintf("../fixture/spec/%s", name)
 		loader   = openapi3.NewSwaggerLoader()
-		resolver = codegen.NewResolver()
+		resolver = codedom.NewResolver()
 	)
 
 	spec, err := loader.LoadSwaggerFromFile(path)
