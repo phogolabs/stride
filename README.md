@@ -15,9 +15,9 @@ specification.
 ## Motivation
 
 There are a lot of tools around the OpenAPI initiative. However neither of them
-provided comprehensive solution for rapid application development. The goal is
+gives comprehensive solution for rapid application development. The goal is
 to provide a tool that you can use to generate production ready server
-application.
+applications.
 
 Doesn't matter whether you are starting from just concept, prototype or
 building your v1 product. The tool provides functionality for editing and
@@ -25,7 +25,7 @@ viewing of OpenAPI specification. It generates a production ready scaffold
 projects. Also it can start a mock server. So you can quickly start building
 your front-end app without waiting for your actual back-end.
 
-Thanks to the contributors of the following projects that empower `strive`:
+Thanks to the contributors of the following projects that empower `stride`:
 - [kin-openapi](https://github.com/getkin/kin-openapi)
 - [swagger-editor](https://github.com/swagger-api/swagger-editor)
 - [swagger-ui](https://github.com/swagger-api/swagger-ui)
