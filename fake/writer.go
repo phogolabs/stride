@@ -4,7 +4,7 @@ package fake
 import (
 	"sync"
 
-	"github.com/phogolabs/stride/plugin/golang"
+	"github.com/phogolabs/stride/syntax/golang"
 )
 
 type Writer struct {

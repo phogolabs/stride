@@ -5,8 +5,8 @@ import (
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
 	"github.com/phogolabs/stride/codegen"
-	"github.com/phogolabs/stride/plugin/golang"
 	"github.com/phogolabs/stride/service"
+	"github.com/phogolabs/stride/syntax/golang"
 )
 
 // OpenAPIGenerator provides a subcommands to generate source code from OpenAPI specification

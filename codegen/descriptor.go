@@ -537,6 +537,15 @@ type OperationDescriptor struct {
 	Responses   ResponseDescriptorCollection
 }
 
+// DeprecationMessage returns the deprecation message
+func (d *OperationDescriptor) DeprecationMessage() string {
+	if d.Deprecated {
+		return "Deprecated: The operation is obsolete"
+	}
+
+	return ""
+}
+
 // OperationDescriptorCollection definition
 type OperationDescriptorCollection []*OperationDescriptor
 

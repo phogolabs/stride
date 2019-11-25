@@ -48,6 +48,11 @@ func Underscore(text string) string {
 	return inflect.Underscore(text)
 }
 
+// UpperCase makes the text upper case
+func UpperCase(text string) string {
+	return strings.ToUpper(text)
+}
+
 // Singularize makes a word singularized
 func Singularize(word string) string {
 	return inflect.Singularize(word)

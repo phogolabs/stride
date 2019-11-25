@@ -1,18 +1,18 @@
-package syntax_test
+package golang_test
 
 import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codegen"
-	"github.com/phogolabs/stride/plugin/syntax"
+	"github.com/phogolabs/stride/syntax/golang"
 )
 
 var _ = Describe("Generator", func() {
-	var generator *syntax.Generator
+	var generator *golang.Generator
 
 	BeforeEach(func() {
-		generator = &syntax.Generator{
+		generator = &golang.Generator{
 			Path: tmpdir(),
 		}
 	})

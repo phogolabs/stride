@@ -1,6 +1,8 @@
-package syntax
+package golang
 
 import (
+	"bytes"
+	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -129,31 +131,38 @@ func (g *ControllerGenerator) controller(root *File) {
 	builder := root.Struct(g.name())
 	builder.Commentf(g.Controller.Description)
 
-	// method mount
-	method := builder.Function("Mount").AddParam("r", "chi.Router")
-	method.Commentf("Mount mounts all operations to the corresponding paths")
+	// // method mount
+	// method := builder.Function("Mount").AddParam("r", "chi.Router")
+	// method.Commentf("Mount mounts all operations to the corresponding paths")
 
-	// mount method block
-	g.mount(method)
+	// // mount method block
+	// g.mount(method)
 
 	// operations
 	for _, operation := range g.Controller.Operations {
-		name := inflect.Camelize(operation.Name)
 
-		method = builder.Function(operation.Name).
-			AddParam("w", "http.ResponseWriter").
-			AddParam("r", "*http.Request")
-
-		method.Commentf("%s handles endpoint %s %s", name, operation.Method, operation.Path)
-
-		if operation.Deprecated {
-			method.Commentf("Deprecated: The operation is obsolete")
+		writer := &TemplateWriter{
+			Path: "syntax/golang/operation.go.tpl",
+			Context: map[string]interface{}{
+				"controller":  builder.Name(),
+				"operation":   operation.Name,
+				"method":      operation.Method,
+				"path":        operation.Path,
+				"description": operation.Description,
+				"summary":     operation.Summary,
+				"deprecated":  operation.DeprecationMessage(),
+			},
 		}
 
-		method.Commentf(operation.Description)
-		method.Commentf(operation.Summary)
+		buffer := &bytes.Buffer{}
 
-		g.operation(method)
+		if _, err := writer.WriteTo(buffer); err != nil {
+			panic(err)
+		}
+
+		fmt.Println(operation.Name)
+		fmt.Println("===========")
+		fmt.Println(buffer.String())
 	}
 }
 
@@ -168,28 +177,6 @@ func (g *ControllerGenerator) mount(builder *FunctionType) {
 		)
 
 		body.Append("r.%s(%q, x.%s)", method, path, handler)
-	}
-
-	if err := body.Build(); err != nil {
-		panic(err)
-	}
-}
-
-func (g *ControllerGenerator) operation(builder *FunctionType) {
-	var (
-		name = inflect.Camelize(builder.Name())
-		body = builder.Body()
-	)
-
-	writer := &TemplateWriter{
-		Path: "syntax/syntax/operation.go.tpl",
-		Context: map[string]interface{}{
-			"name": name,
-		},
-	}
-
-	if _, err := writer.WriteTo(body); err != nil {
-		panic(err)
 	}
 
 	if err := body.Build(); err != nil {
