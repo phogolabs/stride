@@ -25,10 +25,9 @@ const (
 // Writer represents a writer
 type Writer io.Writer
 
-// Builder builds a node from the code
-type Builder interface {
-	Name() string
-	Commentf(string, ...interface{})
+// Node returns the node
+type Node interface {
+	Node() *dst.GenDecl
 }
 
 // File represents the generated file
@@ -168,37 +167,9 @@ func (f *File) WriteTo(w io.Writer) (int64, error) {
 	return int64(n), err
 }
 
-// Struct returns a struct type
-func (f *File) Struct(name string) *StructType {
-	builder := NewStructType(name)
-	builder.file = f.node
-
-	f.node.Decls = append(f.node.Decls, builder.node)
-	return builder
-}
-
-// Literal returns a literal type
-func (f *File) Literal(name string) *LiteralType {
-	builder := NewLiteralType(name)
-
-	f.node.Decls = append(f.node.Decls, builder.node)
-	return builder
-}
-
-// Array returns a array type
-func (f *File) Array(name string) *ArrayType {
-	builder := NewArrayType(name)
-
-	f.node.Decls = append(f.node.Decls, builder.node)
-	return builder
-}
-
-// Const returns a var type
-func (f *File) Const() *ConstBlockType {
-	builder := NewConstBlockType()
-
-	f.node.Decls = append(f.node.Decls, builder.node)
-	return builder
+// AddNode adds a node to the file
+func (f *File) AddNode(node Node) {
+	f.node.Decls = append(f.node.Decls, node.Node())
 }
 
 func (f *File) container() *dst.GenDecl {
@@ -222,7 +193,6 @@ func (f *File) container() *dst.GenDecl {
 // StructType builds a struct
 type StructType struct {
 	node *dst.GenDecl
-	file *dst.File
 }
 
 // NewStructType creates a new struct type builder
@@ -272,6 +242,12 @@ func (b *StructType) Name() string {
 // Commentf adds a comment
 func (b *StructType) Commentf(pattern string, args ...interface{}) {
 	commentf(&b.node.Decs.Start, pattern, args...)
+}
+
+// HasFields return true if the struct has fields
+func (b *StructType) HasFields() bool {
+	spec := b.node.Specs[0].(*dst.TypeSpec).Type.(*dst.StructType)
+	return len(spec.Fields.List) > 0
 }
 
 // AddField defines a field

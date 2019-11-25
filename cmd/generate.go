@@ -4,7 +4,7 @@ import (
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
-	"github.com/phogolabs/stride/codegen"
+	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/service"
 	"github.com/phogolabs/stride/syntax/golang"
 )
@@ -38,7 +38,7 @@ func (m *OpenAPIGenerator) before(ctx *cli.Context) error {
 func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 	generator := &service.Generator{
 		Path:     ctx.String("file-path"),
-		Resolver: codegen.NewResolver(),
+		Resolver: codedom.NewResolver(),
 		Generator: &golang.Generator{
 			Path: "./test",
 		},

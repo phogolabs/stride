@@ -25,17 +25,20 @@ func (g *SchemaGenerator) Generate() *File {
 	for _, descriptor := range g.Collection {
 		switch {
 		case descriptor.IsAlias:
-			root.
-				Literal(descriptor.Name).
-				Element(inflect.Unpointer(descriptor.Element.Kind())).
-				Commentf(descriptor.Description)
+			spec := NewLiteralType(descriptor.Name).Element(inflect.Unpointer(descriptor.Element.Kind()))
+			spec.Commentf(descriptor.Description)
+			// add the spec the file
+			root.AddNode(spec)
 		case descriptor.IsArray:
-			root.
-				Array(descriptor.Name).
-				Element(descriptor.Element.Kind()).
-				Commentf(descriptor.Description)
+			spec := NewArrayType(descriptor.Name).Element(descriptor.Element.Kind())
+			spec.Commentf(descriptor.Description)
+			// add the spec the file
+			root.AddNode(spec)
 		case descriptor.IsClass:
-			builder := root.Struct(descriptor.Name)
+			spec := NewStructType(descriptor.Name)
+			spec.Commentf(descriptor.Description)
+			// add the spec the file
+			root.AddNode(spec)
 
 			// add fields
 			for _, property := range descriptor.Properties {
@@ -47,25 +50,26 @@ func (g *SchemaGenerator) Generate() *File {
 				// add a import if needed
 				root.AddImport(property.PropertyType.Namespace())
 				// add the field
-				builder.AddField(property.Name, kind, tags...)
+				spec.AddField(property.Name, kind, tags...)
 			}
 		case descriptor.IsEnum:
-			builder := root.
-				Literal(descriptor.Name).
-				Element("string")
+			spec := NewLiteralType(descriptor.Name).Element("string")
+			spec.Commentf(descriptor.Description)
+			// add the spec the file
+			root.AddNode(spec)
 
-			builder.Commentf(descriptor.Description)
-
-			block := root.Const()
+			block := NewConstBlockType()
+			// add the spec the file
+			root.AddNode(block)
 
 			if values, ok := descriptor.Metadata["values"].([]interface{}); ok {
 				for _, item := range values {
 					var (
 						value = fmt.Sprintf("%v", item)
-						name  = inflect.Camelize(builder.Name(), value)
+						name  = inflect.Camelize(spec.Name(), value)
 					)
 
-					block.AddConst(name, builder.Name(), value)
+					block.AddConst(name, spec.Name(), value)
 				}
 			}
 			continue

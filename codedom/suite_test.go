@@ -13,7 +13,7 @@ import (
 
 type GetTypeDescriptorFunc func() *codedom.TypeDescriptor
 
-func TestCodegen(t *testing.T) {
+func TestCodedom(t *testing.T) {
 	RegisterFailHandler(Fail)
 	RunSpecs(t, "Codedom Suite")
 }

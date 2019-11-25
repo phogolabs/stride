@@ -74,27 +74,6 @@ var _ = Describe("File", func() {
 			})
 		})
 	})
-
-	Describe("Literal", func() {
-		It("returns a literal", func() {
-			file := golang.NewFile("model.go")
-			Expect(file.Literal("ID")).NotTo(BeNil())
-		})
-	})
-
-	Describe("Array", func() {
-		It("returns a array", func() {
-			file := golang.NewFile("model.go")
-			Expect(file.Array("ID")).NotTo(BeNil())
-		})
-	})
-
-	Describe("Struct", func() {
-		It("returns a struct", func() {
-			file := golang.NewFile("model.go")
-			Expect(file.Struct("ID")).NotTo(BeNil())
-		})
-	})
 })
 
 var _ = Describe("Literal", func() {

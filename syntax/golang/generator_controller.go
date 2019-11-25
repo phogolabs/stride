@@ -52,8 +52,10 @@ func (g *ControllerGenerator) schema(root *File) {
 		name := inflect.Camelize(operation.Name)
 
 		// input
-		input := root.Struct(name + "Input")
+		input := NewStructType(name + "Input")
 		input.Commentf("It is the input of %s operation", name)
+		// add the input to the file
+		root.AddNode(input)
 
 		// path input
 		g.param("Path", root, input, operation.Parameters)
@@ -72,8 +74,10 @@ func (g *ControllerGenerator) schema(root *File) {
 		}
 
 		// output
-		output := root.Struct(name + "Output")
+		output := NewStructType(name + "Output")
 		output.Commentf("It is the output of %s operation", name)
+		// add the output to the file
+		root.AddNode(output)
 
 		for _, response := range operation.Responses {
 			// output header
@@ -106,8 +110,8 @@ func (g *ControllerGenerator) schema(root *File) {
 }
 
 func (g *ControllerGenerator) param(kind string, root *File, parent *StructType, parameters codedom.ParameterDescriptorCollection) {
-	builder := root.Struct(parent.Name() + kind)
-	builder.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
+	spec := NewStructType(parent.Name() + kind)
+	spec.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
 
 	for _, param := range parameters {
 		if strings.EqualFold(param.In, kind) {
@@ -115,11 +119,16 @@ func (g *ControllerGenerator) param(kind string, root *File, parent *StructType,
 			root.AddImport(param.ParameterType.Namespace())
 
 			// add a field
-			builder.AddField(param.Name, param.ParameterType.Kind(), param.Tags()...)
+			spec.AddField(param.Name, param.ParameterType.Kind(), param.Tags()...)
 		}
 	}
 
-	parent.AddField(kind, inflect.Pointer(builder.Name()), g.tagOfArg(kind))
+	if spec.HasFields() {
+		// add the spec to the file
+		root.AddNode(spec)
+		// add the spec as property to the parent
+		parent.AddField(kind, inflect.Pointer(spec.Name()), g.tagOfArg(kind))
+	}
 }
 
 func (g *ControllerGenerator) controller(root *File) {
@@ -129,14 +138,16 @@ func (g *ControllerGenerator) controller(root *File) {
 	root.AddImport("net/http")
 
 	// struct
-	builder := root.Struct(g.name())
-	builder.Commentf(g.Controller.Description)
+	spec := NewStructType(g.name())
+	spec.Commentf(g.Controller.Description)
+	// add the spec to the file
+	root.AddNode(spec)
 
 	// mount method
 	writer := &TemplateWriter{
 		Path: "syntax/golang/mount.go.tpl",
 		Context: map[string]interface{}{
-			"controller": builder.Name(),
+			"controller": spec.Name(),
 			"operations": g.Controller.Operations,
 		},
 	}
@@ -155,7 +166,7 @@ func (g *ControllerGenerator) controller(root *File) {
 		writer := &TemplateWriter{
 			Path: "syntax/golang/operation.go.tpl",
 			Context: map[string]interface{}{
-				"controller":  builder.Name(),
+				"controller":  spec.Name(),
 				"operation":   operation.Name,
 				"method":      operation.Method,
 				"path":        operation.Path,
