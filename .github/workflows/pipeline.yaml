@@ -1,0 +1,14 @@
+name: spec
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Golang
+        uses: actions/setup-go@v1
+      - name: Check out code
+        uses: actions/checkout@v1
+      - name: Run tests
+        run: go test ./...
