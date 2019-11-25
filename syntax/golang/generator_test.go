@@ -44,7 +44,7 @@ var _ = Describe("Generator", func() {
 
 		It("returns the error", func() {
 			spec := &codedom.SpecDescriptor{}
-			Expect(generator.Generate(spec)).To(MatchError("mkdir /my-dir: read-only file system"))
+			Expect(generator.Generate(spec)).To(HaveOccurred())
 			Expect(generator.Path).NotTo(BeADirectory())
 		})
 	})
