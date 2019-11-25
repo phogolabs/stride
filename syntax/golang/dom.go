@@ -50,14 +50,8 @@ func NewFile(name string) *File {
 	}
 }
 
-// OpenFile opens a file
-func OpenFile(name string) (*File, error) {
-	reader, err := os.Open(name)
-	if err != nil {
-		return nil, err
-	}
-	defer reader.Close()
-
+// ReadFile reads the file from reader
+func ReadFile(name string, reader io.Reader) (*File, error) {
 	node, err := decorator.Parse(reader)
 	if err != nil {
 		return nil, err
@@ -67,6 +61,16 @@ func OpenFile(name string) (*File, error) {
 		name: name,
 		node: node,
 	}, nil
+}
+
+// OpenFile opens a file
+func OpenFile(name string) (*File, error) {
+	reader, err := os.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+	return ReadFile(reader.Name(), reader)
 }
 
 // Name returns the name of the file

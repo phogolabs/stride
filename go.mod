@@ -4,7 +4,6 @@ go 1.13
 
 require (
 	github.com/dave/dst v0.23.1
-	github.com/davecgh/go-spew v1.1.1
 	github.com/fatih/structtag v1.1.0
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/go-chi/chi v4.0.2+incompatible

@@ -31,12 +31,13 @@ func (g *TemplateWriter) WriteTo(w io.Writer) (int64, error) {
 	}
 
 	m := template.FuncMap{
-		"camelize":  inflect.Camelize,
-		"dasherize": inflect.Dasherize,
-		"uppercase": inflect.UpperCase,
-		"titleize":  inflect.Titleize,
-		"comment":   g.comment,
-		"key":       g.key,
+		"camelize":   inflect.Camelize,
+		"dasherize":  inflect.Dasherize,
+		"uppercase":  inflect.UpperCase,
+		"underscore": inflect.Underscore,
+		"titleize":   inflect.Titleize,
+		"comment":    g.comment,
+		"key":        g.key,
 	}
 
 	pattern, err := template.New("source").Funcs(m).Parse(string(data))

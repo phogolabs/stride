@@ -23,6 +23,7 @@ func main() {
 		Version:   Version,
 		Writer:    os.Stdout,
 		ErrWriter: os.Stderr,
+		Action:    run,
 		OnSignal:  signal,
 		Flags: []cli.Flag{
 			&cli.StringFlag{
@@ -51,6 +52,8 @@ func before(ctx *cli.Context) error {
 
 	log.SetLevel(level)
 	log.SetHandler(json.New(ctx.Writer))
+
+	return nil
 }
 
 func run(ctx *cli.Context) error {
@@ -62,21 +65,21 @@ func run(ctx *cli.Context) error {
 	ctx.Metadata["server"] = server
 
 	logger := log.WithFields(log.Map{
-		"addr", server.Addr,
+		"addr": server.Addr,
 	})
 
 	logger.Info("http server is listening")
-	return server.ListenAndServ()
+	return server.ListenAndServe()
 }
 
-func signal(ctx *cli.Context, term os.Signal) {
+func signal(ctx *cli.Context, term os.Signal) error {
 	server, ok := ctx.Metadata["server"].(*http.Server)
 	if !ok {
-		return
+		return nil
 	}
 
 	logger := log.WithFields(log.Map{
-		"addr", server.Addr,
+		"addr":   server.Addr,
 		"signal": term,
 	})
 
@@ -86,8 +89,11 @@ func signal(ctx *cli.Context, term os.Signal) {
 
 		if err := server.Shutdown(context.TODO()); err != nil {
 			log.WithError(err).Error("failed to shutdown the http server gracefully")
+			return err
 		}
 	default:
 		logger.Info("unhandled signal occurred")
 	}
+
+	return nil
 }
