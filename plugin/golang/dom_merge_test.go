@@ -11,7 +11,7 @@ import (
 	"github.com/phogolabs/stride/plugin/golang"
 )
 
-var _ = Describe("Merge", func() {
+var _ = FDescribe("Merge", func() {
 	var merger *golang.Merger
 
 	BeforeEach(func() {
@@ -80,7 +80,7 @@ var _ = Describe("Merge", func() {
 			merger.Source = source
 		})
 
-		It("preserves the body", func() {
+		FIt("preserves the body", func() {
 			Expect(merger.Merge()).To(Succeed())
 
 			target := &bytes.Buffer{}

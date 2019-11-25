@@ -14,21 +14,25 @@ const (
 	AnnotationGenerate Annotation = "stride:generate"
 	// AnnotationDefine represents the annotation for user-defined code
 	AnnotationDefine Annotation = "stride:define"
-	// AnnotationNote represents the annotation for note
-	AnnotationNote Annotation = "NOTE:"
+	// AnnotationNotice represents the annotation for note
+	AnnotationNotice Annotation = "NOTE:"
+)
+
+var (
+	bodyInfo  = AnnotationNotice.Comment("not implemented")
+	bodyStart = AnnotationDefine.Key("body", "start")
+	bodyEnd   = AnnotationDefine.Key("body", "end")
 )
 
 const (
-	bodyStart   = "body:start"
-	bodyMessage = "not-implemented"
-	bodyEnd     = "body:end"
+	newline = "\n"
 )
 
 // Annotation represents an annotation
 type Annotation string
 
-// Format formats the annotation
-func (n Annotation) Format(text ...string) string {
+// Key formats the annotation as key
+func (n Annotation) Key(text ...string) string {
 	buffer := &bytes.Buffer{}
 
 	for _, part := range text {
@@ -45,7 +49,12 @@ func (n Annotation) Format(text ...string) string {
 		fmt.Fprint(buffer, part)
 	}
 
-	return fmt.Sprintf("// %s %s", n, buffer.String())
+	return n.Comment(buffer.String())
+}
+
+// Comment formats the annotation as comment
+func (n Annotation) Comment(text string) string {
+	return fmt.Sprintf("// %s %s", n, text)
 }
 
 // Find returns the name of the annotation of exists in the decorations

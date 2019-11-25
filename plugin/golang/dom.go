@@ -15,6 +15,11 @@ import (
 	"golang.org/x/tools/imports"
 )
 
+const (
+	docConst = "// %s is a %q constant value auto-generated from OpenAPI spec"
+	docType  = "// %s is a type auto-generated from OpenAPI spec"
+)
+
 //go:generate counterfeiter -fake-name Writer -o ../../fake/writer.go . Writer
 
 // Writer represents a writer
@@ -223,8 +228,8 @@ func NewStructType(name string) *StructType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// %s is a struct type auto-generated from OpenAPI spec", inflect.Camelize(name)))
-	node.Decs.Start.Append(AnnotationGenerate.Format(name))
+	node.Decs.Start.Append(fmt.Sprintf(docType, inflect.Camelize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Key(name))
 
 	return &StructType{
 		node: node,
@@ -251,7 +256,7 @@ func (b *StructType) AddField(name, kind string, tags ...*codegen.TagDescriptor)
 	field := property(inflect.Camelize(name), kind)
 	field.Decs.Before = dst.NewLine
 	field.Decs.After = dst.NewLine
-	field.Decs.Start.Append(AnnotationGenerate.Format(name))
+	field.Decs.Start.Append(AnnotationGenerate.Key(name))
 
 	if tag := codegen.TagDescriptorCollection(tags).String(); tag != "" {
 		field.Tag = &dst.BasicLit{
@@ -297,8 +302,8 @@ func NewLiteralType(name string) *LiteralType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// %s is a literal type auto-generated from OpenAPI spec", inflect.Camelize(name)))
-	node.Decs.Start.Append(AnnotationGenerate.Format(name))
+	node.Decs.Start.Append(fmt.Sprintf(docType, inflect.Camelize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Key(name))
 
 	return &LiteralType{
 		node: node,
@@ -371,8 +376,8 @@ func (b *ConstBlockType) AddConst(name, kind, value string) {
 
 	spec.Decs.Before = dst.NewLine
 	spec.Decs.After = dst.EmptyLine
-	spec.Decs.Start.Append(fmt.Sprintf("// %s is a %q enum value auto-generated from OpenAPI spec", inflect.Camelize(name), value))
-	spec.Decs.Start.Append(AnnotationGenerate.Format(name))
+	spec.Decs.Start.Append(fmt.Sprintf(docConst, inflect.Camelize(name), value))
+	spec.Decs.Start.Append(AnnotationGenerate.Key(name))
 
 	if value != "" {
 		spec.Values = []dst.Expr{
@@ -409,8 +414,8 @@ func NewArrayType(name string) *ArrayType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(fmt.Sprintf("// %s is a array type auto-generated from OpenAPI spec", inflect.Camelize(name)))
-	node.Decs.Start.Append(AnnotationGenerate.Format(name))
+	node.Decs.Start.Append(fmt.Sprintf(docType, inflect.Camelize(name)))
+	node.Decs.Start.Append(AnnotationGenerate.Key(name))
 
 	return &ArrayType{
 		node: node,
@@ -477,7 +482,7 @@ func NewFunctionType(name string) *FunctionType {
 	node.Decs.Before = dst.EmptyLine
 	node.Decs.After = dst.EmptyLine
 	// comments
-	node.Decs.Start.Append(AnnotationGenerate.Format(name))
+	node.Decs.Start.Append(AnnotationGenerate.Key(name))
 
 	return &FunctionType{
 		node: node,
@@ -509,7 +514,7 @@ func (b *FunctionType) AddReceiver(name, kind string) *FunctionType {
 		index    = len(comments) - 1
 	)
 
-	comments[index] = AnnotationGenerate.Format(kind, b.Name())
+	comments[index] = AnnotationGenerate.Key(kind, b.Name())
 	b.node.Decs.Start.Replace(comments...)
 
 	return b
@@ -565,8 +570,6 @@ func (b *BlockType) Write(content string, args ...interface{}) {
 
 // Build builds the block
 func (b *BlockType) Build() error {
-	const newline = "\n"
-
 	var (
 		content = b.buffer.String()
 		buffer  = &bytes.Buffer{}
@@ -592,9 +595,9 @@ func (b *BlockType) Build() error {
 
 // WriteComment writes the body block comment
 func (b *BlockType) WriteComment() {
-	fmt.Fprintln(b.buffer, AnnotationDefine.Format(bodyStart))
-	fmt.Fprintln(b.buffer, AnnotationNote.Format(bodyMessage))
-	fmt.Fprintln(b.buffer, AnnotationDefine.Format(bodyEnd))
+	fmt.Fprintln(b.buffer, bodyStart)
+	fmt.Fprintln(b.buffer, bodyInfo)
+	fmt.Fprintln(b.buffer, bodyEnd)
 }
 
 func kind(field *dst.Field) string {

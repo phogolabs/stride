@@ -1,7 +1,6 @@
 package golang
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/dave/dst"
@@ -159,13 +158,7 @@ func (m *Merger) blockStmtRange(block *dst.BlockStmt) *Range {
 }
 
 func (m *Merger) squash(items []dst.Stmt) {
-	var (
-		kv      = map[string]bool{}
-		newline = "\n"
-		start   = AnnotationDefine.Format(bodyStart)
-		help    = AnnotationNote.Format(bodyMessage)
-		end     = AnnotationDefine.Format(bodyEnd)
-	)
+	kv := map[string]bool{}
 
 	remove := func(kind string, node *dst.NodeDecs) {
 		var (
@@ -180,16 +173,15 @@ func (m *Merger) squash(items []dst.Stmt) {
 			decorations = &node.End
 		}
 
-		for index, comment := range decorations.All() {
+		for _, comment := range decorations.All() {
 			comment = strings.TrimSpace(comment)
 
-			fmt.Printf("%d %q\n", index, comment)
-
 			if len(comment) == 0 {
-				comment = newline
+				comments = append(comments, newline)
+				continue
 			}
 
-			if strings.EqualFold(comment, help) {
+			if strings.EqualFold(comment, bodyInfo) {
 				continue
 			}
 
@@ -198,14 +190,14 @@ func (m *Merger) squash(items []dst.Stmt) {
 			}
 
 			switch {
-			case strings.EqualFold(comment, start):
+			case strings.EqualFold(comment, bodyStart):
 				switch kind {
 				case "start":
-					//TODO: handle this case
+					node.Before = dst.EmptyLine
 				case "end":
 					//TODO: handle this case
 				}
-			case strings.EqualFold(comment, end):
+			case strings.EqualFold(comment, bodyEnd):
 				switch kind {
 				case "start":
 					node.Before = dst.NewLine
@@ -215,11 +207,8 @@ func (m *Merger) squash(items []dst.Stmt) {
 			}
 
 			comments = append(comments, comment)
-
-			if !strings.EqualFold(comment, newline) {
-				// mark as processed
-				kv[comment] = true
-			}
+			// mark as processed
+			kv[comment] = true
 		}
 
 		decorations.Replace(comments...)
