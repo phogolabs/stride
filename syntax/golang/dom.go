@@ -106,6 +106,25 @@ func (f *File) AddImport(name string) {
 	container.Specs = append(container.Specs, spec)
 }
 
+// AddFunction adds a function
+func (f *File) AddFunction(data string) error {
+	buffer := &bytes.Buffer{}
+
+	fmt.Fprintln(buffer, "package body")
+	fmt.Fprintln(buffer, data)
+
+	file, err := decorator.Parse(buffer.String())
+	if err != nil {
+		return err
+	}
+
+	if node, ok := file.Decls[0].(*dst.FuncDecl); ok {
+		f.node.Decls = append(f.node.Decls, node)
+	}
+
+	return nil
+}
+
 // Merge merges the files
 func (f *File) Merge(source *File) error {
 	merger := &Merger{
@@ -267,17 +286,6 @@ func (b *StructType) AddField(name, kind string, tags ...*codegen.TagDescriptor)
 
 	spec := b.node.Specs[0].(*dst.TypeSpec).Type.(*dst.StructType)
 	spec.Fields.List = append(spec.Fields.List, field)
-}
-
-// Function returns a struct method
-func (b *StructType) Function(name string) *FunctionType {
-	builder := NewFunctionType(name).AddReceiver("x", inflect.Pointer(b.Name()))
-
-	if b.file != nil {
-		b.file.Decls = append(b.file.Decls, builder.node)
-	}
-
-	return builder
 }
 
 // LiteralType builds a literal type
@@ -444,165 +452,6 @@ func (b *ArrayType) Element(name string) *ArrayType {
 	}
 
 	return b
-}
-
-var _ Builder = &FunctionType{}
-
-// FunctionType builds a method
-type FunctionType struct {
-	node *dst.FuncDecl
-}
-
-// NewFunctionType creates a new method type builder
-func NewFunctionType(name string) *FunctionType {
-	node := &dst.FuncDecl{
-		// function receiver
-		Recv: &dst.FieldList{
-			List: []*dst.Field{},
-		},
-		// function name
-		Name: &dst.Ident{
-			Name: inflect.Camelize(name),
-		},
-		// function param
-		Type: &dst.FuncType{
-			Params: &dst.FieldList{
-				List: []*dst.Field{},
-			},
-			Results: &dst.FieldList{
-				List: []*dst.Field{},
-			},
-		},
-		Body: &dst.BlockStmt{
-			List: []dst.Stmt{},
-		},
-	}
-
-	// formatting
-	node.Decs.Before = dst.EmptyLine
-	node.Decs.After = dst.EmptyLine
-	// comments
-	node.Decs.Start.Append(AnnotationGenerate.Key(name))
-
-	return &FunctionType{
-		node: node,
-	}
-}
-
-// Node returns the node
-func (b *FunctionType) Node() *dst.FuncDecl {
-	return b.node
-}
-
-// Name returns the type name
-func (b *FunctionType) Name() string {
-	return b.node.Name.Name
-}
-
-// Commentf adds a comment
-func (b *FunctionType) Commentf(pattern string, args ...interface{}) {
-	commentf(&b.node.Decs.Start, pattern, args...)
-}
-
-// AddReceiver creates a return parameter
-func (b *FunctionType) AddReceiver(name, kind string) *FunctionType {
-	field := property(name, kind)
-	b.node.Recv.List = append(b.node.Recv.List, field)
-
-	var (
-		comments = b.node.Decs.Start.All()
-		index    = len(comments) - 1
-	)
-
-	comments[index] = AnnotationGenerate.Key(kind, b.Name())
-	b.node.Decs.Start.Replace(comments...)
-
-	return b
-}
-
-// AddParam creates a parameter
-func (b *FunctionType) AddParam(name, kind string) *FunctionType {
-	field := property(name, kind)
-	b.node.Type.Params.List = append(b.node.Type.Params.List, field)
-	return b
-}
-
-// Body sets the body
-func (b *FunctionType) Body() *BlockType {
-	block := &BlockType{
-		node:   b.node.Body,
-		buffer: &bytes.Buffer{},
-	}
-	return block
-}
-
-// AddReturn creates a return parameter
-func (b *FunctionType) AddReturn(kind string) *FunctionType {
-	field := property("", kind)
-	b.node.Type.Results.List = append(b.node.Type.Results.List, field)
-	return b
-}
-
-// BlockType represents a block type
-type BlockType struct {
-	node   *dst.BlockStmt
-	buffer *bytes.Buffer
-}
-
-// NewBlockType creates a new block type
-func NewBlockType() *BlockType {
-	return &BlockType{
-		node:   &dst.BlockStmt{},
-		buffer: &bytes.Buffer{},
-	}
-}
-
-// Node returns the node
-func (b *BlockType) Node() *dst.BlockStmt {
-	return b.node
-}
-
-// Write writes the data as a block
-func (b *BlockType) Write(data []byte) (int, error) {
-	return b.buffer.Write(data)
-}
-
-// Append to the block single line
-func (b *BlockType) Append(content string, args ...interface{}) {
-	fmt.Fprintf(b.buffer, content, args...)
-	fmt.Fprintln(b.buffer)
-}
-
-// AppendComment appends the body block comment
-func (b *BlockType) AppendComment() {
-	fmt.Fprintln(b.buffer, bodyStart)
-	fmt.Fprintln(b.buffer, bodyInfo)
-	fmt.Fprintln(b.buffer, bodyEnd)
-}
-
-// Build builds the block
-func (b *BlockType) Build() error {
-	var (
-		content = b.buffer.String()
-		buffer  = &bytes.Buffer{}
-	)
-
-	fmt.Fprintln(buffer, "package body")
-	fmt.Fprintln(buffer, "func body() {")
-	fmt.Fprintln(buffer, strings.TrimSuffix(content, newline))
-	fmt.Fprintln(buffer, "}")
-
-	file, err := decorator.Parse(buffer.String())
-	if err != nil {
-		return err
-	}
-
-	if node, ok := file.Decls[0].(*dst.FuncDecl); ok {
-		b.node.List = append(b.node.List, node.Body.List...)
-	}
-
-	b.buffer.Reset()
-	return nil
 }
 
 func kind(field *dst.Field) string {

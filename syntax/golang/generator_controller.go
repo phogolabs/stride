@@ -2,7 +2,6 @@ package golang
 
 import (
 	"bytes"
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -96,8 +95,9 @@ func (g *ControllerGenerator) schema(root *File) {
 				panic(err)
 			}
 
-			fmt.Println("===========")
-			fmt.Println(buffer.String())
+			if err := root.AddFunction(buffer.String()); err != nil {
+				panic(err)
+			}
 
 			// NOTE: we handle the first response for now
 			break
@@ -146,8 +146,9 @@ func (g *ControllerGenerator) controller(root *File) {
 		panic(err)
 	}
 
-	fmt.Println("===========")
-	fmt.Println(buffer.String())
+	if err := root.AddFunction(buffer.String()); err != nil {
+		panic(err)
+	}
 
 	// operations
 	for _, operation := range g.Controller.Operations {
@@ -169,27 +170,9 @@ func (g *ControllerGenerator) controller(root *File) {
 			panic(err)
 		}
 
-		// fmt.Println(operation.Name)
-		// fmt.Println("===========")
-		// fmt.Println(buffer.String())
-	}
-}
-
-func (g *ControllerGenerator) mount(builder *FunctionType) {
-	body := builder.Body()
-
-	for _, operation := range g.Controller.Operations {
-		var (
-			path    = operation.Path
-			method  = inflect.Camelize(strings.ToLower(operation.Method))
-			handler = inflect.Camelize(operation.Name)
-		)
-
-		body.Append("r.%s(%q, x.%s)", method, path, handler)
-	}
-
-	if err := body.Build(); err != nil {
-		panic(err)
+		if err := root.AddFunction(buffer.String()); err != nil {
+			panic(err)
+		}
 	}
 }
 

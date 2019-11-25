@@ -27,7 +27,7 @@ func (g *SchemaGenerator) Generate() *File {
 		case descriptor.IsAlias:
 			root.
 				Literal(descriptor.Name).
-				Element(descriptor.Element.Name).
+				Element(inflect.Unpointer(descriptor.Element.Kind())).
 				Commentf(descriptor.Description)
 		case descriptor.IsArray:
 			root.

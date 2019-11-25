@@ -75,6 +75,12 @@ func Pointer(text string) string {
 	return text
 }
 
+// Unpointer unpoints the text
+func Unpointer(text string) string {
+	const star = "*"
+	return strings.TrimPrefix(text, star)
+}
+
 func splitAtCaseChangeWithTitlecase(s string) []string {
 	text := func(rn []rune) string {
 		word := string(rn)
