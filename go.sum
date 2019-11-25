@@ -72,6 +72,8 @@ github.com/onsi/ginkgo v1.10.3/go.mod h1:lLunBs/Ym6LB5Z9jYTR76FiuTmxDTDusOGeTQH+
 github.com/onsi/gomega v1.5.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
 github.com/onsi/gomega v1.7.0 h1:XPnZz8VVBHjVsy1vzJmRwIcSwiUO+JFfrv/xGiigmME=
 github.com/onsi/gomega v1.7.0/go.mod h1:ex+gbHU/CVuBBDIJjb2X0qEXbFg53c61hWP/1CpauHY=
+github.com/onsi/gomega v1.7.1 h1:K0jcRCwNQM3vFGh1ppMtDh/+7ApJrjldlX8fA0jDTLQ=
+github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
 github.com/phogolabs/cli v0.0.0-20191121081435-9112dfb9677e h1:8OEuVWcfUS92D3VfyK1pxGorXL5QhJ9sz4HOFWO6o+E=
 github.com/phogolabs/cli v0.0.0-20191121081435-9112dfb9677e/go.mod h1:sjqdZi2hixvI7/uqytSwuJd51kKNgEtGK61pDKv0zQI=
 github.com/phogolabs/flaw v0.0.0-20191023065131-ef10f45475ef/go.mod h1:8sjRPqWMNj+arx9IOBk5Ebl0qyboVfEliQxIT7JL7b0=
