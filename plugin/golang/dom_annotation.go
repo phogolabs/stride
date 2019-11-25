@@ -20,7 +20,7 @@ const (
 
 const (
 	bodyStart   = "body:start"
-	bodyMessage = "Not Implemented"
+	bodyMessage = "not-implemented"
 	bodyEnd     = "body:end"
 )
 
@@ -32,11 +32,11 @@ func (n Annotation) Format(text ...string) string {
 	buffer := &bytes.Buffer{}
 
 	for _, part := range text {
-		part = inflect.Dasherize(part)
-
 		if part = strings.TrimSpace(part); part == "" {
 			continue
 		}
+
+		part = inflect.Dasherize(part)
 
 		if buffer.Len() > 0 {
 			fmt.Fprint(buffer, ":")

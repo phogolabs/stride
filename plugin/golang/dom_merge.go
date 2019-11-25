@@ -1,6 +1,7 @@
 package golang
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/dave/dst"
@@ -179,8 +180,10 @@ func (m *Merger) squash(items []dst.Stmt) {
 			decorations = &node.End
 		}
 
-		for _, comment := range decorations.All() {
+		for index, comment := range decorations.All() {
 			comment = strings.TrimSpace(comment)
+
+			fmt.Printf("%d %q\n", index, comment)
 
 			if len(comment) == 0 {
 				comment = newline
