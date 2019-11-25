@@ -1,4 +1,4 @@
-package golang_test
+package syntax_test
 
 import (
 	"bufio"
@@ -11,14 +11,14 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codegen"
-	"github.com/phogolabs/stride/plugin/golang"
+	"github.com/phogolabs/stride/plugin/syntax"
 )
 
 var _ = Describe("SchemaGenerator", func() {
-	var generator *golang.SchemaGenerator
+	var generator *syntax.SchemaGenerator
 
 	BeforeEach(func() {
-		generator = &golang.SchemaGenerator{
+		generator = &syntax.SchemaGenerator{
 			Path: tmpdir(),
 		}
 

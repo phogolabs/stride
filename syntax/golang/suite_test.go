@@ -1,4 +1,4 @@
-package golang_test
+package syntax_test
 
 import (
 	"io/ioutil"

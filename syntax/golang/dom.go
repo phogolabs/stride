@@ -1,4 +1,4 @@
-package golang
+package syntax
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/dave/dst/decorator"
 	"github.com/phogolabs/stride/codegen"
 	"github.com/phogolabs/stride/inflect"
-	"golang.org/x/tools/imports"
+	"syntax.org/x/tools/imports"
 )
 
 const (
@@ -540,7 +540,7 @@ func (b *FunctionType) Body() *BlockType {
 func (b *FunctionType) AddReturn(kind string) *FunctionType {
 	field := property("", kind)
 	b.node.Type.Results.List = append(b.node.Type.Results.List, field)
-	return b
+	return
 }
 
 // BlockType represents a block type

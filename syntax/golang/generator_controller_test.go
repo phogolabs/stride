@@ -1,4 +1,4 @@
-package golang_test
+package syntax_test
 
 import (
 	"bytes"
@@ -7,21 +7,21 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codegen"
-	"github.com/phogolabs/stride/plugin/golang"
+	"github.com/phogolabs/stride/plugin/syntax"
 )
 
 var _ = Describe("GeneratorController", func() {
-	var generator *golang.ControllerGenerator
+	var generator *syntax.ControllerGenerator
 
 	BeforeEach(func() {
-		generator = &golang.ControllerGenerator{
+		generator = &syntax.ControllerGenerator{
 			Path: tmpdir(),
 		}
 	})
 
 	Context("when the mode is ControllerGeneratorModeSchema", func() {
 		BeforeEach(func() {
-			generator.Mode = golang.ControllerGeneratorModeSchema
+			generator.Mode = syntax.ControllerGeneratorModeSchema
 		})
 
 		Describe("input", func() {
@@ -294,13 +294,13 @@ var _ = Describe("GeneratorController", func() {
 
 	Context("when the mode is ControllerGeneratorModeAPI", func() {
 		BeforeEach(func() {
-			generator.Mode = golang.ControllerGeneratorModeAPI
+			generator.Mode = syntax.ControllerGeneratorModeAPI
 		})
 	})
 
 	Context("when the mode is ControllerGeneratorModeSpec", func() {
 		BeforeEach(func() {
-			generator.Mode = golang.ControllerGeneratorModeSpec
+			generator.Mode = syntax.ControllerGeneratorModeSpec
 		})
 
 		//TODO: implement when you introduce spec generation

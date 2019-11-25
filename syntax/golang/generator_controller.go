@@ -1,4 +1,4 @@
-package golang
+package syntax
 
 import (
 	"path/filepath"
@@ -182,7 +182,7 @@ func (g *ControllerGenerator) operation(builder *FunctionType) {
 	)
 
 	writer := &TemplateWriter{
-		Path: "syntax/golang/operation.go.tpl",
+		Path: "syntax/syntax/operation.go.tpl",
 		Context: map[string]interface{}{
 			"name": name,
 		},

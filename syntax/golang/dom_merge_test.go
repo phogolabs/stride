@@ -1,4 +1,4 @@
-package golang_test
+package syntax_test
 
 import (
 	"bytes"
@@ -7,22 +7,22 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
-	"github.com/phogolabs/stride/plugin/golang"
+	"github.com/phogolabs/stride/plugin/syntax"
 )
 
 var _ = Describe("Merge", func() {
-	var merger *golang.Merger
+	var merger *syntax.Merger
 
 	BeforeEach(func() {
-		merger = &golang.Merger{}
+		merger = &syntax.Merger{}
 	})
 
 	Context("when the struct is auto-generated", func() {
 		BeforeEach(func() {
-			target, err := golang.OpenFile("../../fixture/code/struct_generated_target.go.fixture")
+			target, err := syntax.OpenFile("../../fixture/code/struct_generated_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := golang.OpenFile("../../fixture/code/struct_generated_source.go.fixture")
+			source, err := syntax.OpenFile("../../fixture/code/struct_generated_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
@@ -44,10 +44,10 @@ var _ = Describe("Merge", func() {
 
 	Context("when the user defined declarations", func() {
 		BeforeEach(func() {
-			target, err := golang.OpenFile("../../fixture/code/user_defined_target.go.fixture")
+			target, err := syntax.OpenFile("../../fixture/code/user_defined_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := golang.OpenFile("../../fixture/code/user_defined_source.go.fixture")
+			source, err := syntax.OpenFile("../../fixture/code/user_defined_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
@@ -69,10 +69,10 @@ var _ = Describe("Merge", func() {
 
 	Context("when the function has user-defined body", func() {
 		BeforeEach(func() {
-			target, err := golang.OpenFile("../../fixture/code/function_body_target.go.fixture")
+			target, err := syntax.OpenFile("../../fixture/code/function_body_target.go.fixture")
 			Expect(err).To(BeNil())
 
-			source, err := golang.OpenFile("../../fixture/code/function_body_source.go.fixture")
+			source, err := syntax.OpenFile("../../fixture/code/function_body_source.go.fixture")
 			Expect(err).To(BeNil())
 
 			merger.Target = target
