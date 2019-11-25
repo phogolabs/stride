@@ -5,6 +5,8 @@ import (
 
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/stride/cmd"
+
+	_ "github.com/phogolabs/stride/template"
 )
 
 func main() {

@@ -236,19 +236,19 @@ var _ = Describe("Function", func() {
 })
 
 var _ = Describe("Block", func() {
-	Describe("Write", func() {
+	Describe("Append", func() {
 		It("writes text to a block", func() {
 			block := golang.NewBlockType()
-			block.Write("fmt.Println(123)")
+			block.Append("fmt.Println(123)")
 			Expect(block.Build()).To(Succeed())
 			Expect(block.Node().List).To(HaveLen(1))
 		})
 	})
 
-	Describe("WriteComment", func() {
+	Describe("AppendComment", func() {
 		It("writes comments to a block", func() {
 			block := golang.NewBlockType()
-			block.WriteComment()
+			block.AppendComment()
 			Expect(block.Build()).To(Succeed())
 		})
 	})
@@ -256,7 +256,7 @@ var _ = Describe("Block", func() {
 	Describe("Build", func() {
 		It("builds the block", func() {
 			block := golang.NewBlockType()
-			block.Write("fmt.Println(123)")
+			block.Append("fmt.Println(123)")
 			Expect(block.Build()).To(Succeed())
 			Expect(block.Node().List).To(HaveLen(1))
 		})

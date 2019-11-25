@@ -8,6 +8,8 @@ import (
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	_ "github.com/phogolabs/stride/template"
 )
 
 func TestService(t *testing.T) {

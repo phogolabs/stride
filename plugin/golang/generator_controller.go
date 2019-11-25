@@ -87,8 +87,8 @@ func (g *ControllerGenerator) schema(root *File) {
 				AddReturn("int")
 
 			if body := method.Body(); body != nil {
-				body.WriteComment()
-				body.Write("return %d", response.Code)
+				body.AppendComment()
+				body.Append("return %d", response.Code)
 
 				if err := body.Build(); err != nil {
 					panic(err)
@@ -167,7 +167,7 @@ func (g *ControllerGenerator) mount(builder *FunctionType) {
 			handler = inflect.Camelize(operation.Name)
 		)
 
-		body.Write("r.%s(%q, x.%s)", method, path, handler)
+		body.Append("r.%s(%q, x.%s)", method, path, handler)
 	}
 
 	if err := body.Build(); err != nil {
@@ -181,23 +181,16 @@ func (g *ControllerGenerator) operation(builder *FunctionType) {
 		body = builder.Body()
 	)
 
-	body.Write("reactor := restify.NewReactor(w, r)")
-	body.Write("")
-	body.Write("var (")
-	body.Write("   input  = &%sInput{}", name)
-	body.Write("   output = &%sOutput{}", name)
-	body.Write(")")
-	body.Write("")
-	body.Write("if err := reactor.Bind(input); err != nil {")
-	body.Write("   reactor.Render(err)")
-	body.Write("   return")
-	body.Write("}")
-	body.Write("")
-	body.WriteComment()
-	body.Write("")
-	body.Write("if err := reactor.Render(output); err != nil {")
-	body.Write("   reactor.Render(err)")
-	body.Write("}")
+	writer := &TemplateWriter{
+		Path: "syntax/golang/operation.go.tpl",
+		Context: map[string]interface{}{
+			"name": name,
+		},
+	}
+
+	if _, err := writer.WriteTo(body); err != nil {
+		panic(err)
+	}
 
 	if err := body.Build(); err != nil {
 		panic(err)

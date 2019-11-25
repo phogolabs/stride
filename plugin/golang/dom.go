@@ -562,10 +562,22 @@ func (b *BlockType) Node() *dst.BlockStmt {
 	return b.node
 }
 
-// Write the block
-func (b *BlockType) Write(content string, args ...interface{}) {
+// Write writes the data as a block
+func (b *BlockType) Write(data []byte) (int, error) {
+	return b.buffer.Write(data)
+}
+
+// Append to the block single line
+func (b *BlockType) Append(content string, args ...interface{}) {
 	fmt.Fprintf(b.buffer, content, args...)
 	fmt.Fprintln(b.buffer)
+}
+
+// AppendComment appends the body block comment
+func (b *BlockType) AppendComment() {
+	fmt.Fprintln(b.buffer, bodyStart)
+	fmt.Fprintln(b.buffer, bodyInfo)
+	fmt.Fprintln(b.buffer, bodyEnd)
 }
 
 // Build builds the block
@@ -591,13 +603,6 @@ func (b *BlockType) Build() error {
 
 	b.buffer.Reset()
 	return nil
-}
-
-// WriteComment writes the body block comment
-func (b *BlockType) WriteComment() {
-	fmt.Fprintln(b.buffer, bodyStart)
-	fmt.Fprintln(b.buffer, bodyInfo)
-	fmt.Fprintln(b.buffer, bodyEnd)
 }
 
 func kind(field *dst.Field) string {
