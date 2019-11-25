@@ -29,6 +29,7 @@ var _ = Describe("Editor", func() {
 	JustBeforeEach(func() {
 		server = service.NewEditor(config)
 		go server.ListenAndServe()
+		wait(config.Addr)
 	})
 
 	AfterEach(func() {

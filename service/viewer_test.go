@@ -24,6 +24,7 @@ var _ = Describe("Viewer", func() {
 
 		server = service.NewViewer(config)
 		go server.ListenAndServe()
+		wait(config.Addr)
 	})
 
 	AfterEach(func() {

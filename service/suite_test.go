@@ -3,6 +3,7 @@ package service_test
 import (
 	"io"
 	"io/ioutil"
+	"net"
 	"os"
 	"testing"
 
@@ -28,4 +29,11 @@ func path(path string) string {
 	Expect(err).To(BeNil())
 
 	return target.Name()
+}
+
+func wait(addr string) {
+	Eventually(func() error {
+		_, err := net.Dial("tcp", addr)
+		return err
+	}).Should(Succeed())
 }
