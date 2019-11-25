@@ -58,7 +58,7 @@ var _ = Describe("GeneratorController", func() {
 				Expect(buffer.String()).To(ContainSubstring("Path *GetUserInputPath `path:\"~\"`"))
 
 				Expect(buffer.String()).To(ContainSubstring("type GetUserInputPath struct"))
-				Expect(buffer.String()).To(ContainSubstring("UserId string `path:\"user-id\" validate:\"-\"`"))
+				Expect(buffer.String()).To(ContainSubstring("UserID string `path:\"user-id\" validate:\"-\"`"))
 			})
 
 			It("generates the query parameters", func() {
@@ -241,10 +241,10 @@ var _ = Describe("GeneratorController", func() {
 				_, err := file.WriteTo(buffer)
 				Expect(err).To(BeNil())
 
-				Expect(buffer.String()).To(ContainSubstring("type GetUserByIdOutput struct"))
-				Expect(buffer.String()).To(ContainSubstring("Header *GetUserByIdOutputHeader `header:\"~\"`"))
+				Expect(buffer.String()).To(ContainSubstring("type GetUserByIDOutput struct"))
+				Expect(buffer.String()).To(ContainSubstring("Header *GetUserByIDOutputHeader `header:\"~\"`"))
 
-				Expect(buffer.String()).To(ContainSubstring("type GetUserByIdOutputHeader struct"))
+				Expect(buffer.String()).To(ContainSubstring("type GetUserByIDOutputHeader struct"))
 				Expect(buffer.String()).To(ContainSubstring("XPartnerID string `header:\"X-Partner-ID\" validate:\"-\"`"))
 			})
 
@@ -286,7 +286,7 @@ var _ = Describe("GeneratorController", func() {
 				_, err := file.WriteTo(buffer)
 				Expect(err).To(BeNil())
 
-				Expect(buffer.String()).To(ContainSubstring("type GetUserByIdOutput struct"))
+				Expect(buffer.String()).To(ContainSubstring("type GetUserByIDOutput struct"))
 				Expect(buffer.String()).To(ContainSubstring("Body *User `body:\"~\"`"))
 			})
 		})

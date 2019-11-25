@@ -3,6 +3,7 @@ package inflect
 import (
 	"fmt"
 	"strings"
+	"unicode"
 
 	"github.com/go-openapi/inflect"
 )
@@ -25,7 +26,10 @@ func Camelize(text string, tail ...string) string {
 
 	text = strings.Join(items, "-")
 
-	return inflect.Camelize(text)
+	items = splitAtCaseChangeWithTitlecase(text)
+	text = strings.Join(items, "")
+
+	return text
 }
 
 // Dasherize dasherizes the text
@@ -58,4 +62,54 @@ func Pointer(text string) string {
 	}
 
 	return text
+}
+
+func splitAtCaseChangeWithTitlecase(s string) []string {
+	text := func(rn []rune) string {
+		word := string(rn)
+
+		if word == "Id" {
+			word = "ID"
+		}
+
+		return word
+	}
+
+	words := make([]string, 0)
+	word := make([]rune, 0)
+
+	for _, c := range s {
+		spacer := isSpacerChar(c)
+		if len(word) > 0 {
+			if unicode.IsUpper(c) || spacer {
+				words = append(words, text(word))
+				word = make([]rune, 0)
+			}
+		}
+
+		if !spacer {
+			if len(word) > 0 {
+				word = append(word, unicode.ToLower(c))
+			} else {
+				word = append(word, unicode.ToUpper(c))
+			}
+		}
+	}
+
+	words = append(words, text(word))
+	return words
+}
+
+func isSpacerChar(c rune) bool {
+	switch {
+	case c == rune("_"[0]):
+		return true
+	case c == rune(" "[0]):
+		return true
+	case c == rune(":"[0]):
+		return true
+	case c == rune("-"[0]):
+		return true
+	}
+	return false
 }
