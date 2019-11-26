@@ -9,6 +9,7 @@ import (
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/fake"
 )
 
 type GetTypeDescriptorFunc func() *codedom.TypeDescriptor
@@ -19,10 +20,16 @@ func TestCodedom(t *testing.T) {
 }
 
 func resolve(name string) *codedom.SpecDescriptor {
+	reporter := &fake.Reporter{}
+	reporter.WithReturns(reporter)
+
 	var (
 		path     = fmt.Sprintf("../fixture/spec/%s", name)
 		loader   = openapi3.NewSwaggerLoader()
-		resolver = codedom.NewResolver()
+		resolver = codedom.Resolver{
+			Reporter: reporter,
+			Cache:    codedom.TypeDescriptorMap{},
+		}
 	)
 
 	spec, err := loader.LoadSwaggerFromFile(path)

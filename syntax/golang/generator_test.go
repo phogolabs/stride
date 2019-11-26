@@ -5,6 +5,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/fake"
 	"github.com/phogolabs/stride/syntax/golang"
 )
 
@@ -12,8 +13,12 @@ var _ = Describe("Generator", func() {
 	var generator *golang.Generator
 
 	BeforeEach(func() {
+		reporter := &fake.Reporter{}
+		reporter.WithReturns(reporter)
+
 		generator = &golang.Generator{
-			Path: tmpdir(),
+			Path:     tmpdir(),
+			Reporter: reporter,
 		}
 	})
 

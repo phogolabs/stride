@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/contract"
 	"github.com/phogolabs/stride/inflect"
 )
 
@@ -12,6 +13,7 @@ import (
 type SchemaGenerator struct {
 	Path       string
 	Collection codedom.TypeDescriptorCollection
+	Reporter   contract.Reporter
 }
 
 // Generate generates the file
@@ -21,8 +23,15 @@ func (g *SchemaGenerator) Generate() *File {
 		root     = NewFile(filename)
 	)
 
+	reporter := g.Reporter.With(contract.SeverityHigh)
+
+	reporter.Notice(" Generating schemas file: %s...", root.Name())
+	defer reporter.Success(" Generating schemas file: %s success", root.Name())
+
 	// generate contract
 	for _, descriptor := range g.Collection {
+		g.Reporter.Notice("ﳑ Generating type: %s...", inflect.Dasherize(descriptor.Name))
+
 		switch {
 		case descriptor.IsAlias:
 			spec := NewLiteralType(descriptor.Name).Element(inflect.Unpointer(descriptor.Element.Kind()))
@@ -74,6 +83,8 @@ func (g *SchemaGenerator) Generate() *File {
 			}
 			continue
 		}
+
+		g.Reporter.Success("ﳑ Generation type: %s successful", inflect.Dasherize(descriptor.Name))
 	}
 
 	return root

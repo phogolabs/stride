@@ -11,6 +11,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/fake"
 	"github.com/phogolabs/stride/syntax/golang"
 )
 
@@ -18,8 +19,12 @@ var _ = Describe("SchemaGenerator", func() {
 	var generator *golang.SchemaGenerator
 
 	BeforeEach(func() {
+		reporter := &fake.Reporter{}
+		reporter.WithReturns(reporter)
+
 		generator = &golang.SchemaGenerator{
-			Path: tmpdir(),
+			Path:     tmpdir(),
+			Reporter: reporter,
 		}
 
 		Expect(os.MkdirAll(generator.Path, 0755)).To(Succeed())
