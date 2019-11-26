@@ -12,6 +12,7 @@ func init() {
 	inflect.AddAcronym("API")
 	inflect.AddAcronym("UUID")
 	inflect.AddAcronym("ID")
+	inflect.AddAcronym("OK")
 }
 
 // Camelize camelizes the text
@@ -90,8 +91,11 @@ func splitAtCaseChangeWithTitlecase(s string) []string {
 	text := func(rn []rune) string {
 		word := string(rn)
 
-		if word == "Id" {
+		switch {
+		case strings.EqualFold(word, "id"):
 			word = "ID"
+		case strings.EqualFold(word, "ok"):
+			word = "OK"
 		}
 
 		return word

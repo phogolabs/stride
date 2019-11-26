@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/contract"
 	"github.com/phogolabs/stride/inflect"
 )
 
@@ -26,6 +27,7 @@ type ControllerGenerator struct {
 	Path       string
 	Mode       ControllerGeneratorMode
 	Controller *codedom.ControllerDescriptor
+	Reporter   contract.Reporter
 }
 
 // Generate generates a file
@@ -33,6 +35,18 @@ func (g *ControllerGenerator) Generate() *File {
 	var (
 		filename = filepath.Join(g.Path, g.filename())
 		root     = NewFile(filename)
+	)
+
+	reporter := g.Reporter.With(contract.SeverityHigh)
+
+	reporter.Notice(" Generating controller: %s file: %s...",
+		inflect.Dasherize(g.name()),
+		root.Name(),
+	)
+
+	defer reporter.Notice(" Generating controller: %s file: %s successful",
+		inflect.Dasherize(g.name()),
+		root.Name(),
 	)
 
 	switch g.Mode {
@@ -48,8 +62,23 @@ func (g *ControllerGenerator) Generate() *File {
 }
 
 func (g *ControllerGenerator) schema(root *File) {
+	reporter := g.Reporter.With(contract.SeverityHigh)
+
+	reporter.Notice(" Generating controller: %s schema...", inflect.Dasherize(g.name()))
+	defer reporter.Success("ﳑ Generating controller: %s schema successful", inflect.Dasherize(g.name()))
+
 	for _, operation := range g.Controller.Operations {
 		name := inflect.Camelize(operation.Name)
+
+		g.Reporter.Info("ﳑ Generating controller: %s operation: %s schema...",
+			inflect.Dasherize(g.name()),
+			inflect.Dasherize(operation.Name),
+		)
+
+		g.Reporter.Info("ﳑ Generating controller: %s operation: %s schema input...",
+			inflect.Dasherize(g.name()),
+			inflect.Dasherize(operation.Name),
+		)
 
 		// input
 		input := NewStructType(name + "Input")
@@ -67,11 +96,34 @@ func (g *ControllerGenerator) schema(root *File) {
 		g.param("Cookie", root, input, operation.Parameters)
 
 		for _, request := range operation.Requests {
+			reporter := g.Reporter.With(contract.SeverityLow)
+
+			reporter.Info("ﳑ Generating type: %s field: %s...",
+				inflect.Dasherize(input.Name()),
+				inflect.Dasherize("body"),
+			)
+
 			// input body
 			input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
+
+			reporter.Info("ﳑ Generating type: %s field: %s successful",
+				inflect.Dasherize(input.Name()),
+				inflect.Dasherize("body"),
+			)
+
 			// NOTE: we handle the first request for now
 			break
 		}
+
+		g.Reporter.Success("ﳑ Generating controller: %s operation: %s schema input successful",
+			inflect.Dasherize(g.name()),
+			inflect.Dasherize(operation.Name),
+		)
+
+		g.Reporter.Info("ﳑ Generating controller: %s operation: %s schema output...",
+			inflect.Dasherize(g.name()),
+			inflect.Dasherize(operation.Name),
+		)
 
 		// output
 		output := NewStructType(name + "Output")
@@ -83,8 +135,20 @@ func (g *ControllerGenerator) schema(root *File) {
 			// output header
 			g.param("Header", root, output, response.Parameters)
 
+			reporter := g.Reporter.With(contract.SeverityLow)
+
+			reporter.Info("ﳑ Generating type: %s field: %s...",
+				inflect.Dasherize(output.Name()),
+				inflect.Dasherize("body"),
+			)
+
 			// output body
 			output.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+
+			reporter.Info("Generating type: %s field: %s successful",
+				inflect.Dasherize(output.Name()),
+				inflect.Dasherize("body"),
+			)
 
 			writer := &TemplateWriter{
 				Path: "syntax/golang/status.go.tpl",
@@ -106,6 +170,16 @@ func (g *ControllerGenerator) schema(root *File) {
 			// NOTE: we handle the first response for now
 			break
 		}
+
+		g.Reporter.Success("ﳑ Generating controller: %s operation: %s schema output successful",
+			inflect.Dasherize(g.Controller.Name),
+			inflect.Dasherize(operation.Name),
+		)
+
+		g.Reporter.Success("ﳑ Generating controller: %s operation: %s schema successful",
+			inflect.Dasherize(g.Controller.Name),
+			inflect.Dasherize(operation.Name),
+		)
 	}
 }
 
@@ -113,25 +187,55 @@ func (g *ControllerGenerator) param(kind string, root *File, parent *StructType,
 	spec := NewStructType(parent.Name() + kind)
 	spec.Commentf("It is the %s of %s", strings.ToLower(kind), parent.Name())
 
+	reporter := g.Reporter.With(contract.SeverityLow)
+	reporter.Info("ﳑ Generating type: %s...", inflect.Dasherize(spec.Name()))
+	defer reporter.Success("ﳑ Generating type: %s successful", inflect.Dasherize(spec.Name()))
+
 	for _, param := range parameters {
 		if strings.EqualFold(param.In, kind) {
+			reporter.Info("ﳑ Generating type: %s field: %s...",
+				inflect.Dasherize(spec.Name()),
+				inflect.Dasherize(param.Name),
+			)
+
 			// add a import if needed
 			root.AddImport(param.ParameterType.Namespace())
 
 			// add a field
 			spec.AddField(param.Name, param.ParameterType.Kind(), param.Tags()...)
+
+			reporter.Success("ﳑ Generating type: %s field: %s success...",
+				inflect.Dasherize(spec.Name()),
+				inflect.Dasherize(param.Name),
+			)
 		}
 	}
 
 	if spec.HasFields() {
 		// add the spec to the file
 		root.AddNode(spec)
+
+		reporter.Info("ﳑ Generating type: %s field: %s...",
+			inflect.Dasherize(parent.Name()),
+			inflect.Dasherize(kind),
+		)
+
 		// add the spec as property to the parent
 		parent.AddField(kind, inflect.Pointer(spec.Name()), g.tagOfArg(kind))
+
+		reporter.Success("ﳑ Generating type: %s field: %s successful",
+			inflect.Dasherize(parent.Name()),
+			inflect.Dasherize(kind),
+		)
 	}
 }
 
 func (g *ControllerGenerator) controller(root *File) {
+	reporter := g.Reporter.With(contract.SeverityHigh)
+
+	reporter.Notice("ﳑ Generating controller: %s...", inflect.Dasherize(g.name()))
+	defer reporter.Success("ﳑ Generating controller: %s successful", inflect.Dasherize(g.name()))
+
 	// add a import if needed
 	root.AddImport("github.com/go-chi/chi")
 	root.AddImport("github.com/phogolabs/restify")
@@ -154,15 +258,30 @@ func (g *ControllerGenerator) controller(root *File) {
 
 	buffer := &bytes.Buffer{}
 	if _, err := writer.WriteTo(buffer); err != nil {
-		panic(err)
+		g.Reporter.Error("ﳑ Generating controller: %s operation: %s fail: %v",
+			inflect.Dasherize(g.name()),
+			inflect.UpperCase("mount"),
+			err,
+		)
 	}
 
 	if err := root.AddFunction(buffer.String()); err != nil {
-		panic(err)
+		g.Reporter.Error("ﳑ Generating controller: %s operation: %s fail: %v",
+			inflect.Dasherize(g.name()),
+			inflect.UpperCase("mount"),
+			err,
+		)
 	}
 
 	// operations
 	for _, operation := range g.Controller.Operations {
+		g.Reporter.Info("ﳑ Generating controller: %s operation: %s method: %s path: %s...",
+			inflect.Dasherize(g.name()),
+			inflect.Dasherize(operation.Name),
+			inflect.UpperCase(operation.Method),
+			inflect.LowerCase(operation.Path),
+		)
+
 		writer := &TemplateWriter{
 			Path: "syntax/golang/operation.go.tpl",
 			Context: map[string]interface{}{
@@ -178,12 +297,35 @@ func (g *ControllerGenerator) controller(root *File) {
 
 		buffer := &bytes.Buffer{}
 		if _, err := writer.WriteTo(buffer); err != nil {
-			panic(err)
+			g.Reporter.Error("ﳑ Generating controller: %s operation: %s method: %s path: %s fail: %v",
+				inflect.Dasherize(g.name()),
+				inflect.Dasherize(operation.Name),
+				inflect.UpperCase(operation.Method),
+				inflect.LowerCase(operation.Path),
+				err,
+			)
+
+			continue
 		}
 
 		if err := root.AddFunction(buffer.String()); err != nil {
-			panic(err)
+			g.Reporter.Error("ﳑ Generating controller: %s operation: %s method: %s path: %s fail: %v",
+				inflect.Dasherize(g.name()),
+				inflect.Dasherize(operation.Name),
+				inflect.UpperCase(operation.Method),
+				inflect.LowerCase(operation.Path),
+				err,
+			)
+
+			continue
 		}
+
+		g.Reporter.Success("ﳑ Generating controller: %s operation: %s method: %s path: %s successful",
+			inflect.Dasherize(g.name()),
+			inflect.Dasherize(operation.Name),
+			inflect.UpperCase(operation.Method),
+			inflect.LowerCase(operation.Path),
+		)
 	}
 }
 

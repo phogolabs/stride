@@ -7,6 +7,7 @@ import (
 	. "github.com/onsi/gomega"
 
 	"github.com/phogolabs/stride/codedom"
+	"github.com/phogolabs/stride/fake"
 	"github.com/phogolabs/stride/syntax/golang"
 )
 
@@ -14,8 +15,12 @@ var _ = Describe("GeneratorController", func() {
 	var generator *golang.ControllerGenerator
 
 	BeforeEach(func() {
+		reporter := &fake.Reporter{}
+		reporter.WithReturns(reporter)
+
 		generator = &golang.ControllerGenerator{
-			Path: tmpdir(),
+			Path:     tmpdir(),
+			Reporter: reporter,
 		}
 	})
 
