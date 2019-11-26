@@ -39,10 +39,16 @@ func (m *OpenAPIEditor) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIEditor) edit(ctx *cli.Context) error {
+	// get the spec
+	path, err := get(ctx, "file-path")
+	if err != nil {
+		return err
+	}
+
 	var (
 		config = &service.EditorConfig{
+			Path: path,
 			Addr: ctx.String("listen-addr"),
-			Path: ctx.String("file-path"),
 		}
 		server = service.NewEditor(config)
 	)

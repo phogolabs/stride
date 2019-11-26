@@ -42,8 +42,15 @@ func (m *OpenAPIGenerator) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
+	// get the spec
+	path, err := get(ctx, "file-path")
+	if err != nil {
+		return err
+	}
+
+	// generate the soec
 	generator := &service.Generator{
-		Path:     ctx.String("file-path"),
+		Path:     path,
 		Resolver: codedom.NewResolver(),
 		Generator: &golang.Generator{
 			Path: ctx.String("project-path"),

@@ -39,10 +39,16 @@ func (m *OpenAPIViewer) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIViewer) view(ctx *cli.Context) error {
+	// get the spec
+	path, err := get(ctx, "file-path")
+	if err != nil {
+		return err
+	}
+
 	var (
 		config = &service.ViewerConfig{
+			Path: path,
 			Addr: ctx.String("listen-addr"),
-			Path: ctx.String("file-path"),
 		}
 		server = service.NewViewer(config)
 	)

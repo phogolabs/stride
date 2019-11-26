@@ -66,7 +66,7 @@ generator does not support for now. The following features are not supported:
 
 - [x] Golang generator (in testing phase)
 - [ ] Enable a mock server for given OpenAPI specification
-- [ ] Download the OpenAPI specification from different sources (local, s3, git and etc.)
+- [x] Download the OpenAPI specification from different sources (local, s3, git and etc.)
 - [ ] Support for Dictionaries, Hash Maps and Associative Arrays in Golang
 - [ ] Support for `application/xml` and `application/x-www-form-urlencoded`
 - [ ] Improve the OpenAPI validation reports

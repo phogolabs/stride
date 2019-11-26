@@ -8,7 +8,7 @@ require (
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-openapi/inflect v0.19.0
-	github.com/golang/protobuf v1.3.2 // indirect
+	github.com/hashicorp/go-getter v1.4.0
 	github.com/onsi/ginkgo v1.10.3
 	github.com/onsi/gomega v1.7.1
 	github.com/phogolabs/cli v0.0.0-20191121081435-9112dfb9677e
@@ -17,7 +17,6 @@ require (
 	github.com/phogolabs/parcello v0.8.1
 	github.com/stretchr/testify v1.4.0 // indirect
 	golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7 // indirect
-	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20191124021906-f5828fc9a103
 	gopkg.in/yaml.v2 v2.2.7 // indirect
 )

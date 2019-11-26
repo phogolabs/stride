@@ -34,8 +34,14 @@ func (m *OpenAPIValidator) before(ctx *cli.Context) error {
 }
 
 func (m *OpenAPIValidator) validate(ctx *cli.Context) error {
+	// get the spec
+	path, err := get(ctx, "file-path")
+	if err != nil {
+		return err
+	}
+
 	validator := &service.Validator{
-		Path: ctx.String("file-path"),
+		Path: path,
 	}
 
 	return validator.Validate()
