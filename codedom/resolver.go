@@ -524,8 +524,10 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 						Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
 						Element: r.resolve(ctx.Child("properties", schema)),
 						Metadata: Metadata{
-							"min": ctx.Schema.Value.MinProps,
-							"max": ctx.Schema.Value.MaxProps,
+							"min":           uint64Ptr(&ctx.Schema.Value.MinProps),
+							"max":           uint64Ptr(ctx.Schema.Value.MaxProps),
+							"min_exclusive": false,
+							"max_exclusive": false,
 						},
 						IsMap: true,
 					},
@@ -540,8 +542,10 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 				Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
 				Element: r.resolve(ctx.Child("properties", nil)),
 				Metadata: Metadata{
-					"min": ctx.Schema.Value.MinProps,
-					"max": ctx.Schema.Value.MaxProps,
+					"min":           uint64Ptr(&ctx.Schema.Value.MinProps),
+					"max":           uint64Ptr(ctx.Schema.Value.MaxProps),
+					"min_exclusive": false,
+					"max_exclusive": false,
 				},
 				IsMap: true,
 			}
@@ -569,9 +573,11 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			IsArray:     true,
 			Element:     r.resolve(ctx.Array()),
 			Metadata: Metadata{
-				"unique": ctx.Schema.Value.UniqueItems,
-				"min":    ctx.Schema.Value.MinLength,
-				"max":    ctx.Schema.Value.MaxLength,
+				"unique":        ctx.Schema.Value.UniqueItems,
+				"min":           uint64Ptr(&ctx.Schema.Value.MinLength),
+				"max":           uint64Ptr(ctx.Schema.Value.MaxLength),
+				"min_exclusive": false,
+				"max_exclusive": false,
 			},
 		}
 
@@ -618,9 +624,11 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	switch ctx.Schema.Value.Type {
 	case "string":
 		descriptor.Metadata = Metadata{
-			"min":     &ctx.Schema.Value.MinLength,
-			"max":     ctx.Schema.Value.MaxLength,
-			"pattern": ctx.Schema.Value.Pattern,
+			"min":           uint64Ptr(&ctx.Schema.Value.MinLength),
+			"max":           uint64Ptr(ctx.Schema.Value.MaxLength),
+			"pattern":       ctx.Schema.Value.Pattern,
+			"min_exclusive": false,
+			"max_exclusive": false,
 		}
 	case "number", "integer":
 		descriptor.Metadata = Metadata{
@@ -696,4 +704,13 @@ func (r *Resolver) kind(schema *openapi3.Schema) string {
 	default:
 		return kind
 	}
+}
+
+func uint64Ptr(v *uint64) *float64 {
+	if v == nil {
+		return nil
+	}
+
+	f := float64(*v)
+	return &f
 }
