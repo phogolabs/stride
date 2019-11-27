@@ -41,7 +41,8 @@ func (m *OpenAPIValidator) validate(ctx *cli.Context) error {
 	}
 
 	validator := &service.Validator{
-		Path: path,
+		Path:     path,
+		Reporter: reporter(ctx),
 	}
 
 	return validator.Validate()

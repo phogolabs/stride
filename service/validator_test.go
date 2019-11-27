@@ -4,6 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 
+	"github.com/phogolabs/stride/fake"
 	"github.com/phogolabs/stride/service"
 )
 
@@ -11,8 +12,12 @@ var _ = Describe("Validator", func() {
 	var validator *service.Validator
 
 	BeforeEach(func() {
+		reporter := &fake.Reporter{}
+		reporter.WithReturns(reporter)
+
 		validator = &service.Validator{
-			Path: path("../fixture/spec/schemas-array.yaml"),
+			Path:     path("../fixture/spec/schemas-array.yaml"),
+			Reporter: reporter,
 		}
 	})
 
@@ -36,7 +41,7 @@ var _ = Describe("Validator", func() {
 		})
 
 		It("returns an error", func() {
-			Expect(validator.Validate()).To(MatchError("Unsupported 'format' value 'uuid'"))
+			Expect(validator.Validate()).To(MatchError("message: Please check the error log for more details"))
 		})
 	})
 })
