@@ -1158,16 +1158,16 @@ var _ = Describe("Resolver", func() {
 
 			op = descriptor.Operations[0]
 			Expect(op.Name).To(Equal("get-account-by-id"))
-			Expect(op.Requests).To(HaveLen(0))
+			Expect(op.Requests).To(HaveLen(1))
+			Expect(op.Requests[0].Parameters).To(HaveLen(1))
+			Expect(op.Requests[0].Parameters[0].Name).To(Equal("accountId"))
 			Expect(op.Responses).To(HaveLen(1))
-			Expect(op.Parameters).To(HaveLen(1))
-			Expect(op.Parameters[0].Name).To(Equal("accountId"))
 
 			op = descriptor.Operations[1]
 			Expect(op.Name).To(Equal("get-accounts"))
-			Expect(op.Requests).To(HaveLen(0))
+			Expect(op.Requests).To(HaveLen(1))
+			Expect(op.Requests[0].Parameters).To(HaveLen(0))
 			Expect(op.Responses).To(HaveLen(1))
-			Expect(op.Parameters).To(HaveLen(0))
 		})
 	})
 })

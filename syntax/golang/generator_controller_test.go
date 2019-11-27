@@ -38,13 +38,17 @@ var _ = Describe("GeneratorController", func() {
 							Method: "GET",
 							Path:   "/users/{user-id}",
 							Name:   "get-user",
-							Parameters: codedom.ParameterDescriptorCollection{
-								&codedom.ParameterDescriptor{
-									Name: "user-id",
-									In:   "path",
-									ParameterType: &codedom.TypeDescriptor{
-										Name:        "string",
-										IsPrimitive: true,
+							Requests: codedom.RequestDescriptorCollection{
+								&codedom.RequestDescriptor{
+									Parameters: codedom.ParameterDescriptorCollection{
+										&codedom.ParameterDescriptor{
+											Name: "user-id",
+											In:   "path",
+											ParameterType: &codedom.TypeDescriptor{
+												Name:        "string",
+												IsPrimitive: true,
+											},
+										},
 									},
 								},
 							},
@@ -74,13 +78,17 @@ var _ = Describe("GeneratorController", func() {
 							Method: "GET",
 							Path:   "/users",
 							Name:   "get-user",
-							Parameters: codedom.ParameterDescriptorCollection{
-								&codedom.ParameterDescriptor{
-									Name: "name",
-									In:   "query",
-									ParameterType: &codedom.TypeDescriptor{
-										Name:        "string",
-										IsPrimitive: true,
+							Requests: codedom.RequestDescriptorCollection{
+								&codedom.RequestDescriptor{
+									Parameters: codedom.ParameterDescriptorCollection{
+										&codedom.ParameterDescriptor{
+											Name: "name",
+											In:   "query",
+											ParameterType: &codedom.TypeDescriptor{
+												Name:        "string",
+												IsPrimitive: true,
+											},
+										},
 									},
 								},
 							},
@@ -110,13 +118,17 @@ var _ = Describe("GeneratorController", func() {
 							Method: "GET",
 							Path:   "/users",
 							Name:   "get-user",
-							Parameters: codedom.ParameterDescriptorCollection{
-								&codedom.ParameterDescriptor{
-									Name: "X-Partner-ID",
-									In:   "header",
-									ParameterType: &codedom.TypeDescriptor{
-										Name:        "string",
-										IsPrimitive: true,
+							Requests: codedom.RequestDescriptorCollection{
+								&codedom.RequestDescriptor{
+									Parameters: codedom.ParameterDescriptorCollection{
+										&codedom.ParameterDescriptor{
+											Name: "X-Partner-ID",
+											In:   "header",
+											ParameterType: &codedom.TypeDescriptor{
+												Name:        "string",
+												IsPrimitive: true,
+											},
+										},
 									},
 								},
 							},
@@ -146,13 +158,17 @@ var _ = Describe("GeneratorController", func() {
 							Method: "GET",
 							Path:   "/users",
 							Name:   "get-user",
-							Parameters: codedom.ParameterDescriptorCollection{
-								&codedom.ParameterDescriptor{
-									Name: "token",
-									In:   "cookie",
-									ParameterType: &codedom.TypeDescriptor{
-										Name:        "string",
-										IsPrimitive: true,
+							Requests: codedom.RequestDescriptorCollection{
+								&codedom.RequestDescriptor{
+									Parameters: codedom.ParameterDescriptorCollection{
+										&codedom.ParameterDescriptor{
+											Name: "token",
+											In:   "cookie",
+											ParameterType: &codedom.TypeDescriptor{
+												Name:        "string",
+												IsPrimitive: true,
+											},
+										},
 									},
 								},
 							},

@@ -91,15 +91,15 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 			)
 
 			var (
-				parameters = make(map[string]*openapi3.ParameterRef)
-				requests   = make(map[string]*openapi3.RequestBodyRef)
-				responses  = spec.Responses
+				parameterMap = make(map[string]*openapi3.ParameterRef)
+				requestMap   = make(map[string]*openapi3.RequestBodyRef)
+				responses    = spec.Responses
 			)
 
-			requests["request"] = spec.RequestBody
+			requestMap["request"] = spec.RequestBody
 
 			for _, param := range spec.Parameters {
-				parameters[param.Value.Name] = param
+				parameterMap[param.Value.Name] = param
 			}
 
 			operation := &OperationDescriptor{
@@ -110,9 +110,23 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 				Summary:     spec.Summary,
 				Deprecated:  spec.Deprecated,
 				Tags:        spec.Tags,
-				Parameters:  r.parameters(cctx, parameters),
-				Requests:    r.requests(cctx, requests),
+				Requests:    r.requests(cctx, requestMap),
 				Responses:   r.responses(cctx, responses),
+			}
+
+			parameters := r.parameters(cctx, parameterMap)
+
+			if len(operation.Requests) == 0 {
+				request := &RequestDescriptor{
+					ContentType: "application/unknown",
+					Description: spec.Description,
+				}
+
+				operation.Requests = append(operation.Requests, request)
+			}
+
+			for _, request := range operation.Requests {
+				request.Parameters = parameters
 			}
 
 			controller.Operations = append(controller.Operations, operation)
@@ -190,7 +204,10 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 	reporter.Notice("Resolving responses...")
 	defer reporter.Success("Resolving responses successful")
 
-	descriptors := ResponseDescriptorCollection{}
+	var (
+		descriptors = ResponseDescriptorCollection{}
+		defaultSpec = r.responsesOf(responses)
+	)
 
 	for name, spec := range responses {
 		code, err := strconv.Atoi(name)
@@ -199,6 +216,17 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 		}
 
 		r.Reporter.Info("Resolving response: %s...", inflect.Dasherize(name))
+
+		if len(spec.Value.Content) == 0 {
+			response := &ResponseDescriptor{
+				Code:        code,
+				ContentType: "application/unknown",
+				Description: spec.Value.Description,
+				IsDefault:   spec == defaultSpec,
+			}
+
+			descriptors = append(descriptors, response)
+		}
 
 		for contentType, content := range spec.Value.Content {
 			r.Reporter.Info("Resolving response: %s content-type: %s...",
@@ -224,6 +252,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 					Description:  spec.Value.Description,
 					ResponseType: r.resolve(cctx),
 					Parameters:   r.headers(cctx, spec.Value.Headers),
+					IsDefault:    spec == defaultSpec,
 				}
 			)
 
@@ -241,6 +270,33 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 	sort.Sort(descriptors)
 
 	return descriptors
+}
+
+func (r *Resolver) responsesOf(responses map[string]*openapi3.ResponseRef) *openapi3.ResponseRef {
+	if spec, ok := responses["default"]; ok {
+		return spec
+	}
+
+	var (
+		prefix = "2"
+		codes  = []string{}
+	)
+
+	for name, spec := range responses {
+		codes = append(codes, name)
+
+		if strings.HasPrefix(name, prefix) {
+			return spec
+		}
+	}
+
+	sort.Strings(codes)
+
+	if len(codes) > 0 {
+		return responses[codes[0]]
+	}
+
+	return nil
 }
 
 func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*openapi3.ParameterRef) ParameterDescriptorCollection {
