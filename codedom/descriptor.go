@@ -360,7 +360,7 @@ func (p *ParameterDescriptor) Tags() TagDescriptorCollection {
 		Name: p.Name,
 	}
 
-	if style := strings.ToLower(p.Style); style != "" {
+	if style := inflect.Dasherize(p.Style); style != "" {
 		tag.Options = append(tag.Options, style)
 	}
 
