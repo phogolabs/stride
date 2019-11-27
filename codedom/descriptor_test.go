@@ -178,7 +178,7 @@ var _ = Describe("PropertyDescriptor", func() {
 
 			tags := property.Tags()
 			Expect(tags).To(HaveLen(2))
-			Expect(tags[0].Key).To(Equal("json"))
+			Expect(tags[0].Key).To(Equal("field"))
 			Expect(tags[0].Name).To(Equal("bank-id"))
 			Expect(tags[0].Options).To(ContainElement("omitempty"))
 

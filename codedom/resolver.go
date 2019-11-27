@@ -357,8 +357,19 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	}
 
 	if ctx.Schema == nil {
-		reporter.Warn("Resolving type: %s not found ", inflect.Dasherize(ctx.Name))
-		return nil
+		descriptor := &TypeDescriptor{
+			IsAny: true,
+		}
+
+		if ctx.Parent.IsRoot() {
+			descriptor = &TypeDescriptor{
+				Name:    inflect.Dasherize(ctx.Name),
+				IsAlias: true,
+				Element: descriptor,
+			}
+		}
+
+		return descriptor
 	}
 
 	defer reporter.Success("Resolving type: %s successful", inflect.Dasherize(ctx.Name))
@@ -430,9 +441,32 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 				inflect.Dasherize(ctx.Name),
 				inflect.Dasherize(ctx.Name))
 		}
+		switch {
+		case ctx.Schema.Value.AdditionalPropertiesAllowed != nil:
+			fallthrough
+		case ctx.Schema.Value.AdditionalProperties != nil:
+			var (
+				schema   = ctx.Schema.Value.AdditionalProperties
+				property = &PropertyDescriptor{
+					Name:        "properties",
+					Description: "additional properties",
+					PropertyType: &TypeDescriptor{
+						Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
+						Element: r.resolve(ctx.Child("properties", schema)),
+						IsMap:   true,
+					},
+					IsEmbedded: true,
+				}
+			)
 
-		if extra := ctx.Schema.Value.AdditionalProperties; extra != nil {
-			//TODO: handle additional properties
+			descriptor.Properties = append(descriptor.Properties, property)
+		case !descriptor.HasProperties():
+			descriptor = &TypeDescriptor{
+				Name:    inflect.Dasherize(ctx.Name),
+				Key:     r.resolve(ctx.Child("map", schemaOf("string"))),
+				Element: r.resolve(ctx.Child("properties", nil)),
+				IsMap:   true,
+			}
 		}
 
 		// sort properties by name

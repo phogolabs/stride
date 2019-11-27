@@ -25,7 +25,7 @@ func (r *ResolverContext) IsRoot() bool {
 // Child returns the child context
 func (r *ResolverContext) Child(name string, schema *openapi3.SchemaRef) *ResolverContext {
 	ctx := &ResolverContext{
-		Name:   r.name(name),
+		Name:   r.NameOf(name),
 		Schema: schema,
 		Parent: r,
 	}
@@ -57,7 +57,8 @@ func (r *ResolverContext) Array() *ResolverContext {
 	return ctx
 }
 
-func (r *ResolverContext) name(text string) string {
+// NameOf return the name
+func (r *ResolverContext) NameOf(text string) string {
 	items := []string{}
 
 	if r.Name != "" {
@@ -72,4 +73,10 @@ func (r *ResolverContext) name(text string) string {
 	text = inflect.Dasherize(text)
 
 	return text
+}
+
+func schemaOf(name string) *openapi3.SchemaRef {
+	return &openapi3.SchemaRef{
+		Value: &openapi3.Schema{Type: name},
+	}
 }

@@ -43,6 +43,11 @@ func (g *SchemaGenerator) Generate() *File {
 			spec.Commentf(descriptor.Description)
 			// add the spec the file
 			root.AddNode(spec)
+		case descriptor.IsMap:
+			spec := NewLiteralType(descriptor.Name).Element(descriptor.Kind())
+			spec.Commentf(descriptor.Description)
+			// add the spec the file
+			root.AddNode(spec)
 		case descriptor.IsClass:
 			spec := NewStructType(descriptor.Name)
 			spec.Commentf(descriptor.Description)
