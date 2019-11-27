@@ -68,7 +68,7 @@ generator does not support for now. The following features are not supported:
 - [x] Download the OpenAPI specification from different sources (local, s3, git and etc.)
 - [x] Support for Dictionaries, Hash Maps and Associative Arrays in Golang
 - [x] Support for `application/xml` and `application/x-www-form-urlencoded`
-- [ ] Improve the OpenAPI validation reports
+- [x] Improve the OpenAPI validation reports
 - [ ] Allow implementation of 3rd party generators in other languages (via GRPC)
 
 ## Installation

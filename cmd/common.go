@@ -4,6 +4,8 @@ import (
 	"fmt"
 
 	"github.com/phogolabs/cli"
+	"github.com/phogolabs/stride/contract"
+	"github.com/phogolabs/stride/terminal"
 	"github.com/phogolabs/stride/torrent"
 )
 
@@ -25,4 +27,10 @@ func get(ctx *cli.Context, key string) (string, error) {
 
 	path := fmt.Sprintf("%v", task.Data())
 	return path, nil
+}
+
+func reporter(ctx *cli.Context) contract.Reporter {
+	return &terminal.Reporter{
+		Writer: ctx.ErrWriter,
+	}
 }

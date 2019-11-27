@@ -7,7 +7,6 @@ import (
 	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/service"
 	"github.com/phogolabs/stride/syntax/golang"
-	"github.com/phogolabs/stride/terminal"
 )
 
 // OpenAPIGenerator provides a subcommands to generate source code from OpenAPI specification
@@ -49,19 +48,15 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		return err
 	}
 
-	reporter := &terminal.Reporter{
-		Writer: ctx.ErrWriter,
-	}
-
 	// generate the soec
 	generator := &service.Generator{
 		Path: path,
 		Resolver: &codedom.Resolver{
-			Reporter: reporter,
+			Reporter: reporter(ctx),
 			Cache:    codedom.TypeDescriptorMap{},
 		},
 		Generator: &golang.Generator{
-			Reporter: reporter,
+			Reporter: reporter(ctx),
 			Path:     ctx.String("project-path"),
 		},
 	}
