@@ -143,11 +143,6 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 		r.Reporter.Info("Resolving request body: %s....", inflect.Dasherize(name))
 
 		for contentType, content := range spec.Value.Content {
-			if !strings.EqualFold(contentType, "application/json") {
-				//TODO: at some point we must support all content-types
-				continue
-			}
-
 			r.Reporter.Info("Resolving request body: %s content-type: %s...",
 				inflect.Dasherize(name),
 				inflect.LowerCase(contentType))
@@ -206,11 +201,6 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 		r.Reporter.Info("Resolving response: %s...", inflect.Dasherize(name))
 
 		for contentType, content := range spec.Value.Content {
-			if !strings.EqualFold(contentType, "application/json") {
-				//TODO: at some point we must support all content-types
-				continue
-			}
-
 			r.Reporter.Info("Resolving response: %s content-type: %s...",
 				inflect.Dasherize(name),
 				inflect.LowerCase(contentType))
