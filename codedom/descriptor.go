@@ -400,6 +400,7 @@ type RequestDescriptor struct {
 	ContentType string
 	Description string
 	Required    bool
+	Parameters  ParameterDescriptorCollection
 	RequestType *TypeDescriptor
 }
 
@@ -429,6 +430,7 @@ type ResponseDescriptor struct {
 	ContentType  string
 	ResponseType *TypeDescriptor
 	Parameters   ParameterDescriptorCollection
+	IsDefault    bool
 }
 
 // ResponseDescriptorCollection definition
@@ -545,7 +547,6 @@ type OperationDescriptor struct {
 	Description string
 	Deprecated  bool
 	Tags        []string
-	Parameters  ParameterDescriptorCollection
 	Requests    RequestDescriptorCollection
 	Responses   ResponseDescriptorCollection
 }

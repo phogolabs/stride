@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"net/http"
 	"path/filepath"
 	"strings"
 
@@ -80,39 +81,48 @@ func (g *ControllerGenerator) schema(root *File) {
 			inflect.Dasherize(operation.Name),
 		)
 
-		// input
-		input := NewStructType(name + "Input")
-		input.Commentf("It is the input of %s operation", name)
-		// add the input to the file
-		root.AddNode(input)
-
-		// path input
-		g.param("Path", root, input, operation.Parameters)
-		// query input
-		g.param("Query", root, input, operation.Parameters)
-		// header input
-		g.param("Header", root, input, operation.Parameters)
-		// cookie input
-		g.param("Cookie", root, input, operation.Parameters)
-
-		for _, request := range operation.Requests {
+		for index, request := range operation.Requests {
 			reporter := g.Reporter.With(contract.SeverityLow)
 
-			reporter.Info("ﳑ Generating type: %s field: %s...",
-				inflect.Dasherize(input.Name()),
-				inflect.Dasherize("body"),
-			)
+			if index > 0 {
+				reporter.Warn("ﳑ Generating request content-type: %s skipped. More than one request per operation is not supported",
+					inflect.Dasherize(request.ContentType),
+				)
 
-			// input body
-			input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
+				continue
+			}
 
-			reporter.Info("ﳑ Generating type: %s field: %s successful",
-				inflect.Dasherize(input.Name()),
-				inflect.Dasherize("body"),
-			)
+			// input
+			input := NewStructType(name + "Input")
+			input.Commentf("It is the input of %s operation", name)
+			// add the input to the file
+			root.AddNode(input)
 
-			// NOTE: we handle the first request for now
-			break
+			// path input
+			g.param("Path", root, input, request.Parameters)
+			// query input
+			g.param("Query", root, input, request.Parameters)
+			// header input
+			g.param("Header", root, input, request.Parameters)
+			// cookie input
+			g.param("Cookie", root, input, request.Parameters)
+
+			if request.RequestType != nil {
+				reporter.Info("ﳑ Generating type: %s field: %s content-type: %s...",
+					inflect.Dasherize(input.Name()),
+					inflect.Dasherize("body"),
+					inflect.Dasherize(request.ContentType),
+				)
+
+				// input body
+				input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
+
+				reporter.Info("ﳑ Generating type: %s field: %s content-type: %s successful",
+					inflect.Dasherize(input.Name()),
+					inflect.Dasherize("body"),
+					inflect.Dasherize(request.ContentType),
+				)
+			}
 		}
 
 		g.Reporter.Success("ﳑ Generating controller: %s operation: %s schema input successful",
@@ -125,29 +135,45 @@ func (g *ControllerGenerator) schema(root *File) {
 			inflect.Dasherize(operation.Name),
 		)
 
-		// output
-		output := NewStructType(name + "Output")
-		output.Commentf("It is the output of %s operation", name)
-		// add the output to the file
-		root.AddNode(output)
+		for index, response := range operation.Responses {
+			reporter := g.Reporter.With(contract.SeverityLow)
 
-		for _, response := range operation.Responses {
+			if index > 0 {
+				reporter.Warn("ﳑ Generating response content-type: %s code: %d skipped. The response payload should be equal to every response that has different content-type and the same code.",
+					inflect.Dasherize(response.ContentType),
+					response.Code,
+				)
+
+				// TODO:
+				continue
+			}
+
+			// output
+			output := NewStructType(name + inflect.Camelize(http.StatusText(response.Code)) + "Output")
+			output.Commentf("It is the output of %s operation with code: %d", name, response.Code)
+			// add the output to the file
+			root.AddNode(output)
+
 			// output header
 			g.param("Header", root, output, response.Parameters)
 
-			reporter := g.Reporter.With(contract.SeverityLow)
-
-			reporter.Info("ﳑ Generating type: %s field: %s...",
+			reporter.Info("ﳑ Generating type: %s field: %s content-type: %s code: %d...",
 				inflect.Dasherize(output.Name()),
 				inflect.Dasherize("body"),
+				inflect.Dasherize(response.ContentType),
+				response.Code,
 			)
 
-			// output body
-			output.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+			if response.ResponseType != nil {
+				// output body
+				output.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+			}
 
-			reporter.Info("Generating type: %s field: %s successful",
+			reporter.Info("ﳑ Generating type: %s field: %s content-type: %s code: %d successful",
 				inflect.Dasherize(output.Name()),
 				inflect.Dasherize("body"),
+				inflect.Dasherize(response.ContentType),
+				response.Code,
 			)
 
 			writer := &TemplateWriter{
@@ -160,15 +186,40 @@ func (g *ControllerGenerator) schema(root *File) {
 
 			buffer := &bytes.Buffer{}
 			if _, err := writer.WriteTo(buffer); err != nil {
-				panic(err)
+				reporter.Info("ﳑ Generating type: %s method: %s content-type: %s code: %d fail: %v",
+					inflect.Dasherize(output.Name()),
+					inflect.Dasherize("status"),
+					inflect.Dasherize(response.ContentType),
+					response.Code,
+					err,
+				)
+
+				continue
 			}
 
 			if err := root.AddFunction(buffer.String()); err != nil {
-				panic(err)
+				reporter.Info("ﳑ Generating type: %s method: %s content-type: %s code: %d fail: %v",
+					inflect.Dasherize(output.Name()),
+					inflect.Dasherize("status"),
+					inflect.Dasherize(response.ContentType),
+					response.Code,
+					err,
+				)
 			}
 
-			// NOTE: we handle the first response for now
-			break
+			if response.IsDefault {
+				// output
+				alias := NewLiteralType(name + "Output")
+				alias.Element(output.Name())
+				alias.Commentf("It is the alias to the default output of %s operation", name)
+
+				reporter.Info("ﳑ Generating type: %s...", inflect.Dasherize(alias.Name()))
+
+				// add the output to the file
+				root.AddNode(alias)
+
+				reporter.Info("ﳑ Generating type: %s successful", inflect.Dasherize(alias.Name()))
+			}
 		}
 
 		g.Reporter.Success("ﳑ Generating controller: %s operation: %s schema output successful",
