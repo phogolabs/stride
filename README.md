@@ -60,7 +60,6 @@ generator does not support for now. The following features are not supported:
 - Links
 - Callbacks
 - Authentication
-- Content-Type different that `application/json`
 
 ## Road map
 
@@ -68,7 +67,7 @@ generator does not support for now. The following features are not supported:
 - [ ] Enable a mock server for given OpenAPI specification
 - [x] Download the OpenAPI specification from different sources (local, s3, git and etc.)
 - [x] Support for Dictionaries, Hash Maps and Associative Arrays in Golang
-- [ ] Support for `application/xml` and `application/x-www-form-urlencoded`
+- [x] Support for `application/xml` and `application/x-www-form-urlencoded`
 - [ ] Improve the OpenAPI validation reports
 - [ ] Allow implementation of 3rd party generators in other languages (via GRPC)
 
