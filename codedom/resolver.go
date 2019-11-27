@@ -334,8 +334,33 @@ func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*opena
 			}
 		)
 
-		//TODO: handle the explode value property as per spec
-		if value := spec.Value.Explode; value != nil {
+		if value := spec.Value.Style; value == "" {
+			switch spec.Value.In {
+			case "header":
+				parameter.Style = "form"
+			case "query":
+				parameter.Style = "form"
+			case "path":
+				parameter.Style = "simple"
+			case "cookie":
+				parameter.Style = "form"
+			}
+		} else {
+			parameter.Style = value
+		}
+
+		if value := spec.Value.Explode; value == nil {
+			switch spec.Value.In {
+			case "header":
+				parameter.Explode = false
+			case "query":
+				parameter.Explode = true
+			case "path":
+				parameter.Explode = false
+			case "cookie":
+				parameter.Explode = true
+			}
+		} else {
 			parameter.Explode = *value
 		}
 
@@ -494,12 +519,15 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			var (
 				schema   = ctx.Schema.Value.AdditionalProperties
 				property = &PropertyDescriptor{
-					Name:        "properties",
-					Description: "additional properties",
+					Name: "properties",
 					PropertyType: &TypeDescriptor{
 						Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
 						Element: r.resolve(ctx.Child("properties", schema)),
-						IsMap:   true,
+						Metadata: Metadata{
+							"min": ctx.Schema.Value.MinProps,
+							"max": ctx.Schema.Value.MaxProps,
+						},
+						IsMap: true,
 					},
 					IsEmbedded: true,
 				}
@@ -509,9 +537,13 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		case !descriptor.HasProperties():
 			descriptor = &TypeDescriptor{
 				Name:    inflect.Dasherize(ctx.Name),
-				Key:     r.resolve(ctx.Child("map", schemaOf("string"))),
+				Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
 				Element: r.resolve(ctx.Child("properties", nil)),
-				IsMap:   true,
+				Metadata: Metadata{
+					"min": ctx.Schema.Value.MinProps,
+					"max": ctx.Schema.Value.MaxProps,
+				},
+				IsMap: true,
 			}
 		}
 
