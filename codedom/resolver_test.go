@@ -268,7 +268,7 @@ var _ = Describe("Resolver", func() {
 
 				BeforeEach(func() {
 					spec = resolve("schemas-object.yaml")
-					Expect(spec.Types).To(HaveLen(6))
+					Expect(spec.Types).To(HaveLen(8))
 				})
 
 				ItResolvesObjectType("account", SchemaAt(0))
@@ -280,8 +280,33 @@ var _ = Describe("Resolver", func() {
 
 				It("resolves schemas without type successfully", func() {
 					descriptor := spec.Types[5]
-					Expect(descriptor.Name).To(Equal("z-map"))
+					Expect(descriptor.Name).To(Equal("map-any"))
+					Expect(descriptor.IsMap).To(BeTrue())
+				})
+
+				It("resolves schemas with additional properties 'true' successfully", func() {
+					descriptor := spec.Types[6]
+					Expect(descriptor.Name).To(Equal("map-any-of"))
 					Expect(descriptor.IsClass).To(BeTrue())
+					Expect(descriptor.Properties).To(HaveLen(1))
+					Expect(descriptor.Properties[0].Name).To(Equal("properties"))
+					Expect(descriptor.Properties[0].PropertyType.IsMap).To(BeTrue())
+					Expect(descriptor.Properties[0].PropertyType.Key.Name).To(Equal("string"))
+					Expect(descriptor.Properties[0].PropertyType.Key.IsPrimitive).To(BeTrue())
+					Expect(descriptor.Properties[0].PropertyType.Element.IsAny).To(BeTrue())
+				})
+
+				It("resolves schemas with additional properties 'number' successfully", func() {
+					descriptor := spec.Types[7]
+					Expect(descriptor.Name).To(Equal("map-number"))
+					Expect(descriptor.IsClass).To(BeTrue())
+					Expect(descriptor.Properties).To(HaveLen(1))
+					Expect(descriptor.Properties[0].Name).To(Equal("properties"))
+					Expect(descriptor.Properties[0].PropertyType.IsMap).To(BeTrue())
+					Expect(descriptor.Properties[0].PropertyType.Key.Name).To(Equal("string"))
+					Expect(descriptor.Properties[0].PropertyType.Key.IsPrimitive).To(BeTrue())
+					Expect(descriptor.Properties[0].PropertyType.Element.Name).To(Equal("float32"))
+					Expect(descriptor.Properties[0].PropertyType.Element.IsPrimitive).To(BeTrue())
 				})
 
 				It("has a nested property types", func() {

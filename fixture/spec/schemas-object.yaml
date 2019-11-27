@@ -1,8 +1,15 @@
 openapi: 3.0.1
 components:
   schemas:
-    ZMap:
+    MapAny:
       type:
+    MapAnyOf:
+      type: object
+      additionalProperties: true
+    MapNumber:
+      type: object
+      additionalProperties:
+        type: number
     Account:
       type: object
       required:

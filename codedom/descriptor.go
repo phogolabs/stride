@@ -81,12 +81,15 @@ func (t TypeDescriptorCollection) Swap(i, j int) {
 type TypeDescriptor struct {
 	Name        string
 	Description string
+	IsAny       bool
+	IsMap       bool
 	IsArray     bool
 	IsClass     bool
 	IsEnum      bool
 	IsPrimitive bool
 	IsAlias     bool
 	IsNullable  bool
+	Key         *TypeDescriptor
 	Element     *TypeDescriptor
 	Default     interface{}
 	Metadata    Metadata
@@ -223,7 +226,12 @@ func (d *TypeDescriptor) Kind() string {
 	case name == "uuid":
 		name = "schema.UUID"
 	default:
-		if !d.IsPrimitive {
+		switch {
+		case d.IsAny:
+			name = "interface{}"
+		case d.IsMap:
+			name = fmt.Sprintf("map[%s]%s", d.Key.Kind(), d.Element.Kind())
+		case !d.IsPrimitive:
 			name = inflect.Camelize(d.Name)
 		}
 	}
@@ -247,6 +255,7 @@ type PropertyDescriptor struct {
 	Required     bool
 	ReadOnly     bool
 	WriteOnly    bool
+	IsEmbedded   bool
 	PropertyType *TypeDescriptor
 }
 
@@ -264,12 +273,16 @@ func (p *PropertyDescriptor) Tags() TagDescriptorCollection {
 			options = append(options, "omitempty")
 		}
 
+		if p.IsEmbedded {
+			options = append(options, "inline")
+		}
+
 		return options
 	}
 
 	// json marshalling
 	tag = &TagDescriptor{
-		Key:     "json",
+		Key:     "field",
 		Name:    p.Name,
 		Options: omitempty(),
 	}
