@@ -42,7 +42,7 @@ func resolve(name string) *codedom.SpecDescriptor {
 	Expect(spec).NotTo(BeNil())
 
 	result, err := resolver.Resolve(spec)
-	Expec(err).To(BeNil())
+	Expect(err).To(BeNil())
 
 	return result
 }
