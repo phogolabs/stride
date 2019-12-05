@@ -26,7 +26,7 @@ func (g *SchemaGenerator) Generate() *File {
 	reporter := g.Reporter.With(contract.SeverityHigh)
 
 	reporter.Notice(" Generating schemas file: %s...", root.Name())
-	defer reporter.Success(" Generating schemas file: %s success", root.Name())
+	defer reporter.Success(" Generating schemas file: %s successful", root.Name())
 
 	// generate contract
 	for _, descriptor := range g.Collection {

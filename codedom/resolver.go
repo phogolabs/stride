@@ -661,7 +661,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	// enum type descriptor
 	if kind := r.kind(ctx.Schema.Value); kind == "string" {
 		if values := ctx.Schema.Value.Enum; len(values) > 0 {
-			reporter.Info("Resolving type %s to enum...", inflect.Dasherize(ctx.Name))
+			reporter.Info("Resolving type: %s to enum...", inflect.Dasherize(ctx.Name))
 
 			descriptor := &TypeDescriptor{
 				Name:        inflect.Dasherize(ctx.Name),
