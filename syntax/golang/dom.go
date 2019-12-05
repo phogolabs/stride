@@ -121,8 +121,10 @@ func (f *File) AddFunction(data string) error {
 		return err
 	}
 
-	if node, ok := file.Decls[0].(*dst.FuncDecl); ok {
-		f.node.Decls = append(f.node.Decls, node)
+	for _, decl := range file.Decls {
+		if node, ok := decl.(*dst.FuncDecl); ok {
+			f.node.Decls = append(f.node.Decls, node)
+		}
 	}
 
 	return nil

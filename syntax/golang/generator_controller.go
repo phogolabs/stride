@@ -2,6 +2,7 @@ package golang
 
 import (
 	"bytes"
+	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -122,6 +123,12 @@ func (g *ControllerGenerator) schema(root *File) {
 					inflect.Dasherize("body"),
 					inflect.Dasherize(request.ContentType),
 				)
+
+				g.function(root, "decode", map[string]interface{}{
+					"receiver": input.Name(),
+					"function": "decode",
+					"body":     request.RequestType.Name,
+				})
 			}
 		}
 
@@ -157,6 +164,12 @@ func (g *ControllerGenerator) schema(root *File) {
 			if response.ResponseType != nil {
 				// output body
 				output.AddField("Body", response.ResponseType.Kind(), g.tagOfArg("Body"))
+
+				g.function(root, "encode", map[string]interface{}{
+					"receiver": output.Name(),
+					"function": "encode",
+					"body":     response.ResponseType.Name,
+				})
 			}
 
 			reporter.Info("ﳑ Generating type: %s field: %s content-type: %s code: %d successful",
@@ -166,36 +179,11 @@ func (g *ControllerGenerator) schema(root *File) {
 				response.Code,
 			)
 
-			writer := &TemplateWriter{
-				Path: "syntax/golang/status.go.tpl",
-				Context: map[string]interface{}{
-					"code":   response.Code,
-					"schema": output.Name(),
-				},
-			}
-
-			buffer := &bytes.Buffer{}
-			if _, err := writer.WriteTo(buffer); err != nil {
-				reporter.Info("ﳑ Generating type: %s method: %s content-type: %s code: %d fail: %v",
-					inflect.Dasherize(output.Name()),
-					inflect.Dasherize("status"),
-					inflect.Dasherize(response.ContentType),
-					response.Code,
-					err,
-				)
-
-				continue
-			}
-
-			if err := root.AddFunction(buffer.String()); err != nil {
-				reporter.Info("ﳑ Generating type: %s method: %s content-type: %s code: %d fail: %v",
-					inflect.Dasherize(output.Name()),
-					inflect.Dasherize("status"),
-					inflect.Dasherize(response.ContentType),
-					response.Code,
-					err,
-				)
-			}
+			g.function(root, "status", map[string]interface{}{
+				"receiver": output.Name(),
+				"function": "status",
+				"code":     response.Code,
+			})
 
 			if response.IsDefault {
 				// output
@@ -289,89 +277,74 @@ func (g *ControllerGenerator) controller(root *File) {
 	root.AddNode(spec)
 
 	// mount method
-	writer := &TemplateWriter{
-		Path: "syntax/golang/mount.go.tpl",
-		Context: map[string]interface{}{
-			"controller": spec.Name(),
-			"operations": g.Controller.Operations,
-		},
-	}
-
-	buffer := &bytes.Buffer{}
-	if _, err := writer.WriteTo(buffer); err != nil {
-		g.Reporter.Error("ﳑ Generating controller: %s operation: %s fail: %v",
-			inflect.Dasherize(g.name()),
-			inflect.UpperCase("mount"),
-			err,
-		)
-	}
-
-	if err := root.AddFunction(buffer.String()); err != nil {
-		g.Reporter.Error("ﳑ Generating controller: %s operation: %s fail: %v",
-			inflect.Dasherize(g.name()),
-			inflect.UpperCase("mount"),
-			err,
-		)
-	}
+	g.function(root, "mount", map[string]interface{}{
+		"receiver":   spec.Name(),
+		"function":   "mount",
+		"operations": g.Controller.Operations,
+	})
 
 	// operations
 	for _, operation := range g.Controller.Operations {
-		g.Reporter.Info("ﳑ Generating controller: %s operation: %s method: %s path: %s...",
-			inflect.Dasherize(g.name()),
-			inflect.Dasherize(operation.Name),
-			inflect.UpperCase(operation.Method),
-			inflect.LowerCase(operation.Path),
-		)
+		g.function(root, "operation", map[string]interface{}{
+			"receiver":    spec.Name(),
+			"function":    operation.Name,
+			"method":      operation.Method,
+			"path":        operation.Path,
+			"description": operation.Description,
+			"summary":     operation.Summary,
+			"deprecated":  operation.DeprecationMessage(),
+		})
 
-		writer := &TemplateWriter{
-			Path: "syntax/golang/operation.go.tpl",
-			Context: map[string]interface{}{
-				"controller":  spec.Name(),
-				"operation":   operation.Name,
-				"method":      operation.Method,
-				"path":        operation.Path,
-				"description": operation.Description,
-				"summary":     operation.Summary,
-				"deprecated":  operation.DeprecationMessage(),
-			},
-		}
-
-		buffer := &bytes.Buffer{}
-		if _, err := writer.WriteTo(buffer); err != nil {
-			g.Reporter.Error("ﳑ Generating controller: %s operation: %s method: %s path: %s fail: %v",
-				inflect.Dasherize(g.name()),
-				inflect.Dasherize(operation.Name),
-				inflect.UpperCase(operation.Method),
-				inflect.LowerCase(operation.Path),
-				err,
-			)
-
-			continue
-		}
-
-		if err := root.AddFunction(buffer.String()); err != nil {
-			g.Reporter.Error("ﳑ Generating controller: %s operation: %s method: %s path: %s fail: %v",
-				inflect.Dasherize(g.name()),
-				inflect.Dasherize(operation.Name),
-				inflect.UpperCase(operation.Method),
-				inflect.LowerCase(operation.Path),
-				err,
-			)
-
-			continue
-		}
-
-		g.Reporter.Success("ﳑ Generating controller: %s operation: %s method: %s path: %s successful",
-			inflect.Dasherize(g.name()),
-			inflect.Dasherize(operation.Name),
-			inflect.UpperCase(operation.Method),
-			inflect.LowerCase(operation.Path),
-		)
 	}
 }
 
 func (g *ControllerGenerator) spec(root *File) {
 	//TODO:
+}
+
+func (g *ControllerGenerator) function(root *File, name string, ctx map[string]interface{}) {
+	var (
+		receiver  = ctx["receiver"].(string)
+		operation = ctx["function"].(string)
+	)
+
+	g.Reporter.Info("ﳑ Generating type: %s function: %s...",
+		inflect.Dasherize(receiver),
+		inflect.Dasherize(operation),
+	)
+
+	// mount method
+	writer := &TemplateWriter{
+		Path:    fmt.Sprintf("syntax/golang/%s.go.tpl", name),
+		Context: ctx,
+	}
+
+	buffer := &bytes.Buffer{}
+
+	if _, err := writer.WriteTo(buffer); err != nil {
+		g.Reporter.Error("ﳑ Generating type: %s function: %s fail: %v",
+			inflect.Dasherize(receiver),
+			inflect.Dasherize(operation),
+			err,
+		)
+
+		return
+	}
+
+	if err := root.AddFunction(buffer.String()); err != nil {
+		g.Reporter.Error("ﳑ Generating type: %s function: %s fail: %v",
+			inflect.Dasherize(receiver),
+			inflect.Dasherize(operation),
+			err,
+		)
+
+		return
+	}
+
+	g.Reporter.Success("ﳑ Generating type: %s function: %s successful",
+		inflect.Dasherize(receiver),
+		inflect.Dasherize(operation),
+	)
 }
 
 func (g *ControllerGenerator) filename() string {

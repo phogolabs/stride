@@ -1,14 +1,14 @@
-{{- comment (camelize .operation) "handles endpoint" (uppercase .method) .path }}
+{{- comment (camelize .function) "handles endpoint" (uppercase .method) .path }}
 {{- comment .summary }}
 {{- comment .description }}
 {{- comment .deprecated }}
-{{- comment "stride:generate" (key .controller .operation) }}
-func (x *{{ .controller | camelize }}) {{ .operation | camelize }}(w http.ResponseWriter, r *http.Request) {
+{{- comment "stride:generate" (key .receiver .function) }}
+func (x *{{ .receiver | camelize }}) {{ .function | camelize }}(w http.ResponseWriter, r *http.Request) {
 	reactor := restify.NewReactor(w, r)
 
 	var (
-		input  = &{{ .operation | camelize }}Input{}
-		output = &{{ .operation | camelize }}Output{}
+		input  = &{{ .function | camelize }}Input{}
+		output = &{{ .function | camelize }}Output{}
 	)
 
 	if err := reactor.Bind(input); err != nil {
