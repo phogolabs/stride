@@ -21,6 +21,11 @@ func TestCodedom(t *testing.T) {
 
 func resolve(name string) *codedom.SpecDescriptor {
 	reporter := &fake.Reporter{}
+	reporter.ErrorStub = func(msg string, arg ...interface{}) {
+		fmt.Fprintf(GinkgoWriter, msg, arg...)
+		fmt.Fprintln(GinkgoWriter)
+	}
+
 	reporter.WithReturns(reporter)
 
 	var (
@@ -36,5 +41,8 @@ func resolve(name string) *codedom.SpecDescriptor {
 	Expect(err).To(BeNil())
 	Expect(spec).NotTo(BeNil())
 
-	return resolver.Resolve(spec)
+	result, err := resolver.Resolve(spec)
+	Expec(err).To(BeNil())
+
+	return result
 }

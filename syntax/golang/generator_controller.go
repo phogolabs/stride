@@ -135,18 +135,8 @@ func (g *ControllerGenerator) schema(root *File) {
 			inflect.Dasherize(operation.Name),
 		)
 
-		for index, response := range operation.Responses {
+		for _, response := range operation.Responses {
 			reporter := g.Reporter.With(contract.SeverityLow)
-
-			if index > 0 {
-				reporter.Warn("ﳑ Generating response content-type: %s code: %d skipped. The response payload should be equal to every response that has different content-type and the same code.",
-					inflect.Dasherize(response.ContentType),
-					response.Code,
-				)
-
-				// TODO:
-				continue
-			}
 
 			// output
 			output := NewStructType(name + inflect.Camelize(http.StatusText(response.Code)) + "Output")

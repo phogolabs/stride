@@ -20,7 +20,7 @@ var _ = Describe("Generator", func() {
 
 	BeforeEach(func() {
 		resolver = &fake.SpecResolver{}
-		resolver.ResolveReturns(&codedom.SpecDescriptor{})
+		resolver.ResolveReturns(&codedom.SpecDescriptor{}, nil)
 
 		coder = &fake.CodeGenerator{}
 

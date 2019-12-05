@@ -1,28 +1,31 @@
 package codedom
 
 import (
+	"fmt"
 	"net/http"
+	"reflect"
 	"sort"
 	"strconv"
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/phogolabs/flaw"
 	"github.com/phogolabs/stride/contract"
 	"github.com/phogolabs/stride/inflect"
 )
 
 // Resolver resolves all swagger spec
 type Resolver struct {
-	Cache    TypeDescriptorMap
-	Reporter contract.Reporter
+	Cache     TypeDescriptorMap
+	Collector flaw.ErrorCollector
+	Reporter  contract.Reporter
 }
 
 // Resolve resolves the spec
-func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
+func (r *Resolver) Resolve(swagger *openapi3.Swagger) (*SpecDescriptor, error) {
 	reporter := r.Reporter.With(contract.SeverityVeryHigh)
 
 	reporter.Notice("Resolving spec...")
-	defer reporter.Success("Resolving spec complete")
 
 	defer r.Cache.Clear()
 
@@ -38,10 +41,18 @@ func (r *Resolver) Resolve(swagger *openapi3.Swagger) *SpecDescriptor {
 	r.requests(ctx, components.RequestBodies)
 	r.responses(ctx, components.Responses)
 
+	if err := r.Collector; len(err) > 0 {
+		r.Collector = flaw.ErrorCollector{}
+		reporter.Error("Resolving spec fail!")
+		return nil, flaw.Errorf("Please check the error log for more details")
+	}
+
+	reporter.Success("Resolving spec complete")
+
 	return &SpecDescriptor{
 		Types:       r.Cache.Collection(),
 		Controllers: controllers,
-	}
+	}, nil
 }
 
 func (r *Resolver) schemas(ctx *ResolverContext, schemas map[string]*openapi3.SchemaRef) TypeDescriptorCollection {
@@ -207,15 +218,21 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 	var (
 		descriptors = ResponseDescriptorCollection{}
 		defaultSpec = r.responsesOf(responses)
+		collector   = flaw.ErrorCollector{}
+		check       = false
 	)
 
 	for name, spec := range responses {
+		text := name
+
 		code, err := strconv.Atoi(name)
 		if err == nil {
+			check = true
 			name = inflect.Dasherize(http.StatusText(code)) + "-response"
+			text = inflect.Dasherize(ctx.Name) + "-" + name
 		}
 
-		r.Reporter.Info("Resolving response: %s...", inflect.Dasherize(name))
+		r.Reporter.Info("Resolving response: %s...", inflect.Dasherize(text))
 
 		if len(spec.Value.Content) == 0 {
 			response := &ResponseDescriptor{
@@ -230,7 +247,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 
 		for contentType, content := range spec.Value.Content {
 			r.Reporter.Info("Resolving response: %s content-type: %s...",
-				inflect.Dasherize(name),
+				inflect.Dasherize(text),
 				inflect.LowerCase(contentType))
 
 			schema := content.Schema
@@ -256,14 +273,42 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 				}
 			)
 
+			if length := len(descriptors); check && length > 0 {
+				prev := descriptors[length-1]
+
+				if !reflect.DeepEqual(prev.ResponseType, response.ResponseType) {
+					err := fmt.Errorf("Expecting response: %s content-type: %s body: %s to equal content-type: %s body: %s",
+						inflect.Dasherize(text),
+						inflect.LowerCase(response.ContentType),
+						inflect.Dasherize(response.ResponseType.Name),
+						inflect.LowerCase(prev.ContentType),
+						inflect.Dasherize(prev.ResponseType.Name),
+					)
+
+					collector.Wrap(err)
+
+					reporter := r.Reporter.With(contract.SeverityVeryHigh)
+					reporter.Error("Resolving response: %s content-type: %s fail", inflect.Dasherize(text), inflect.LowerCase(response.ContentType))
+					reporter.Error(err.Error())
+					reporter.Error("You cannot have a response with different content-type. The response body should be the same for all content-type declarations")
+				}
+
+				continue
+			}
+
 			descriptors = append(descriptors, response)
 
 			r.Reporter.Info("Resolving response: %s content-type: %s successful",
-				inflect.Dasherize(name),
+				inflect.Dasherize(text),
 				inflect.LowerCase(contentType))
 		}
 
-		r.Reporter.Info("Resolving response: %s successful", inflect.Dasherize(name))
+		if err := collector; len(err) > 0 {
+			r.Collector.Wrap(err)
+			r.Reporter.Error("Resolving response: %s fail", inflect.Dasherize(text))
+		} else {
+			r.Reporter.Info("Resolving response: %s successful", inflect.Dasherize(text))
+		}
 	}
 
 	// sort descriptors
@@ -417,28 +462,35 @@ func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.He
 	return descriptors
 }
 
+func (r *Resolver) add(descriptor *TypeDescriptor) {
+	if err := r.Cache.Add(descriptor); err != nil {
+		reporter := r.Reporter.With(contract.SeverityVeryHigh)
+		reporter.Error("Resolving type: %s fail: %v ", inflect.Dasherize(descriptor.Name), err)
+		reporter.Error("Please check your OpenAPI spec for duplicated name: '%v'", descriptor.Name)
+		reporter.Error("The requests, responses, parameters, headers should have unique names across the whole document.")
+
+		r.Collector.Wrap(err)
+	}
+}
+
 func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	reporter := r.Reporter.With(contract.SeverityLow)
 
 	reporter.Notice("Resolving type: %s...", inflect.Dasherize(ctx.Name))
 
-	if descriptor := r.Cache.Get(ctx.Name); descriptor != nil {
-		reporter.Success("Resolving type: %s found ", inflect.Dasherize(ctx.Name))
-		return descriptor
-	}
-
 	switch {
+	case ctx.Schema == nil:
 	case ctx.Schema.Value.OneOf != nil:
-		reporter.Warn("Resoling type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		reporter.Warn("Resolving type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
 		ctx.Schema = nil
 	case ctx.Schema.Value.AnyOf != nil:
-		reporter.Warn("Resoling type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		reporter.Warn("Resolving type: %s does not support 'any-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
 		ctx.Schema = nil
 	case ctx.Schema.Value.AllOf != nil:
-		reporter.Warn("Resoling type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		reporter.Warn("Resolving type: %s does not support 'all-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
 		ctx.Schema = nil
 	case ctx.Schema.Value.Not != nil:
-		reporter.Warn("Resoling type: %s does not support 'not' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		reporter.Warn("Resolving type: %s does not support 'not' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
 		ctx.Schema = nil
 	}
 
@@ -455,7 +507,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			}
 
 			// add the descriptor to the cache
-			r.Cache.Add(descriptor)
+			r.add(descriptor)
 		}
 
 		return descriptor
@@ -478,7 +530,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			}
 
 			// add the descriptor to the cache
-			r.Cache.Add(descriptor)
+			r.add(descriptor)
 		}
 
 		reporter.Info("Resolving type: %s to alias successful", inflect.Dasherize(ctx.Name))
@@ -573,7 +625,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		sort.Sort(descriptor.Properties)
 
 		// add the descriptor to the cache
-		r.Cache.Add(descriptor)
+		r.add(descriptor)
 
 		reporter.Info("Resolving type: %s to class successful", inflect.Dasherize(ctx.Name))
 		return descriptor
@@ -600,7 +652,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		}
 
 		// add the descriptor to the cache
-		r.Cache.Add(descriptor)
+		r.add(descriptor)
 
 		reporter.Info("Resolving type: %s to array successful", inflect.Dasherize(ctx.Name))
 		return descriptor
@@ -623,7 +675,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			}
 
 			// add the descriptor to the cache
-			r.Cache.Add(descriptor)
+			r.add(descriptor)
 
 			reporter.Info("Resolving type: %s to enum successful", inflect.Dasherize(ctx.Name))
 			return descriptor
@@ -667,7 +719,7 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		}
 
 		// add the descriptor to the cache
-		r.Cache.Add(descriptor)
+		r.add(descriptor)
 
 	}
 

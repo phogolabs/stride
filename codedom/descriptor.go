@@ -24,8 +24,19 @@ type SpecDescriptor struct {
 type TypeDescriptorMap map[string]*TypeDescriptor
 
 // Add adds a type descriptor
-func (m TypeDescriptorMap) Add(descriptor *TypeDescriptor) {
+func (m TypeDescriptorMap) Add(descriptor *TypeDescriptor) error {
+	definition, ok := m[descriptor.Name]
+
+	if ok {
+		if !reflect.DeepEqual(definition, descriptor) {
+			return fmt.Errorf("'%v' is already declared", descriptor.Name)
+		}
+
+		return nil
+	}
+
 	m[descriptor.Name] = descriptor
+	return nil
 }
 
 // Get returns the TypeDescriptor for given name
