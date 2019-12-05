@@ -427,6 +427,21 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		return descriptor
 	}
 
+	switch {
+	case ctx.Schema.Value.OneOf != nil:
+		reporter.Warn("Resoling type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		ctx.Schema = nil
+	case ctx.Schema.Value.AnyOf != nil:
+		reporter.Warn("Resoling type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		ctx.Schema = nil
+	case ctx.Schema.Value.AllOf != nil:
+		reporter.Warn("Resoling type: %s does not support 'one-of' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		ctx.Schema = nil
+	case ctx.Schema.Value.Not != nil:
+		reporter.Warn("Resoling type: %s does not support 'not' clause. Reverting to generic type", inflect.Dasherize(ctx.Name))
+		ctx.Schema = nil
+	}
+
 	if ctx.Schema == nil {
 		descriptor := &TypeDescriptor{
 			IsAny: true,
@@ -438,6 +453,9 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 				IsAlias: true,
 				Element: descriptor,
 			}
+
+			// add the descriptor to the cache
+			r.Cache.Add(descriptor)
 		}
 
 		return descriptor
