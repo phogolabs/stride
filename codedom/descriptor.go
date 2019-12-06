@@ -317,6 +317,7 @@ func (p *PropertyDescriptor) Tags() TagDescriptorCollection {
 	emit("json")
 	emit("xml")
 	emit("field")
+	emit("form")
 
 	// validation
 	tags = append(tags, p.PropertyType.Tags(p.Required)...)

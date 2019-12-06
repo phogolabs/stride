@@ -116,7 +116,7 @@ func (g *ControllerGenerator) schema(root *File) {
 				)
 
 				// input body
-				input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"))
+				input.AddField("Body", request.RequestType.Kind(), g.tagOfArg("Body"), g.tagOfArg("Form"))
 
 				reporter.Info("ﳑ Generating type: %s field: %s content-type: %s successful",
 					inflect.Dasherize(input.Name()),
