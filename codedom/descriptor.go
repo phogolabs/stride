@@ -138,6 +138,15 @@ func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 		tag.Options = append(tag.Options, "required")
 	}
 
+	can := func(exclusive bool) bool {
+		if !d.IsNullable {
+			if required {
+				return true
+			}
+		}
+		return exclusive
+	}
+
 	tags = append(tags, tag)
 
 	for k, v := range d.Metadata {
@@ -158,15 +167,14 @@ func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 		case "multiple_of":
 			if value, ok := v.(*float64); ok {
 				if value != nil {
-					// TODO: add support for multileof
-					// options = append(options, fmt.Sprintf("multipleof=%v", value))
+					tag.Options = append(tag.Options, fmt.Sprintf("multipleof=%v", value))
 				}
 			}
 		case "min":
 			if value, ok := v.(*float64); ok {
 				if value != nil {
 					if exclusive, ok := d.Metadata["min_exclusive"].(bool); ok {
-						if exclusive {
+						if can(exclusive) {
 							tag.Options = append(tag.Options, fmt.Sprintf("gt=%v", *value))
 						} else {
 							tag.Options = append(tag.Options, fmt.Sprintf("gte=%v", *value))
@@ -178,7 +186,7 @@ func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 			if value, ok := v.(*float64); ok {
 				if value != nil {
 					if exclusive, ok := d.Metadata["max_exclusive"].(bool); ok {
-						if exclusive {
+						if can(exclusive) {
 							tag.Options = append(tag.Options, fmt.Sprintf("lt=%v", *value))
 						} else {
 							tag.Options = append(tag.Options, fmt.Sprintf("lte=%v", *value))
@@ -200,14 +208,16 @@ func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 		tag.Options = tag.Options[1:]
 	}
 
-	// default
-	if value := d.Default; value != nil {
-		tag = &TagDescriptor{
-			Key:  "default",
-			Name: fmt.Sprintf("%v", value),
-		}
+	tag = &TagDescriptor{
+		Key:  "default",
+		Name: "~",
+	}
 
-		tags = append(tags, tag)
+	tags = append(tags, tag)
+
+	// default
+	if defValue := d.Default; defValue != nil {
+		tag.Name = fmt.Sprintf("%v", defValue)
 	}
 
 	return tags
@@ -284,21 +294,29 @@ func (p *PropertyDescriptor) Tags() TagDescriptorCollection {
 			options = append(options, "omitempty")
 		}
 
-		if p.IsEmbedded {
-			options = append(options, "inline")
-		}
-
 		return options
 	}
 
-	// json marshalling
-	tag = &TagDescriptor{
-		Key:     "field",
-		Name:    p.Name,
-		Options: omitempty(),
+	emit := func(key string) {
+		tag = &TagDescriptor{
+			Key:     key,
+			Name:    p.Name,
+			Options: omitempty(),
+		}
+
+		if key == "field" {
+			if p.IsEmbedded {
+				tag.Name = "~"
+				tag.Options = []string{}
+			}
+		}
+
+		tags = append(tags, tag)
 	}
 
-	tags = append(tags, tag)
+	emit("json")
+	emit("xml")
+	emit("field")
 
 	// validation
 	tags = append(tags, p.PropertyType.Tags(p.Required)...)
@@ -367,7 +385,7 @@ func (p *ParameterDescriptor) Tags() TagDescriptorCollection {
 
 	// style
 	tag = &TagDescriptor{
-		Key:  p.In,
+		Key:  inflect.LowerCase(p.In),
 		Name: p.Name,
 	}
 

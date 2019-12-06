@@ -646,8 +646,8 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 				"unique":        ctx.Schema.Value.UniqueItems,
 				"min":           uint64Ptr(&ctx.Schema.Value.MinLength),
 				"max":           uint64Ptr(ctx.Schema.Value.MaxLength),
-				"min_exclusive": false,
-				"max_exclusive": false,
+				"min_exclusive": ctx.Schema.Value.ExclusiveMin,
+				"max_exclusive": ctx.Schema.Value.ExclusiveMax,
 			},
 		}
 
@@ -691,16 +691,16 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		IsPrimitive: true,
 	}
 
-	switch ctx.Schema.Value.Type {
-	case "string":
+	switch r.kind(ctx.Schema.Value) {
+	case "string", "byte", "binary":
 		descriptor.Metadata = Metadata{
 			"min":           uint64Ptr(&ctx.Schema.Value.MinLength),
 			"max":           uint64Ptr(ctx.Schema.Value.MaxLength),
 			"pattern":       ctx.Schema.Value.Pattern,
-			"min_exclusive": false,
-			"max_exclusive": false,
+			"min_exclusive": ctx.Schema.Value.ExclusiveMin,
+			"max_exclusive": ctx.Schema.Value.ExclusiveMax,
 		}
-	case "number", "integer":
+	case "int32", "int64", "float32", "float64":
 		descriptor.Metadata = Metadata{
 			"min":           ctx.Schema.Value.Min,
 			"max":           ctx.Schema.Value.Max,
