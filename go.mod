@@ -5,7 +5,7 @@ go 1.13
 require (
 	github.com/dave/dst v0.23.1
 	github.com/fatih/color v1.7.0
-	github.com/fatih/structtag v1.1.0
+	github.com/fatih/structtag v1.2.0
 	github.com/getkin/kin-openapi v0.2.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-openapi/inflect v0.19.0
