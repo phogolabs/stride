@@ -65,7 +65,7 @@ var _ = Describe("TypeDescriptor", func() {
 		})
 
 		Context("when the exlusive is disabled", func() {
-			PIt("returns a tag collection successfully", func() {
+			It("returns a tag collection successfully", func() {
 				float64Ptr := func(v float64) *float64 {
 					return &v
 				}
@@ -90,8 +90,8 @@ var _ = Describe("TypeDescriptor", func() {
 				Expect(tags[0].Name).To(Equal("required"))
 				Expect(tags[0].Options).To(ContainElement("unique"))
 				Expect(tags[0].Options).To(ContainElement("oneof=1 2 3"))
-				Expect(tags[0].Options).To(ContainElement("gte=10"))
-				Expect(tags[0].Options).To(ContainElement("lte=20"))
+				Expect(tags[0].Options).To(ContainElement("gt=10"))
+				Expect(tags[0].Options).To(ContainElement("lt=20"))
 
 				Expect(tags[1].Key).To(Equal("default"))
 				Expect(tags[1].Name).To(Equal("99.9"))
@@ -167,7 +167,7 @@ var _ = Describe("TypeDescriptorCollection", func() {
 
 var _ = Describe("PropertyDescriptor", func() {
 	Describe("Tags", func() {
-		PIt("returns a tag collection successfully", func() {
+		It("returns a tag collection successfully", func() {
 			property := &codedom.PropertyDescriptor{
 				Name:     "bank-id",
 				Required: false,
@@ -177,14 +177,30 @@ var _ = Describe("PropertyDescriptor", func() {
 			}
 
 			tags := property.Tags()
-			Expect(tags).To(HaveLen(2))
-			Expect(tags[0].Key).To(Equal("field"))
+			Expect(tags).To(HaveLen(6))
+			Expect(tags[0].Key).To(Equal("json"))
 			Expect(tags[0].Name).To(Equal("bank-id"))
 			Expect(tags[0].Options).To(ContainElement("omitempty"))
 
-			Expect(tags[1].Key).To(Equal("validate"))
-			Expect(tags[1].Name).To(Equal("-"))
-			Expect(tags[1].Options).To(BeEmpty())
+			Expect(tags[1].Key).To(Equal("xml"))
+			Expect(tags[1].Name).To(Equal("bank-id"))
+			Expect(tags[1].Options).To(ContainElement("omitempty"))
+
+			Expect(tags[2].Key).To(Equal("form"))
+			Expect(tags[2].Name).To(Equal("bank-id"))
+			Expect(tags[2].Options).To(ContainElement("omitempty"))
+
+			Expect(tags[3].Key).To(Equal("field"))
+			Expect(tags[3].Name).To(Equal("bank-id"))
+			Expect(tags[3].Options).To(ContainElement("omitempty"))
+
+			Expect(tags[4].Key).To(Equal("validate"))
+			Expect(tags[4].Name).To(Equal("-"))
+			Expect(tags[4].Options).To(BeEmpty())
+
+			Expect(tags[5].Key).To(Equal("default"))
+			Expect(tags[5].Name).To(Equal("~"))
+			Expect(tags[5].Options).To(BeEmpty())
 		})
 	})
 })
@@ -206,7 +222,7 @@ var _ = Describe("PropertyDescriptorCollection", func() {
 
 var _ = Describe("ParameterDescriptor", func() {
 	Describe("Tags", func() {
-		PIt("returns a tag collection successfully", func() {
+		It("returns a tag collection successfully", func() {
 			param := &codedom.ParameterDescriptor{
 				Name:     "bank-id",
 				Style:    "matrix",
@@ -219,15 +235,18 @@ var _ = Describe("ParameterDescriptor", func() {
 			}
 
 			tags := param.Tags()
-			Expect(tags).To(HaveLen(2))
+			Expect(tags).To(HaveLen(3))
 			Expect(tags[0].Key).To(Equal("header"))
 			Expect(tags[0].Name).To(Equal("bank-id"))
-			Expect(tags[0].Options).To(ContainElement("matrix"))
 			Expect(tags[0].Options).To(ContainElement("matrix"))
 
 			Expect(tags[1].Key).To(Equal("validate"))
 			Expect(tags[1].Name).To(Equal("required"))
 			Expect(tags[1].Options).To(BeEmpty())
+
+			Expect(tags[2].Key).To(Equal("default"))
+			Expect(tags[2].Name).To(Equal("~"))
+			Expect(tags[2].Options).To(BeEmpty())
 		})
 	})
 })
