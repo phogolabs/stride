@@ -65,7 +65,7 @@ var _ = Describe("TypeDescriptor", func() {
 		})
 
 		Context("when the exlusive is disabled", func() {
-			It("returns a tag collection successfully", func() {
+			PIt("returns a tag collection successfully", func() {
 				float64Ptr := func(v float64) *float64 {
 					return &v
 				}
@@ -167,7 +167,7 @@ var _ = Describe("TypeDescriptorCollection", func() {
 
 var _ = Describe("PropertyDescriptor", func() {
 	Describe("Tags", func() {
-		It("returns a tag collection successfully", func() {
+		PIt("returns a tag collection successfully", func() {
 			property := &codedom.PropertyDescriptor{
 				Name:     "bank-id",
 				Required: false,
@@ -206,7 +206,7 @@ var _ = Describe("PropertyDescriptorCollection", func() {
 
 var _ = Describe("ParameterDescriptor", func() {
 	Describe("Tags", func() {
-		It("returns a tag collection successfully", func() {
+		PIt("returns a tag collection successfully", func() {
 			param := &codedom.ParameterDescriptor{
 				Name:     "bank-id",
 				Style:    "matrix",
