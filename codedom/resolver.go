@@ -16,22 +16,20 @@ import (
 
 // Resolver resolves all swagger spec
 type Resolver struct {
-	Cache     TypeDescriptorMap
-	Collector flaw.ErrorCollector
-	Reporter  contract.Reporter
+	Cache    TypeDescriptorMap
+	Reporter contract.Reporter
 }
 
 // Resolve resolves the spec
 func (r *Resolver) Resolve(swagger *openapi3.Swagger) (*SpecDescriptor, error) {
 	reporter := r.Reporter.With(contract.SeverityVeryHigh)
-
 	reporter.Notice("Resolving spec...")
 
 	defer r.Cache.Clear()
 
 	var (
+		ctx         = &ResolverContext{}
 		components  = swagger.Components
-		ctx         = emptyCtx
 		controllers = r.operations(ctx, swagger.Paths)
 	)
 
@@ -41,8 +39,7 @@ func (r *Resolver) Resolve(swagger *openapi3.Swagger) (*SpecDescriptor, error) {
 	r.requests(ctx, components.RequestBodies)
 	r.responses(ctx, components.Responses)
 
-	if err := r.Collector; len(err) > 0 {
-		r.Collector = flaw.ErrorCollector{}
+	if err := ctx.Collector; len(err) > 0 {
 		reporter.Error("Resolving spec fail!")
 		return nil, flaw.Errorf("Please check the error log for more details")
 	}
@@ -56,26 +53,52 @@ func (r *Resolver) Resolve(swagger *openapi3.Swagger) (*SpecDescriptor, error) {
 }
 
 func (r *Resolver) schemas(ctx *ResolverContext, schemas map[string]*openapi3.SchemaRef) TypeDescriptorCollection {
-	reporter := r.Reporter.With(contract.SeverityHigh)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityHigh)
+	)
 
 	reporter.Notice("Resolving schemas...")
-	defer reporter.Success("Resolving schemas successful")
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving schemas fail")
+		} else {
+			reporter.Success("Resolving schemas successful")
+		}
+	}()
 
 	descriptors := TypeDescriptorCollection{}
 
 	for name, schema := range schemas {
 		cctx := ctx.Child(name, schema)
 		descriptors = append(descriptors, r.resolve(cctx))
+
+		if err := cctx.Collector; len(err) > 0 {
+			collector.Wrap(err)
+		}
 	}
 
 	return descriptors
 }
 
 func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*openapi3.PathItem) ControllerDescriptorCollection {
-	reporter := r.Reporter.With(contract.SeverityHigh)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityHigh)
+	)
 
 	reporter.Notice("Resolving operations...")
-	defer reporter.Success("Resolving operations successful")
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving operations fail")
+		} else {
+			reporter.Success("Resolving operations successful")
+		}
+	}()
 
 	descriptors := ControllerDescriptorMap{}
 
@@ -142,10 +165,18 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 
 			controller.Operations = append(controller.Operations, operation)
 
-			r.Reporter.Info("Resolving operation: %s method: %v path: %v successful",
-				inflect.Dasherize(spec.OperationID),
-				inflect.UpperCase(method),
-				inflect.LowerCase(path))
+			if err := cctx.Collector; len(err) > 0 {
+				collector.Wrap(err)
+				r.Reporter.Error("Resolving operation: %s method: %v path: %v fail",
+					inflect.Dasherize(spec.OperationID),
+					inflect.UpperCase(method),
+					inflect.LowerCase(path))
+			} else {
+				r.Reporter.Info("Resolving operation: %s method: %v path: %v successful",
+					inflect.Dasherize(spec.OperationID),
+					inflect.UpperCase(method),
+					inflect.LowerCase(path))
+			}
 		}
 	}
 
@@ -153,10 +184,21 @@ func (r *Resolver) operations(ctx *ResolverContext, operations map[string]*opena
 }
 
 func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.RequestBodyRef) RequestDescriptorCollection {
-	reporter := r.Reporter.With(contract.SeverityHigh)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityHigh)
+	)
 
 	reporter.Notice("Resolving requests...")
-	defer reporter.Success("Resolving requests successful")
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving requests fail")
+		} else {
+			reporter.Success("Resolving requests successful")
+		}
+	}()
 
 	descriptors := RequestDescriptorCollection{}
 
@@ -165,6 +207,7 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 			continue
 		}
 
+		rcollector := flaw.ErrorCollector{}
 		r.Reporter.Info("Resolving request body: %s....", inflect.Dasherize(name))
 
 		for contentType, content := range spec.Value.Content {
@@ -195,12 +238,24 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 
 			descriptors = append(descriptors, descriptor)
 
-			r.Reporter.Info("Resolving request body: %s content-type: %s successful",
-				inflect.Dasherize(name),
-				inflect.LowerCase(contentType))
+			if err := cctx.Collector; len(err) > 0 {
+				rcollector.Wrap(err)
+				r.Reporter.Error("Resolving request body: %s content-type: %s fail",
+					inflect.Dasherize(name),
+					inflect.LowerCase(contentType))
+			} else {
+				r.Reporter.Info("Resolving request body: %s content-type: %s successful",
+					inflect.Dasherize(name),
+					inflect.LowerCase(contentType))
+			}
 		}
 
-		r.Reporter.Info("Resolving request body: %s successful", inflect.Dasherize(name))
+		if err := rcollector; len(err) > 0 {
+			collector.Wrap(err)
+			r.Reporter.Error("Resolving request body: %s fail", inflect.Dasherize(name))
+		} else {
+			r.Reporter.Info("Resolving request body: %s successful", inflect.Dasherize(name))
+		}
 	}
 
 	// sort descriptors
@@ -210,26 +265,39 @@ func (r *Resolver) requests(ctx *ResolverContext, bodies map[string]*openapi3.Re
 }
 
 func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi3.ResponseRef) ResponseDescriptorCollection {
-	reporter := r.Reporter.With(contract.SeverityHigh)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityHigh)
+	)
 
 	reporter.Notice("Resolving responses...")
-	defer reporter.Success("Resolving responses successful")
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving responses fail")
+		} else {
+			reporter.Success("Resolving responses successful")
+		}
+	}()
 
 	var (
 		descriptors = ResponseDescriptorCollection{}
 		defaultSpec = r.responsesOf(responses)
-		collector   = flaw.ErrorCollector{}
-		check       = false
 	)
 
 	for name, spec := range responses {
-		text := name
+		var (
+			text       = name
+			rcollector = flaw.ErrorCollector{}
+		)
 
 		code, err := strconv.Atoi(name)
 		if err == nil {
-			check = true
 			name = inflect.Dasherize(http.StatusText(code)) + "-response"
 			text = inflect.Dasherize(ctx.Name) + "-" + name
+		} else {
+			code = -1
 		}
 
 		r.Reporter.Info("Resolving response: %s...", inflect.Dasherize(text))
@@ -273,7 +341,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 				}
 			)
 
-			if length := len(descriptors); check && length > 0 {
+			if length := len(descriptors); code >= 0 && length > 0 {
 				prev := descriptors[length-1]
 
 				if !reflect.DeepEqual(prev.ResponseType, response.ResponseType) {
@@ -285,26 +353,30 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 						inflect.Dasherize(prev.ResponseType.Name),
 					)
 
-					collector.Wrap(err)
-
 					reporter := r.Reporter.With(contract.SeverityVeryHigh)
-					reporter.Error("Resolving response: %s content-type: %s fail", inflect.Dasherize(text), inflect.LowerCase(response.ContentType))
 					reporter.Error(err.Error())
 					reporter.Error("You cannot have a response with different content-type. The response body should be the same for all content-type declarations")
+
+					cctx.Collector.Wrap(err)
 				}
 
 				continue
+			} else {
+				descriptors = append(descriptors, response)
 			}
 
-			descriptors = append(descriptors, response)
-
-			r.Reporter.Info("Resolving response: %s content-type: %s successful",
-				inflect.Dasherize(text),
-				inflect.LowerCase(contentType))
+			if err := cctx.Collector; len(err) > 0 {
+				reporter.Error("Resolving response: %s content-type: %s fail", inflect.Dasherize(text), inflect.LowerCase(response.ContentType))
+				rcollector.Wrap(err)
+			} else {
+				r.Reporter.Info("Resolving response: %s content-type: %s successful",
+					inflect.Dasherize(text),
+					inflect.LowerCase(contentType))
+			}
 		}
 
-		if err := collector; len(err) > 0 {
-			r.Collector.Wrap(err)
+		if err := rcollector; len(err) > 0 {
+			collector.Wrap(err)
 			r.Reporter.Error("Resolving response: %s fail", inflect.Dasherize(text))
 		} else {
 			r.Reporter.Info("Resolving response: %s successful", inflect.Dasherize(text))
@@ -345,10 +417,21 @@ func (r *Resolver) responsesOf(responses map[string]*openapi3.ResponseRef) *open
 }
 
 func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*openapi3.ParameterRef) ParameterDescriptorCollection {
-	reporter := r.Reporter.With(contract.SeverityHigh)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityHigh)
+	)
 
 	reporter.Notice("Resolving parameters...")
-	defer reporter.Success("Resolving parameters successful")
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving parameters fail")
+		} else {
+			reporter.Success("Resolving parameters successful")
+		}
+	}()
 
 	descriptors := ParameterDescriptorCollection{}
 
@@ -411,7 +494,12 @@ func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*opena
 
 		descriptors = append(descriptors, parameter)
 
-		r.Reporter.Info("Resolving parameter: %s successful", inflect.Dasherize(name))
+		if err := cctx.Collector; len(err) > 0 {
+			collector.Wrap(err)
+			r.Reporter.Error("Resolving parameter: %s fail", inflect.Dasherize(name))
+		} else {
+			r.Reporter.Info("Resolving parameter: %s successful", inflect.Dasherize(name))
+		}
 	}
 
 	// sort parameters
@@ -421,10 +509,21 @@ func (r *Resolver) parameters(ctx *ResolverContext, parameters map[string]*opena
 }
 
 func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.HeaderRef) ParameterDescriptorCollection {
-	reporter := r.Reporter.With(contract.SeverityHigh)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityHigh)
+	)
 
 	reporter.Notice("Resolving headers...")
-	defer reporter.Success("Resolving headers successful")
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving headers fail")
+		} else {
+			reporter.Success("Resolving headers successful")
+		}
+	}()
 
 	descriptors := ParameterDescriptorCollection{}
 
@@ -453,7 +552,12 @@ func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.He
 
 		descriptors = append(descriptors, header)
 
-		r.Reporter.Info("Resolving header: %s successful", inflect.Dasherize(name))
+		if err := cctx.Collector; len(err) > 0 {
+			collector.Wrap(err)
+			r.Reporter.Error("Resolving header: %s fail", inflect.Dasherize(name))
+		} else {
+			r.Reporter.Info("Resolving header: %s successful", inflect.Dasherize(name))
+		}
 	}
 
 	// sort descriptors
@@ -462,21 +566,34 @@ func (r *Resolver) headers(ctx *ResolverContext, headers map[string]*openapi3.He
 	return descriptors
 }
 
-func (r *Resolver) add(descriptor *TypeDescriptor) {
+func (r *Resolver) add(descriptor *TypeDescriptor) error {
 	if err := r.Cache.Add(descriptor); err != nil {
 		reporter := r.Reporter.With(contract.SeverityVeryHigh)
 		reporter.Error("Resolving type: %s fail: %v ", inflect.Dasherize(descriptor.Name), err)
 		reporter.Error("Please check your OpenAPI spec for duplicated name: '%v'", descriptor.Name)
 		reporter.Error("The requests, responses, parameters, headers should have unique names across the whole document.")
-
-		r.Collector.Wrap(err)
+		return err
 	}
+
+	return nil
 }
 
 func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
-	reporter := r.Reporter.With(contract.SeverityLow)
+	var (
+		collector = flaw.ErrorCollector{}
+		reporter  = r.Reporter.With(contract.SeverityLow)
+	)
 
 	reporter.Notice("Resolving type: %s...", inflect.Dasherize(ctx.Name))
+
+	defer func() {
+		if err := collector; len(err) > 0 {
+			ctx.Collector.Wrap(err)
+			reporter.Error("Resolving type: %s fail", inflect.Dasherize(ctx.Name))
+		} else {
+			reporter.Success("Resolving type: %s successful", inflect.Dasherize(ctx.Name))
+		}
+	}()
 
 	switch {
 	case ctx.Schema == nil:
@@ -507,19 +624,22 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			}
 
 			// add the descriptor to the cache
-			r.add(descriptor)
+			if err := r.add(descriptor); err != nil {
+				collector.Wrap(err)
+			}
 		}
 
 		return descriptor
 	}
 
-	defer reporter.Success("Resolving type: %s successful", inflect.Dasherize(ctx.Name))
-
 	// reference type descriptor
 	if reference := ctx.Schema.Ref; reference != "" {
 		reporter.Info("Resolving type: %s to alias...", inflect.Dasherize(ctx.Name))
 
-		descriptor := r.resolve(ctx.Dereference())
+		var (
+			cctx       = ctx.Dereference()
+			descriptor = r.resolve(cctx)
+		)
 
 		if ctx.Parent.IsRoot() {
 			descriptor = &TypeDescriptor{
@@ -530,10 +650,18 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			}
 
 			// add the descriptor to the cache
-			r.add(descriptor)
+			if err := r.add(descriptor); err != nil {
+				cctx.Collector.Wrap(err)
+			}
 		}
 
-		reporter.Info("Resolving type: %s to alias successful", inflect.Dasherize(ctx.Name))
+		if err := cctx.Collector; len(err) > 0 {
+			collector.Wrap(err)
+			reporter.Error("Resolving type: %s to alias fail", inflect.Dasherize(ctx.Name))
+		} else {
+			reporter.Info("Resolving type: %s to alias successful", inflect.Dasherize(ctx.Name))
+		}
+
 		return descriptor
 	}
 
@@ -565,34 +693,47 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		for field, schema := range ctx.Schema.Value.Properties {
 			reporter.Info("Resolving type: %s field: %s...",
 				inflect.Dasherize(ctx.Name),
-				inflect.Dasherize(ctx.Name))
+				inflect.Dasherize(field))
 
-			property := &PropertyDescriptor{
-				Name:         field,
-				Description:  schema.Value.Description,
-				ReadOnly:     schema.Value.ReadOnly,
-				WriteOnly:    schema.Value.WriteOnly,
-				Required:     required(field),
-				PropertyType: r.resolve(ctx.Child(field, schema)),
-			}
+			var (
+				cctx     = ctx.Child(field, schema)
+				property = &PropertyDescriptor{
+					Name:         field,
+					Description:  schema.Value.Description,
+					ReadOnly:     schema.Value.ReadOnly,
+					WriteOnly:    schema.Value.WriteOnly,
+					Required:     required(field),
+					PropertyType: r.resolve(cctx),
+				}
+			)
 
 			descriptor.Properties = append(descriptor.Properties, property)
 
-			reporter.Info("Resolving type: %s field: %s successful",
-				inflect.Dasherize(ctx.Name),
-				inflect.Dasherize(ctx.Name))
+			if err := cctx.Collector; len(err) > 0 {
+				collector.Wrap(err)
+				reporter.Error("Resolving type: %s field: %s fail",
+					inflect.Dasherize(ctx.Name),
+					inflect.Dasherize(field))
+			} else {
+				reporter.Info("Resolving type: %s field: %s successful",
+					inflect.Dasherize(ctx.Name),
+					inflect.Dasherize(field))
+			}
 		}
+
 		switch {
 		case ctx.Schema.Value.AdditionalPropertiesAllowed != nil:
 			fallthrough
 		case ctx.Schema.Value.AdditionalProperties != nil:
 			var (
 				schema   = ctx.Schema.Value.AdditionalProperties
+				kctx     = ctx.Child("key", schemaOf("string"))
+				pctx     = ctx.Child("properties", schema)
 				property = &PropertyDescriptor{
 					Name: "properties",
 					PropertyType: &TypeDescriptor{
-						Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
-						Element: r.resolve(ctx.Child("properties", schema)),
+						Key:     r.resolve(kctx),
+						Element: r.resolve(pctx),
 						Metadata: Metadata{
 							"min":           uint64Ptr(&ctx.Schema.Value.MinProps),
 							"max":           uint64Ptr(ctx.Schema.Value.MaxProps),
@@ -606,11 +747,24 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			)
 
 			descriptor.Properties = append(descriptor.Properties, property)
+
+			if err := kctx.Collector; len(err) > 0 {
+				collector.Wrap(err)
+			}
+
+			if err := pctx.Collector; len(err) > 0 {
+				collector.Wrap(err)
+			}
 		case !descriptor.HasProperties():
+			var (
+				kctx = ctx.Child("key", schemaOf("string"))
+				pctx = ctx.Child("properties", nil)
+			)
+
 			descriptor = &TypeDescriptor{
 				Name:    inflect.Dasherize(ctx.Name),
-				Key:     r.resolve(ctx.Child("key", schemaOf("string"))),
-				Element: r.resolve(ctx.Child("properties", nil)),
+				Key:     r.resolve(kctx),
+				Element: r.resolve(pctx),
 				Metadata: Metadata{
 					"min":           uint64Ptr(&ctx.Schema.Value.MinProps),
 					"max":           uint64Ptr(ctx.Schema.Value.MaxProps),
@@ -619,15 +773,30 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 				},
 				IsMap: true,
 			}
+
+			if err := kctx.Collector; len(err) > 0 {
+				collector.Wrap(err)
+			}
+
+			if err := pctx.Collector; len(err) > 0 {
+				collector.Wrap(err)
+			}
 		}
 
 		// sort properties by name
 		sort.Sort(descriptor.Properties)
 
 		// add the descriptor to the cache
-		r.add(descriptor)
+		if err := r.add(descriptor); err != nil {
+			collector.Wrap(err)
+		}
 
-		reporter.Info("Resolving type: %s to class successful", inflect.Dasherize(ctx.Name))
+		if err := collector; len(err) > 0 {
+			reporter.Error("Resolving type: %s to class fail", inflect.Dasherize(ctx.Name))
+		} else {
+			reporter.Info("Resolving type: %s to class successful", inflect.Dasherize(ctx.Name))
+		}
+
 		return descriptor
 	}
 
@@ -635,13 +804,14 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 	if kind := r.kind(ctx.Schema.Value); kind == "array" {
 		reporter.Info("Resolving type: %s to array...", inflect.Dasherize(ctx.Name))
 
+		cctx := ctx.Array()
 		descriptor := &TypeDescriptor{
 			Name:        inflect.Dasherize(ctx.Name),
 			Description: ctx.Schema.Value.Description,
 			Default:     ctx.Schema.Value.Default,
 			IsNullable:  ctx.Schema.Value.Nullable,
 			IsArray:     true,
-			Element:     r.resolve(ctx.Array()),
+			Element:     r.resolve(cctx),
 			Metadata: Metadata{
 				"unique":        ctx.Schema.Value.UniqueItems,
 				"min":           uint64Ptr(&ctx.Schema.Value.MinLength),
@@ -651,10 +821,21 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			},
 		}
 
-		// add the descriptor to the cache
-		r.add(descriptor)
+		if err := cctx.Collector; len(err) > 0 {
+			collector.Wrap(err)
+		}
 
-		reporter.Info("Resolving type: %s to array successful", inflect.Dasherize(ctx.Name))
+		// add the descriptor to the cache
+		if err := r.add(descriptor); err != nil {
+			collector.Wrap(err)
+		}
+
+		if err := collector; len(err) > 0 {
+			reporter.Error("Resolving type: %s to array fail", inflect.Dasherize(ctx.Name))
+		} else {
+			reporter.Info("Resolving type: %s to array successful", inflect.Dasherize(ctx.Name))
+		}
+
 		return descriptor
 	}
 
@@ -675,9 +856,16 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 			}
 
 			// add the descriptor to the cache
-			r.add(descriptor)
+			if err := r.add(descriptor); err != nil {
+				collector.Wrap(err)
+			}
 
-			reporter.Info("Resolving type: %s to enum successful", inflect.Dasherize(ctx.Name))
+			if err := collector; len(err) > 0 {
+				reporter.Error("Resolving type: %s to enum fail", inflect.Dasherize(ctx.Name))
+			} else {
+				reporter.Info("Resolving type: %s to enum successful", inflect.Dasherize(ctx.Name))
+			}
+
 			return descriptor
 		}
 	}
@@ -719,11 +907,17 @@ func (r *Resolver) resolve(ctx *ResolverContext) *TypeDescriptor {
 		}
 
 		// add the descriptor to the cache
-		r.add(descriptor)
-
+		if err := r.add(descriptor); err != nil {
+			collector.Wrap(err)
+		}
 	}
 
-	reporter.Info("Resolving type: %s to primitive successful", inflect.Dasherize(ctx.Name))
+	if err := collector; len(err) > 0 {
+		reporter.Error("Resolving type: %s to primitive fail", inflect.Dasherize(ctx.Name))
+	} else {
+		reporter.Info("Resolving type: %s to primitive successful", inflect.Dasherize(ctx.Name))
+	}
+
 	return descriptor
 }
 

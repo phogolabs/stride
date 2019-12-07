@@ -5,21 +5,21 @@ import (
 	"strings"
 
 	"github.com/getkin/kin-openapi/openapi3"
+	"github.com/phogolabs/flaw"
 	"github.com/phogolabs/stride/inflect"
 )
 
-var emptyCtx = &ResolverContext{}
-
 // ResolverContext is the current resolver context
 type ResolverContext struct {
-	Name   string
-	Schema *openapi3.SchemaRef
-	Parent *ResolverContext
+	Name      string
+	Schema    *openapi3.SchemaRef
+	Parent    *ResolverContext
+	Collector flaw.ErrorCollector
 }
 
 // IsRoot returns true if it's root
 func (r *ResolverContext) IsRoot() bool {
-	return r == emptyCtx
+	return r.Parent == nil
 }
 
 // Child returns the child context
@@ -35,12 +35,10 @@ func (r *ResolverContext) Child(name string, schema *openapi3.SchemaRef) *Resolv
 
 // Dereference returns the dereferenced context
 func (r *ResolverContext) Dereference() *ResolverContext {
-	nick := filepath.Base(r.Schema.Ref)
-
 	ctx := &ResolverContext{
-		Name:   inflect.Dasherize(nick),
+		Name:   inflect.Dasherize(filepath.Base(r.Schema.Ref)),
 		Schema: &openapi3.SchemaRef{Value: r.Schema.Value},
-		Parent: emptyCtx,
+		Parent: &ResolverContext{},
 	}
 
 	return ctx
