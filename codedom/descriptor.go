@@ -208,16 +208,14 @@ func (d *TypeDescriptor) Tags(required bool) TagDescriptorCollection {
 		tag.Options = tag.Options[1:]
 	}
 
-	tag = &TagDescriptor{
-		Key:  "default",
-		Name: "~",
-	}
-
-	tags = append(tags, tag)
-
 	// default
 	if defValue := d.Default; defValue != nil {
-		tag.Name = fmt.Sprintf("%v", defValue)
+		tag = &TagDescriptor{
+			Key:  "default",
+			Name: fmt.Sprintf("%v", defValue),
+		}
+
+		tags = append(tags, tag)
 	}
 
 	return tags

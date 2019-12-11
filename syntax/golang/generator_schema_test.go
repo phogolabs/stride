@@ -178,7 +178,7 @@ var _ = Describe("SchemaGenerator", func() {
 				case 5:
 					Expect(text).To(Equal("\t// stride:generate id"))
 				case 6:
-					Expect(text).To(Equal("\tID string `field:\"ID,omitempty\" validate:\"-\"`"))
+					Expect(text).To(Equal("\tID string `json:\"ID,omitempty\" xml:\"ID,omitempty\" form:\"ID,omitempty\" field:\"ID,omitempty\" validate:\"-\"`"))
 				case 7:
 					Expect(text).To(Equal("}"))
 				}
