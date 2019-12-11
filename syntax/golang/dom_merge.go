@@ -93,6 +93,10 @@ func (m *Merger) mergeFunc(target, source dst.Node) {
 		items  = right.List[rightRange.Start : rightRange.End+1]
 	)
 
+	if len(items) == 0 {
+		return
+	}
+
 	// append top block
 	for index, item := range left.List {
 		if index < leftRange.Start {

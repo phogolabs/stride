@@ -15,9 +15,10 @@ github.com/aphistic/golf v0.0.0-20180712155816-02c07f170c5a/go.mod h1:3NqKYiepwy
 github.com/aphistic/sweet v0.2.0/go.mod h1:fWDlIh/isSE9n6EPsRmC0det+whmX6dJid3stzu0Xys=
 github.com/aws/aws-sdk-go v1.15.78/go.mod h1:E3/ieXAlvM0XWO57iftYVDLLvQ824smPP3ATZkfNZeM=
 github.com/aws/aws-sdk-go v1.20.6/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
-github.com/aws/aws-sdk-go v1.25.15/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aws/aws-sdk-go v1.25.39 h1:1xxya3nsUaFlEZuoE5PWsIEd47RoDV/kkOGt0qEuwNw=
 github.com/aws/aws-sdk-go v1.25.39/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
+github.com/aws/aws-sdk-go v1.25.43 h1:R5YqHQFIulYVfgRySz9hvBRTWBjudISa+r0C8XQ1ufg=
+github.com/aws/aws-sdk-go v1.25.43/go.mod h1:KmX6BPdI08NWTb3/sm4ZGu5ShLoqVDhKgpiN924inxo=
 github.com/aybabtme/rgbterm v0.0.0-20170906152045-cc83f3b3ce59/go.mod h1:q/89r3U2H7sSsE2t6Kca0lfwTK8JdoNGS/yzM/4iH5I=
 github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d h1:xDfNPAt8lFiC1UJrqV3uuy861HCTo708pDMbjHHdCas=
 github.com/bgentry/go-netrc v0.0.0-20140422174119-9fd32a8b3d3d/go.mod h1:6QX/PXZ00z/TKoufEY6K/a0k6AhaJrQKdFe6OfVXsa4=
@@ -38,8 +39,6 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fatih/color v1.7.0 h1:DkWD4oS2D8LGGgTQ6IvwJJXSL5Vp2ffcQg58nFV38Ys=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
-github.com/fatih/structtag v1.1.0 h1:6j4mUV/ES2duvnAzKMFkN6/A5mCaNYPD3xfbAkLLOF8=
-github.com/fatih/structtag v1.1.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
 github.com/fatih/structtag v1.2.0 h1:/OdNE99OxoI/PqaW/SuSK9uxxT3f/tcSZgon/ssNSx4=
 github.com/fatih/structtag v1.2.0/go.mod h1:mBJUNpUnHmRKrKlQQlmCrh5PuhftFbNv8Ys4/aAZl94=
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
@@ -135,10 +134,10 @@ github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7J
 github.com/phogolabs/cli v0.0.0-20191121081435-9112dfb9677e h1:8OEuVWcfUS92D3VfyK1pxGorXL5QhJ9sz4HOFWO6o+E=
 github.com/phogolabs/cli v0.0.0-20191121081435-9112dfb9677e/go.mod h1:sjqdZi2hixvI7/uqytSwuJd51kKNgEtGK61pDKv0zQI=
 github.com/phogolabs/flaw v0.0.0-20191023065131-ef10f45475ef/go.mod h1:8sjRPqWMNj+arx9IOBk5Ebl0qyboVfEliQxIT7JL7b0=
-github.com/phogolabs/flaw v0.0.0-20191023101459-361ba19d20f2 h1:e2jd9+V1+VXrPKp2E21jKBxGqIEaDRhEv++Lj0PtAM0=
-github.com/phogolabs/flaw v0.0.0-20191023101459-361ba19d20f2/go.mod h1:8sjRPqWMNj+arx9IOBk5Ebl0qyboVfEliQxIT7JL7b0=
-github.com/phogolabs/log v0.0.0-20191024085316-68ea00873941 h1:ZuJfc3jQZb5pRl555bD4DyY25LToVD4TIGi+ByVt9/I=
-github.com/phogolabs/log v0.0.0-20191024085316-68ea00873941/go.mod h1:+e4jdkaQFdMi+xWUdUbuF0YfgE3kbKVFAafPwlHmiYE=
+github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0 h1:M3LJvOhnce7w1nuaSEOXdJ2AKeDftFF41t2rNhfoF9Y=
+github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0/go.mod h1:8sjRPqWMNj+arx9IOBk5Ebl0qyboVfEliQxIT7JL7b0=
+github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073 h1:ACtNpzOMIxUP6bIE+LoVov0XjENrtSctj2B043TH6yE=
+github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073/go.mod h1:j2gwPB/JQT4EvaZfWJ6jr9gIOc/Ka7hWVKqP+zzKYrE=
 github.com/phogolabs/parcello v0.8.1 h1:olbuFKkvNCyFJEN3SYPuRq6vXLWYI+6iBrGJYKJZXdU=
 github.com/phogolabs/parcello v0.8.1/go.mod h1:/HlY+yKSdyM8MUX9YvwT3+sED9SKXizc5zfuHDh6+to=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=

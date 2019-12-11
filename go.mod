@@ -13,8 +13,8 @@ require (
 	github.com/onsi/ginkgo v1.10.3
 	github.com/onsi/gomega v1.7.1
 	github.com/phogolabs/cli v0.0.0-20191121081435-9112dfb9677e
-	github.com/phogolabs/flaw v0.0.0-20191023101459-361ba19d20f2
-	github.com/phogolabs/log v0.0.0-20191024085316-68ea00873941
+	github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0
+	github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073
 	github.com/phogolabs/parcello v0.8.1
 	github.com/stretchr/testify v1.4.0 // indirect
 	golang.org/x/sys v0.0.0-20191022100944-742c48ecaeb7 // indirect

@@ -172,7 +172,8 @@ var _ = Describe("PropertyDescriptor", func() {
 				Name:     "bank-id",
 				Required: false,
 				PropertyType: &codedom.TypeDescriptor{
-					Name: "string",
+					Name:    "string",
+					Default: "hello",
 				},
 			}
 
@@ -199,7 +200,7 @@ var _ = Describe("PropertyDescriptor", func() {
 			Expect(tags[4].Options).To(BeEmpty())
 
 			Expect(tags[5].Key).To(Equal("default"))
-			Expect(tags[5].Name).To(Equal("~"))
+			Expect(tags[5].Name).To(Equal("hello"))
 			Expect(tags[5].Options).To(BeEmpty())
 		})
 	})
@@ -235,7 +236,7 @@ var _ = Describe("ParameterDescriptor", func() {
 			}
 
 			tags := param.Tags()
-			Expect(tags).To(HaveLen(3))
+			Expect(tags).To(HaveLen(2))
 			Expect(tags[0].Key).To(Equal("header"))
 			Expect(tags[0].Name).To(Equal("bank-id"))
 			Expect(tags[0].Options).To(ContainElement("matrix"))
@@ -243,10 +244,6 @@ var _ = Describe("ParameterDescriptor", func() {
 			Expect(tags[1].Key).To(Equal("validate"))
 			Expect(tags[1].Name).To(Equal("required"))
 			Expect(tags[1].Options).To(BeEmpty())
-
-			Expect(tags[2].Key).To(Equal("default"))
-			Expect(tags[2].Name).To(Equal("~"))
-			Expect(tags[2].Options).To(BeEmpty())
 		})
 	})
 })

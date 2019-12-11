@@ -219,7 +219,7 @@ var _ = Describe("GeneratorController", func() {
 				Expect(err).To(BeNil())
 
 				Expect(buffer.String()).To(ContainSubstring("type SearchUserInput struct"))
-				Expect(buffer.String()).To(ContainSubstring("Body *SearchQuery `body:\"~\"`"))
+				Expect(buffer.String()).To(ContainSubstring("Body *SearchQuery `body:\"~\" form:\"~\"`"))
 			})
 		})
 
