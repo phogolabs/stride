@@ -105,7 +105,7 @@ We are open for any contributions. Just fork the
 [logo-license]: http://creativecommons.org/licenses/by/3.0/
 [codecov-url]: https://codecov.io/gh/phogolabs/stride
 [codecov-img]: https://codecov.io/gh/phogolabs/stride/branch/master/graph/badge.svg
-[action-img]: https://github.com/phogolabs/stride/workflows/pipeline/badge.svg
+[action-img]: https://github.com/phogolabs/stride/workflows/main/badge.svg
 [action-url]: https://github.com/phogolabs/stride/actions
 [godoc-url]: https://godoc.org/github.com/phogolabs/stride
 [godoc-img]: https://godoc.org/github.com/phogolabs/stride?status.svg
