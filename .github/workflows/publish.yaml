@@ -12,11 +12,38 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@master
+      - name: Set up environment
+        run: echo ::set-env name=VERSION_NUMBER::$(echo ${GITHUB_REF:10})
       - name: Set up Golang
         uses: actions/setup-go@v1
         with:
           go-version: '1.13.x'
       - name: Install Golang tools
-        run: GO111MODULE=on go install github.com/mitchellh/gox
-      - name: Build project
-        run: ls -l $GOPATH && ls -l $GOBIN
+        run: go install github.com/mitchellh/gox
+      - name: Build release
+        run: $HOME/go/bin/gox --output="$GOX_OUTPUT" --osarch="$GOX_OSARCH"  github.com/$GITHUB_REPOSITORY/cmd/stride
+        env:
+          GOX_OUTPUT: "./build/{{.Dir}}_{{.OS}}_{{.Arch}}" 
+          GOX_OSARCH: "darwin/amd64"
+      - name: Bundle release
+        run: zip --junk-paths stride.zip ./build/*
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: false
+          prerelease: false
+      - name: Upload release
+        id: upload_release
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./stride.zip
+          asset_name: stride.zip
+          asset_content_type: application/zip

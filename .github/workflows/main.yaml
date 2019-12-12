@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    ignore-tags:
+      - 'v*'
   pull_request:
 
 jobs:
