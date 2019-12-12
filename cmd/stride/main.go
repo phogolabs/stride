@@ -11,6 +11,9 @@ import (
 	_ "github.com/phogolabs/stride/template"
 )
 
+// Version is the application version
+var Version string = "unknown"
+
 func main() {
 	var (
 		editor    = &cmd.OpenAPIEditor{}
@@ -33,7 +36,7 @@ func main() {
 		HelpName:  "stride",
 		Usage:     "OpenAPI viewer, editor, generator, validator and mocker",
 		UsageText: "stride [global options]",
-		Version:   "1.0-beta-05",
+		Version:   Version,
 		Writer:    os.Stdout,
 		ErrWriter: os.Stderr,
 		OnSignal:  onSignal,

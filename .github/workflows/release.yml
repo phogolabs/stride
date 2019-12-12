@@ -10,6 +10,9 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
+      - name: Get Project Version
+        id: get_version
+        run: echo ::set-output name=NUMBER::${GITHUB_REF/refs\/tags\//}
       - name: Checkout code
         uses: actions/checkout@master
       - name: Set up Golang
@@ -18,5 +21,8 @@ jobs:
           go-version: '1.13.x'
       - name: Install Golang tools
         run: go install github.com/mitchellh/gox
-      - name: Build project
-        run: gox github.com/phogolabs/stride/cmd/stride
+      - name: Build Project
+        run: gox -ldflags "-X main.Version=$VERSION" github.com/phogolabs/stride/cmd/stride
+        env:
+          VERSION: ${{ steps.get_version.NUMBER }}
+        working-directory: ./build
