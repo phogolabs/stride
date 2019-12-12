@@ -111,6 +111,17 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 		return err
 	}
 
+	markdown := &MarkdownGenerator{
+		Path:     g.Path,
+		Reporter: g.Reporter,
+		Info:     spec.Info,
+	}
+
+	if err := markdown.Generate(); err != nil {
+		reporter.Error(" Generating spec fail")
+		return err
+	}
+
 	reporter.Success(" Generating spec complete!")
 	return nil
 }
@@ -120,6 +131,7 @@ func (g *Generator) sync(generator FileGenerator) error {
 
 	if target := generator.Generate(); target != nil {
 		// merge if the file exist
+
 		if source, err := OpenFile(target.Name()); err == nil {
 			reporter.Info(" Merging file: %s...", target.Name())
 

@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"path/filepath"
+
 	"github.com/phogolabs/cli"
 	"github.com/phogolabs/log"
 	"github.com/phogolabs/log/handler/console"
@@ -48,6 +50,11 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		return err
 	}
 
+	dir, err := filepath.Abs(ctx.String("project-path"))
+	if err != nil {
+		return err
+	}
+
 	// generate the soec
 	generator := &service.Generator{
 		Path: path,
@@ -57,7 +64,7 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 		},
 		Generator: &golang.Generator{
 			Reporter: reporter(ctx),
-			Path:     ctx.String("project-path"),
+			Path:     dir,
 		},
 	}
 

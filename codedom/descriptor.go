@@ -16,8 +16,17 @@ type Metadata map[string]interface{}
 
 // SpecDescriptor represents a spec
 type SpecDescriptor struct {
+	Info        *InfoDescriptor
 	Types       TypeDescriptorCollection
 	Controllers ControllerDescriptorCollection
+}
+
+// InfoDescriptor provides some information
+type InfoDescriptor struct {
+	Title          string
+	Description    string
+	TermsOfService string
+	Version        string
 }
 
 // TypeDescriptorMap definition

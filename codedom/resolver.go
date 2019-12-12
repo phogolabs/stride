@@ -47,6 +47,12 @@ func (r *Resolver) Resolve(swagger *openapi3.Swagger) (*SpecDescriptor, error) {
 	reporter.Success("Resolving spec complete")
 
 	return &SpecDescriptor{
+		Info: &InfoDescriptor{
+			Version:        swagger.Info.Version,
+			Title:          swagger.Info.Title,
+			Description:    swagger.Info.Description,
+			TermsOfService: swagger.Info.TermsOfService,
+		},
 		Types:       r.Cache.Collection(),
 		Controllers: controllers,
 	}, nil
