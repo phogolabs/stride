@@ -1,4 +1,4 @@
-name: Create Release
+name: release
 
 on:
   push:
@@ -22,7 +22,5 @@ jobs:
       - name: Install Golang tools
         run: go install github.com/mitchellh/gox
       - name: Build Project
-        run: gox -ldflags "-X main.Version=$VERSION" github.com/phogolabs/stride/cmd/stride
-        env:
-          VERSION: ${{ steps.get_version.NUMBER }}
+        run: $GOPATH/bin/gox -ldflags "-X main.Version=${{ steps.get_version.NUMBER }}" github.com/phogolabs/stride/cmd/stride
         working-directory: ./build
