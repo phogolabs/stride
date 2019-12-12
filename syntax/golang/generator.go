@@ -22,11 +22,7 @@ type Generator struct {
 
 // Generate generates the source code
 func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
-	var (
-		dirPkg    = filepath.Join(g.Path, "service")
-		dirCmd    = filepath.Join(g.Path, "cmd", filepath.Base(g.Path))
-		generator FileGenerator
-	)
+	var generator FileGenerator
 
 	reporter := g.Reporter.With(contract.SeverityVeryHigh)
 	reporter.Notice(" Generating spec...")
@@ -47,9 +43,9 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 	for _, descriptor := range spec.Controllers {
 		generator = &ControllerGenerator{
 			Mode:       ControllerGeneratorModeSchema,
-			Path:       dirPkg,
-			Controller: descriptor,
+			Path:       filepath.Join(g.Path, "service"),
 			Reporter:   g.Reporter,
+			Controller: descriptor,
 		}
 
 		if err := g.sync(generator); err != nil {
@@ -62,9 +58,9 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 	for _, descriptor := range spec.Controllers {
 		generator = &ControllerGenerator{
 			Mode:       ControllerGeneratorModeAPI,
-			Path:       dirPkg,
-			Controller: descriptor,
+			Path:       filepath.Join(g.Path, "service"),
 			Reporter:   g.Reporter,
+			Controller: descriptor,
 		}
 
 		if err := g.sync(generator); err != nil {
@@ -77,9 +73,9 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 	for _, descriptor := range spec.Controllers {
 		generator = &ControllerGenerator{
 			Mode:       ControllerGeneratorModeSpec,
-			Path:       dirPkg,
-			Controller: descriptor,
+			Path:       filepath.Join(g.Path, "service"),
 			Reporter:   g.Reporter,
+			Controller: descriptor,
 		}
 
 		if err := g.sync(generator); err != nil {
@@ -90,7 +86,7 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 
 	// write the server
 	generator = &ServerGenerator{
-		Path:        dirPkg,
+		Path:        filepath.Join(g.Path, "service"),
 		Controllers: spec.Controllers,
 		Reporter:    reporter,
 	}
@@ -102,7 +98,18 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 
 	// write the application main
 	generator = &MainGenerator{
-		Path:     dirCmd,
+		Path:     g.Path,
+		Reporter: g.Reporter,
+	}
+
+	if err := g.sync(generator); err != nil {
+		reporter.Error(" Generating spec fail")
+		return err
+	}
+
+	// write the application suite spec
+	generator = &SpecGenerator{
+		Path:     g.Path,
 		Reporter: g.Reporter,
 	}
 

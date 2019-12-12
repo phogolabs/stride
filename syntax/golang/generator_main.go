@@ -17,8 +17,9 @@ type MainGenerator struct {
 // Generate generates a file
 func (g *MainGenerator) Generate() *File {
 	var (
-		command  = filepath.Base(g.Path)
-		filename = filepath.Join(g.Path, "main.go")
+		path     = filepath.Join(g.Path, "cmd", filepath.Base(g.Path))
+		command  = filepath.Base(path)
+		filename = filepath.Join(path, "main.go")
 	)
 
 	reporter := g.Reporter.With(contract.SeverityHigh)
