@@ -23,10 +23,14 @@ jobs:
       - name: Build release
         run: $HOME/go/bin/gox --output="$GOX_OUTPUT" --osarch="$GOX_OSARCH"  github.com/$GITHUB_REPOSITORY/cmd/stride
         env:
-          GOX_OUTPUT: "./build/{{.Dir}}_{{.OS}}_{{.Arch}}" 
-          GOX_OSARCH: "darwin/amd64"
-      - name: Bundle release
-        run: zip --junk-paths stride-${{ env.VERSION_NUMBER }}.zip ./build/*
+          GOX_OUTPUT: "./build/{{.OS}}/{{.Dir}}_{{.OS}}_{{.Arch}}"
+          GOX_OSARCH: "linux/amd64 linux/386 darwin/amd64 darwin/386 windows/386 windows/amd64"
+      - name: Bundle Linux release
+        run: zip --junk-paths stride-linux-${{ env.VERSION_NUMBER }}.zip ./build/linux/*
+      - name: Bundle Darwin release
+        run: zip --junk-paths stride-darwin-${{ env.VERSION_NUMBER }}.zip ./build/darwin/*
+      - name: Bundle Windows release
+        run: zip --junk-paths stride-windows-${{ env.VERSION_NUMBER }}.zip ./build/windows/*
       - name: Create release
         id: create_release
         uses: actions/create-release@v1.0.0
@@ -37,13 +41,33 @@ jobs:
           release_name: ${{ github.ref }}
           draft: false
           prerelease: false
-      - name: Upload release
-        id: upload_release
+      - name: Upload Linux release
+        id: upload_release_linux
         uses: actions/upload-release-asset@v1.0.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./stride-${{ env.VERSION_NUMBER }}.zip
-          asset_name: stride-${{ env.VERSION_NUMBER }}.zip
+          asset_path: ./stride-linux-${{ env.VERSION_NUMBER }}.zip
+          asset_name: stride-linux-${{ env.VERSION_NUMBER }}.zip
+          asset_content_type: application/zip
+      - name: Upload Darwin release
+        id: upload_release_darwin
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./stride-darwin-${{ env.VERSION_NUMBER }}.zip
+          asset_name: stride-darwin-${{ env.VERSION_NUMBER }}.zip
+          asset_content_type: application/zip
+      - name: Upload Windows release
+        id: upload_release_windows
+        uses: actions/upload-release-asset@v1.0.1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./stride-windows-${{ env.VERSION_NUMBER }}.zip
+          asset_name: stride-windows-${{ env.VERSION_NUMBER }}.zip
           asset_content_type: application/zip
