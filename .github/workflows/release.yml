@@ -1,0 +1,22 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Set up Golang
+        uses: actions/setup-go@v1
+        with:
+          go-version: '1.13.x'
+      - name: Download Golang tools
+        run: go get github.com/mitchellh/gox
+      - name: Build project
+        run: gox github.com/phogolabs/stride/cmd/stride
