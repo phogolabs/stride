@@ -21,7 +21,7 @@ jobs:
       - name: Install Golang tools
         run: go install github.com/mitchellh/gox
       - name: Build release
-        run: $HOME/go/bin/gox --output="$GOX_OUTPUT" --osarch="$GOX_OSARCH"  github.com/$GITHUB_REPOSITORY/cmd/stride
+        run: $HOME/go/bin/gox -ldflags "-X main.Version=$VERSION_NUMBER" --output="$GOX_OUTPUT" --osarch="$GOX_OSARCH"  github.com/$GITHUB_REPOSITORY/cmd/stride
         env:
           GOX_OUTPUT: "./build/{{.OS}}/{{.Dir}}_{{.OS}}_{{.Arch}}"
           GOX_OSARCH: "linux/amd64 linux/386 darwin/amd64 darwin/386 windows/386 windows/amd64"
