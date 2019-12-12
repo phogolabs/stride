@@ -1,4 +1,4 @@
-name: pipeline
+name: Pipeline
 on:
   push:
     branches:
@@ -7,7 +7,7 @@ on:
 
 jobs:
   pipeline:
-    name: test
+    name: Run Tests
     runs-on: ubuntu-latest
     steps:
       - name: Check out code
@@ -22,10 +22,3 @@ jobs:
         uses: codecov/codecov-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-  update_release_draft:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: release-drafter/release-drafter@v5.3.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        if: env.github.ref == 'refs/heads/master'

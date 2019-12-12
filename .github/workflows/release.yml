@@ -1,4 +1,4 @@
-name: release
+name: Create Release
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: '1.13.x'
-      - name: Download Golang tools
-        run: go get github.com/mitchellh/gox
+      - name: Install Golang tools
+        run: go install github.com/mitchellh/gox
       - name: Build project
         run: gox github.com/phogolabs/stride/cmd/stride
