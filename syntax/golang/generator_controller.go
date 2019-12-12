@@ -3,6 +3,7 @@ package golang
 import (
 	"bytes"
 	"fmt"
+	"go/build"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -295,12 +296,42 @@ func (g *ControllerGenerator) controller(root *File) {
 			"summary":     operation.Summary,
 			"deprecated":  operation.DeprecationMessage(),
 		})
-
 	}
 }
 
 func (g *ControllerGenerator) spec(root *File) {
-	//TODO:
+	g.Reporter.Error("ﳑ Generating tests: %s...", root.Name())
+
+	project, err := filepath.Rel(filepath.Join(build.Default.GOPATH, "src"), g.Path)
+	if err != nil {
+		g.Reporter.Error(" Generating markdown documentation fail: ", err)
+		return
+	}
+
+	ctx := map[string]interface{}{
+		"receiver":   inflect.Camelize(g.Controller.Name) + "API",
+		"project":    project,
+		"operations": g.Controller.Operations,
+	}
+
+	writer := &syntax.TemplateWriter{
+		Path:    "syntax/golang/spec.go.tpl",
+		Context: ctx,
+	}
+
+	buffer := &bytes.Buffer{}
+
+	if _, err := writer.WriteTo(buffer); err != nil {
+		g.Reporter.Error("ﳑ Generating tests: %s fail: %v", root.Name(), err)
+		return
+	}
+
+	if _, err := root.ReadFrom(buffer); err != nil {
+		g.Reporter.Error("ﳑ Generating tests: %s fail: %v", root.Name(), err)
+		return
+	}
+
+	g.Reporter.Success("ﳑ Generating tests: %s success", root.Name())
 }
 
 func (g *ControllerGenerator) function(root *File, name string, ctx map[string]interface{}) {

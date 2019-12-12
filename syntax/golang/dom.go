@@ -169,6 +169,17 @@ func (f *File) WriteTo(w io.Writer) (int64, error) {
 	return int64(n), err
 }
 
+// ReadFrom reads the content from a file
+func (f *File) ReadFrom(r io.Reader) (int64, error) {
+	node, err := decorator.Parse(r)
+	if err != nil {
+		return 0, err
+	}
+
+	f.node = node
+	return 0, nil
+}
+
 // AddNode adds a node to the file
 func (f *File) AddNode(node Node) {
 	f.node.Decls = append(f.node.Decls, node.Node())
