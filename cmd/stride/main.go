@@ -17,13 +17,13 @@ func main() {
 		viewer    = &cmd.OpenAPIViewer{}
 		generator = &cmd.OpenAPIGenerator{}
 		validator = &cmd.OpenAPIValidator{}
-		mocker    = &cmd.OpenAPIMocker{}
+		// mocker    = &cmd.OpenAPIMocker{}
 	)
 
 	commands := []*cli.Command{
 		editor.CreateCommand(),
 		viewer.CreateCommand(),
-		mocker.CreateCommand(),
+		// mocker.CreateCommand(),
 		generator.CreateCommand(),
 		validator.CreateCommand(),
 	}
