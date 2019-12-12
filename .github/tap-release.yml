@@ -1,4 +1,4 @@
-asset: "stride.zip"
+asset: "stride-$VERSION_NUMBER.zip"
 tap: "phogolabs/homebrew-tap/stride.rb"
 template: |
   class Stride < Formula
@@ -9,6 +9,11 @@ template: |
     sha256 "$STABLE_SHA256"
 
     def install
-      prefix.install "stride"
+      mv "stride_darwin_amd64", "stride"
+      bin.install "stride"
+    end
+
+    test do
+      assert_match "stride version #{version}", shell_output("#{bin}/stride -v2>&1")
     end
   end

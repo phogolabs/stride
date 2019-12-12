@@ -26,7 +26,7 @@ jobs:
           GOX_OUTPUT: "./build/{{.Dir}}_{{.OS}}_{{.Arch}}" 
           GOX_OSARCH: "darwin/amd64"
       - name: Bundle release
-        run: zip --junk-paths stride.zip ./build/*
+        run: zip --junk-paths stride-${{ env.VERSION_NUMBER }}.zip ./build/*
       - name: Create release
         id: create_release
         uses: actions/create-release@v1.0.0
@@ -44,6 +44,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./stride.zip
-          asset_name: stride.zip
+          asset_path: ./stride-${{ env.VERSION_NUMBER }}.zip
+          asset_name: stride-${{ env.VERSION_NUMBER }}.zip
           asset_content_type: application/zip
