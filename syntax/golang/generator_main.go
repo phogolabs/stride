@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 
 	"github.com/phogolabs/stride/contract"
+	"github.com/phogolabs/stride/syntax"
 )
 
 // MainGenerator builds the main
@@ -23,7 +24,7 @@ func (g *MainGenerator) Generate() *File {
 	reporter := g.Reporter.With(contract.SeverityHigh)
 	reporter.Notice(" Generating main file: %s...", filename)
 
-	writer := &TemplateWriter{
+	writer := &syntax.TemplateWriter{
 		Path: "syntax/golang/main.go.tpl",
 		Context: map[string]interface{}{
 			"command": command,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/contract"
+	"github.com/phogolabs/stride/syntax"
 )
 
 // ServerGenerator builds a server
@@ -22,7 +23,7 @@ func (g *ServerGenerator) Generate() *File {
 	reporter := g.Reporter.With(contract.SeverityHigh)
 	reporter.Notice(" Generating server file: %s...", filename)
 
-	writer := &TemplateWriter{
+	writer := &syntax.TemplateWriter{
 		Path: "syntax/golang/server.go.tpl",
 		Context: map[string]interface{}{
 			"controllers": g.Controllers,

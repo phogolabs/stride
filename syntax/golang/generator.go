@@ -111,17 +111,6 @@ func (g *Generator) Generate(spec *codedom.SpecDescriptor) error {
 		return err
 	}
 
-	markdown := &MarkdownGenerator{
-		Path:     g.Path,
-		Reporter: g.Reporter,
-		Info:     spec.Info,
-	}
-
-	if err := markdown.Generate(); err != nil {
-		reporter.Error(" Generating spec fail")
-		return err
-	}
-
 	reporter.Success(" Generating spec complete!")
 	return nil
 }

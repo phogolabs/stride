@@ -13,18 +13,34 @@ type SpecResolver interface {
 	Resolve(spec *openapi3.Swagger) (*codedom.SpecDescriptor, error)
 }
 
-//go:generate counterfeiter -fake-name CodeGenerator -o ../fake/code_generator.go . CodeGenerator
+//go:generate counterfeiter -fake-name SyntaxGenerator -o ../fake/syntax_generator.go . SyntaxGenerator
 
-// CodeGenerator generates the code
-type CodeGenerator interface {
+// SyntaxGenerator generates the code
+type SyntaxGenerator interface {
 	// Generate generates a source code from spec
 	Generate(spec *codedom.SpecDescriptor) error
+}
+
+var _ SyntaxGenerator = CompositeGenerator{}
+
+// CompositeGenerator represents a composite generator
+type CompositeGenerator []SyntaxGenerator
+
+// Generate generates the source code
+func (items CompositeGenerator) Generate(spec *codedom.SpecDescriptor) error {
+	for _, generator := range items {
+		if err := generator.Generate(spec); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // Generator generates the code
 type Generator struct {
 	Path      string
-	Generator CodeGenerator
+	Generator SyntaxGenerator
 	Resolver  SpecResolver
 }
 

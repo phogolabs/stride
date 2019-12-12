@@ -9,6 +9,7 @@ import (
 	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/service"
 	"github.com/phogolabs/stride/syntax/golang"
+	"github.com/phogolabs/stride/syntax/markdown"
 )
 
 // OpenAPIGenerator provides a subcommands to generate source code from OpenAPI specification
@@ -62,9 +63,15 @@ func (m *OpenAPIGenerator) generate(ctx *cli.Context) error {
 			Reporter: reporter(ctx),
 			Cache:    codedom.TypeDescriptorMap{},
 		},
-		Generator: &golang.Generator{
-			Reporter: reporter(ctx),
-			Path:     dir,
+		Generator: service.CompositeGenerator{
+			&golang.Generator{
+				Reporter: reporter(ctx),
+				Path:     dir,
+			},
+			&markdown.Generator{
+				Reporter: reporter(ctx),
+				Path:     dir,
+			},
 		},
 	}
 

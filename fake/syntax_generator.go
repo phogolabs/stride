@@ -8,7 +8,7 @@ import (
 	"github.com/phogolabs/stride/service"
 )
 
-type CodeGenerator struct {
+type SyntaxGenerator struct {
 	GenerateStub        func(*codedom.SpecDescriptor) error
 	generateMutex       sync.RWMutex
 	generateArgsForCall []struct {
@@ -24,7 +24,7 @@ type CodeGenerator struct {
 	invocationsMutex sync.RWMutex
 }
 
-func (fake *CodeGenerator) Generate(arg1 *codedom.SpecDescriptor) error {
+func (fake *SyntaxGenerator) Generate(arg1 *codedom.SpecDescriptor) error {
 	fake.generateMutex.Lock()
 	ret, specificReturn := fake.generateReturnsOnCall[len(fake.generateArgsForCall)]
 	fake.generateArgsForCall = append(fake.generateArgsForCall, struct {
@@ -42,26 +42,26 @@ func (fake *CodeGenerator) Generate(arg1 *codedom.SpecDescriptor) error {
 	return fakeReturns.result1
 }
 
-func (fake *CodeGenerator) GenerateCallCount() int {
+func (fake *SyntaxGenerator) GenerateCallCount() int {
 	fake.generateMutex.RLock()
 	defer fake.generateMutex.RUnlock()
 	return len(fake.generateArgsForCall)
 }
 
-func (fake *CodeGenerator) GenerateCalls(stub func(*codedom.SpecDescriptor) error) {
+func (fake *SyntaxGenerator) GenerateCalls(stub func(*codedom.SpecDescriptor) error) {
 	fake.generateMutex.Lock()
 	defer fake.generateMutex.Unlock()
 	fake.GenerateStub = stub
 }
 
-func (fake *CodeGenerator) GenerateArgsForCall(i int) *codedom.SpecDescriptor {
+func (fake *SyntaxGenerator) GenerateArgsForCall(i int) *codedom.SpecDescriptor {
 	fake.generateMutex.RLock()
 	defer fake.generateMutex.RUnlock()
 	argsForCall := fake.generateArgsForCall[i]
 	return argsForCall.arg1
 }
 
-func (fake *CodeGenerator) GenerateReturns(result1 error) {
+func (fake *SyntaxGenerator) GenerateReturns(result1 error) {
 	fake.generateMutex.Lock()
 	defer fake.generateMutex.Unlock()
 	fake.GenerateStub = nil
@@ -70,7 +70,7 @@ func (fake *CodeGenerator) GenerateReturns(result1 error) {
 	}{result1}
 }
 
-func (fake *CodeGenerator) GenerateReturnsOnCall(i int, result1 error) {
+func (fake *SyntaxGenerator) GenerateReturnsOnCall(i int, result1 error) {
 	fake.generateMutex.Lock()
 	defer fake.generateMutex.Unlock()
 	fake.GenerateStub = nil
@@ -84,7 +84,7 @@ func (fake *CodeGenerator) GenerateReturnsOnCall(i int, result1 error) {
 	}{result1}
 }
 
-func (fake *CodeGenerator) Invocations() map[string][][]interface{} {
+func (fake *SyntaxGenerator) Invocations() map[string][][]interface{} {
 	fake.invocationsMutex.RLock()
 	defer fake.invocationsMutex.RUnlock()
 	fake.generateMutex.RLock()
@@ -96,7 +96,7 @@ func (fake *CodeGenerator) Invocations() map[string][][]interface{} {
 	return copiedInvocations
 }
 
-func (fake *CodeGenerator) recordInvocation(key string, args []interface{}) {
+func (fake *SyntaxGenerator) recordInvocation(key string, args []interface{}) {
 	fake.invocationsMutex.Lock()
 	defer fake.invocationsMutex.Unlock()
 	if fake.invocations == nil {
@@ -108,4 +108,4 @@ func (fake *CodeGenerator) recordInvocation(key string, args []interface{}) {
 	fake.invocations[key] = append(fake.invocations[key], args)
 }
 
-var _ service.CodeGenerator = new(CodeGenerator)
+var _ service.SyntaxGenerator = new(SyntaxGenerator)

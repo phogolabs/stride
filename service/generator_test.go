@@ -15,14 +15,14 @@ var _ = Describe("Generator", func() {
 	var (
 		generator *service.Generator
 		resolver  *fake.SpecResolver
-		coder     *fake.CodeGenerator
+		coder     *fake.SyntaxGenerator
 	)
 
 	BeforeEach(func() {
 		resolver = &fake.SpecResolver{}
 		resolver.ResolveReturns(&codedom.SpecDescriptor{}, nil)
 
-		coder = &fake.CodeGenerator{}
+		coder = &fake.SyntaxGenerator{}
 
 		generator = &service.Generator{
 			Path:      path("../fixture/spec/schemas-array.yaml"),

@@ -10,6 +10,7 @@ import (
 	"github.com/phogolabs/stride/codedom"
 	"github.com/phogolabs/stride/contract"
 	"github.com/phogolabs/stride/inflect"
+	"github.com/phogolabs/stride/syntax"
 )
 
 // ControllerGeneratorMode determines the mode of this generator
@@ -314,7 +315,7 @@ func (g *ControllerGenerator) function(root *File, name string, ctx map[string]i
 	)
 
 	// mount method
-	writer := &TemplateWriter{
+	writer := &syntax.TemplateWriter{
 		Path:    fmt.Sprintf("syntax/golang/%s.go.tpl", name),
 		Context: ctx,
 	}

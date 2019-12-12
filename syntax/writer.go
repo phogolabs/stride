@@ -1,4 +1,4 @@
-package golang
+package syntax
 
 import (
 	"bytes"
