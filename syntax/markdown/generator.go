@@ -60,7 +60,7 @@ func (g *Generator) sync(path string, ctx map[string]interface{}) error {
 	var (
 		name   = inflect.LowerCase(filepath.Base(path))
 		writer = &syntax.TemplateWriter{
-			Path:    fmt.Sprintf("syntax/golang/%s.tpl", name),
+			Path:    fmt.Sprintf("syntax/markdown/%s.tpl", name),
 			Context: ctx,
 		}
 	)
