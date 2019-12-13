@@ -24,7 +24,7 @@ require (
 	github.com/phogolabs/cli v0.0.0-20191127174228-63a80da88234
 	github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0
 	github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073
-	github.com/phogolabs/parcello v0.8.1
+	github.com/phogolabs/parcello v0.8.2
 	github.com/ulikunitz/xz v0.5.6 // indirect
 	go.opencensus.io v0.22.2 // indirect
 	golang.org/x/exp v0.0.0-20191129062945-2f5052295587 // indirect
