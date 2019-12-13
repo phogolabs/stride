@@ -11,8 +11,8 @@ import (
 	_ "github.com/phogolabs/stride/template"
 )
 
-// Version is the application version
-var Version string = "unknown"
+// version is injected by goreleaser.com
+var version string = "unknown"
 
 func main() {
 	var (
@@ -36,7 +36,7 @@ func main() {
 		HelpName:  "stride",
 		Usage:     "OpenAPI viewer, editor, generator, validator and mocker",
 		UsageText: "stride [global options]",
-		Version:   Version,
+		Version:   version,
 		Writer:    os.Stdout,
 		ErrWriter: os.Stderr,
 		OnSignal:  onSignal,
