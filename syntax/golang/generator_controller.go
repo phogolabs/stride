@@ -300,7 +300,7 @@ func (g *ControllerGenerator) controller(root *File) {
 }
 
 func (g *ControllerGenerator) spec(root *File) {
-	g.Reporter.Error("ﳑ Generating tests: %s...", root.Name())
+	g.Reporter.Info("ﳑ Generating tests: %s...", root.Name())
 
 	project, err := filepath.Rel(filepath.Join(build.Default.GOPATH, "src"), g.Path)
 	if err != nil {

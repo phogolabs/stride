@@ -347,7 +347,7 @@ func (r *Resolver) responses(ctx *ResolverContext, responses map[string]*openapi
 				}
 			)
 
-			if length := len(descriptors); code >= 0 && length > 0 {
+			if length := len(descriptors); code >= 0 && length > 1 {
 				prev := descriptors[length-1]
 
 				if !reflect.DeepEqual(prev.ResponseType, response.ResponseType) {
