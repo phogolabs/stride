@@ -8,7 +8,6 @@ builds:
   goos:
   - linux
   - darwin
-  - windows
 changelog:
   sort: asc
   filters:
