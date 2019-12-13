@@ -190,15 +190,20 @@ func (g *ControllerGenerator) schema(root *File) {
 			if response.IsDefault {
 				// output
 				alias := NewLiteralType(name + "Output")
-				alias.Element(output.Name())
-				alias.Commentf("It is the alias to the default output of %s operation", name)
 
-				reporter.Info("ﳑ Generating type: %s...", inflect.Dasherize(alias.Name()))
+				if !strings.EqualFold(alias.Name(), output.Name()) {
+					fmt.Println("NOT EQUAL", output.Name(), name)
 
-				// add the output to the file
-				root.AddNode(alias)
+					alias.Element(output.Name())
+					alias.Commentf("It is the alias to the default output of %s operation", name)
 
-				reporter.Info("ﳑ Generating type: %s successful", inflect.Dasherize(alias.Name()))
+					reporter.Info("ﳑ Generating type: %s...", inflect.Dasherize(alias.Name()))
+
+					// add the output to the file
+					root.AddNode(alias)
+
+					reporter.Info("ﳑ Generating type: %s successful", inflect.Dasherize(alias.Name()))
+				}
 			}
 		}
 
