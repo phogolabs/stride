@@ -1,0 +1,26 @@
+before:
+  hooks:
+    - go mod download
+builds:
+- main: ./cmd/stride/main.go
+  env:
+  - CGO_ENABLED=0
+  goos:
+  - linux
+  - darwin
+  - windows
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+brews:
+- github:
+    owner: phogolabs
+    name: homebrew-tap
+  name: stride
+  description: OpenAPI viewer, editor, generator, validator and mocker
+  homepage: https://github.com/phogolabs/stride
+  test: |
+   system "#{bin}/stride -v"
