@@ -142,6 +142,7 @@ github.com/mattn/go-isatty v0.0.10/go.mod h1:qgIWMr58cqv1PHHyhnkY9lrL7etaEgOFcME
 github.com/mattn/go-isatty v0.0.11 h1:FxPOTFNqGkuDUGi3H/qkUbQO4ZiBa2brKq5r0l8TGeM=
 github.com/mattn/go-isatty v0.0.11/go.mod h1:PhnuNfih5lzO57/f3n+odYbM4JtupLOxQOAqxQCu2WE=
 github.com/mattn/go-runewidth v0.0.4/go.mod h1:LwmH8dsx7+W8Uxz3IHJYH5QSwggIsqBzpuz5H//U1FU=
+github.com/mattn/go-sqlite3 v1.11.0/go.mod h1:FPy6KqzDD04eiIsT53CuJW3U88zkxoIYsOqkbpncsNc=
 github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b/go.mod h1:01TrycV0kFyexm33Z7vhZRXopbI8J3TDReVlkTgMUxE=
 github.com/mitchellh/go-homedir v1.0.0/go.mod h1:SfyaCUpYCn1Vlf4IUYiD9fPX4A5wJrkLzIz1N1q0pr0=
 github.com/mitchellh/go-homedir v1.1.0 h1:lukF9ziXFxDFPkA1vsr5zpc1XuPDn/wFntq5mG+4E0Y=
@@ -158,6 +159,7 @@ github.com/onsi/gomega v1.7.1 h1:K0jcRCwNQM3vFGh1ppMtDh/+7ApJrjldlX8fA0jDTLQ=
 github.com/onsi/gomega v1.7.1/go.mod h1:XdKZgCCFLUoM/7CFJVPcG8C1xQ1AJ0vpAezJrB7JYyY=
 github.com/phogolabs/cli v0.0.0-20191127174228-63a80da88234 h1:9AVKg1E4bSVs3bG5AKXhgGcNP7UILkNQN+zqyi+FOrk=
 github.com/phogolabs/cli v0.0.0-20191127174228-63a80da88234/go.mod h1:grzrc/EIac+v5wd6EjBB4a9obKGGIdsgWhPIsqjBGLo=
+github.com/phogolabs/cli v0.0.0-20191212161310-ce689d871370/go.mod h1:grzrc/EIac+v5wd6EjBB4a9obKGGIdsgWhPIsqjBGLo=
 github.com/phogolabs/flaw v0.0.0-20191023065131-ef10f45475ef/go.mod h1:8sjRPqWMNj+arx9IOBk5Ebl0qyboVfEliQxIT7JL7b0=
 github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0 h1:M3LJvOhnce7w1nuaSEOXdJ2AKeDftFF41t2rNhfoF9Y=
 github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0/go.mod h1:8sjRPqWMNj+arx9IOBk5Ebl0qyboVfEliQxIT7JL7b0=
@@ -165,6 +167,8 @@ github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073 h1:ACtNpzOMIxUP6bIE+
 github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073/go.mod h1:j2gwPB/JQT4EvaZfWJ6jr9gIOc/Ka7hWVKqP+zzKYrE=
 github.com/phogolabs/parcello v0.8.1 h1:olbuFKkvNCyFJEN3SYPuRq6vXLWYI+6iBrGJYKJZXdU=
 github.com/phogolabs/parcello v0.8.1/go.mod h1:/HlY+yKSdyM8MUX9YvwT3+sED9SKXizc5zfuHDh6+to=
+github.com/phogolabs/parcello v0.8.2 h1:XFNJw82IXEARNHFXh2FlsVOOEwjIQkoeKmgNRyH7264=
+github.com/phogolabs/parcello v0.8.2/go.mod h1:rtKgAK1yF6KZOllQDfcHvOzYYwV3kCt61LJybif3SCE=
 github.com/pkg/errors v0.8.1 h1:iURUrRGxPUNPdy5/HRSm+Yj6okJ6UtLINN0Q9M4+h3I=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
