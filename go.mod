@@ -14,7 +14,7 @@ require (
 	github.com/go-openapi/inflect v0.19.0
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
-	github.com/hashicorp/go-getter v1.4.0
+	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
 	github.com/mattn/go-isatty v0.0.11 // indirect
