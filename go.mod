@@ -10,7 +10,7 @@ require (
 	github.com/fatih/color v1.8.0
 	github.com/fatih/structtag v1.2.0
 	github.com/getkin/kin-openapi v0.2.0
-	github.com/go-chi/chi v4.0.2+incompatible
+	github.com/go-chi/chi v4.1.0+incompatible
 	github.com/go-openapi/inflect v0.19.0
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.1 // indirect
