@@ -20,7 +20,7 @@ require (
 	github.com/mattn/go-isatty v0.0.11 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.12.0
-	github.com/onsi/gomega v1.9.0
+	github.com/onsi/gomega v1.10.0
 	github.com/phogolabs/cli v0.0.0-20191127174228-63a80da88234
 	github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0
 	github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073
