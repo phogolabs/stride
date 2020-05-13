@@ -6,7 +6,7 @@ require (
 	cloud.google.com/go v0.49.0 // indirect
 	cloud.google.com/go/storage v1.4.0 // indirect
 	github.com/aws/aws-sdk-go v1.26.0 // indirect
-	github.com/dave/dst v0.23.1
+	github.com/dave/dst v0.24.0
 	github.com/fatih/color v1.9.0
 	github.com/fatih/structtag v1.2.0
 	github.com/getkin/kin-openapi v0.8.0
