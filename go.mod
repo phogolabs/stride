@@ -17,11 +17,10 @@ require (
 	github.com/hashicorp/go-getter v1.4.1
 	github.com/hashicorp/go-version v1.2.0 // indirect
 	github.com/jstemmer/go-junit-report v0.9.1 // indirect
-	github.com/mattn/go-isatty v0.0.11 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
-	github.com/onsi/ginkgo v1.12.0
+	github.com/onsi/ginkgo v1.12.1
 	github.com/onsi/gomega v1.9.0
-	github.com/phogolabs/cli v0.0.0-20191127174228-63a80da88234
+	github.com/phogolabs/cli v0.0.0-20191212161310-ce689d871370
 	github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0
 	github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073
 	github.com/phogolabs/parcello v0.8.2
