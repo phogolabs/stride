@@ -9,7 +9,7 @@ require (
 	github.com/dave/dst v0.23.1
 	github.com/fatih/color v1.9.0
 	github.com/fatih/structtag v1.2.0
-	github.com/getkin/kin-openapi v0.8.0
+	github.com/getkin/kin-openapi v0.54.0
 	github.com/go-chi/chi v4.1.1+incompatible
 	github.com/go-openapi/inflect v0.19.0
 	github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9 // indirect
@@ -21,7 +21,7 @@ require (
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/onsi/ginkgo v1.12.0
 	github.com/onsi/gomega v1.9.0
-	github.com/phogolabs/cli v0.0.0-20191127174228-63a80da88234
+	github.com/phogolabs/cli v0.0.0-20191212161310-ce689d871370
 	github.com/phogolabs/flaw v0.0.0-20191127174302-4f33634378f0
 	github.com/phogolabs/log v0.0.0-20191127172145-f737d8658073
 	github.com/phogolabs/parcello v0.8.2
