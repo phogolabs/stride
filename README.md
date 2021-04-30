@@ -1,7 +1,7 @@
 # stride
 A code generator for OpenAPI v3.x BETA.
 
-*The tool is depracted. We are recommending using GRPC + PLEX.*
+**The tool is depracted. I am recommending using GRPC + PLEX.**
 
 
 [![Documentation][godoc-img]][godoc-url]
